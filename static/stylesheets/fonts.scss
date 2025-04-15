@@ -1,0 +1,72 @@
+@import "./guideline";
+
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+a,
+pre {
+	/* all text */
+	width: fit-content;
+	margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	/* all titles */
+	font-family: "Playfair Display", serif;
+	font-style: normal;
+	color: $text-primary;
+}
+
+h1 {
+	font-size: 42px;
+	line-height: 46px;
+	font-weight: 800;
+}
+h2 {
+	font-size: 28px;
+	line-height: 36px;
+	font-weight: 800;
+}
+
+p,
+a,
+ol,
+ul,
+li,
+pre {
+	font-family: "Outfit", system-ui, Helvetica, sans-serif;
+	font-size: 16px;
+	line-height: 22px;
+	color: $text-secondary;
+	font-weight: 400;
+}
+a {
+	// link color
+	color: $text-tertiary;
+	text-decoration-line: underline;
+	text-decoration-thickness: 15%; // thick ahh boi
+}
+ol,
+ul,
+li {
+	font-weight: 500;
+}
+
+.caption {
+	@extend p;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: auto;
+	color: $text-tertiary;
+}
