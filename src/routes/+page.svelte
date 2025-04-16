@@ -7,12 +7,14 @@
 		<h2>This is a subheading</h2>
 
 		<p>
-			Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem consectetur
-			error, maxime minima accusamus amet ex voluptas, similique reprehenderit architecto
-			neque. Voluptates expedita dolores quibusdam cupiditate dolore exercitationem totam
-			quam. Aliquid asperiores quod culpa qui, itaque sint mollitia amet perferendis eveniet
-			quis maxime nihil iste, omnis assumenda architecto consectetur ea, est facere odit! Qui
-			assumenda odio harum eum hic excepturi!
+			Lorem ipsum dolor sit amet consectetur adipisicing elit.
+			Exercitationem consectetur error, maxime minima accusamus amet ex
+			voluptas, similique reprehenderit architecto neque. Voluptates
+			expedita dolores quibusdam cupiditate dolore exercitationem totam
+			quam. Aliquid asperiores quod culpa qui, itaque sint mollitia amet
+			perferendis eveniet quis maxime nihil iste, omnis assumenda
+			architecto consectetur ea, est facere odit! Qui assumenda odio harum
+			eum hic excepturi!
 		</p>
 
 		<p class="caption">This is a caption. It's quite small</p>
@@ -30,28 +32,28 @@
 	@use "$static/stylesheets/guideline" as *;
 
 	main {
-		width: 100%;
-		height: 100%;
-		padding: 30px;
-		display: flex;
-		justify-content: center;
-		align-items: flex-start;
+	  width: 100%;
+	  height: 100%;
+	  padding: 30px;
+	  display: flex;
+	  justify-content: center;
+	  align-items: flex-start;
 
-		#testing-box {
-			width: min(100%, 1000px);
-			padding: 40px;
+	  #testing-box {
+	    width: min(100%, 1000px);
+	    padding: 40px;
 
-			display: flex;
-			flex-direction: column;
-			row-gap: 20px;
+	    display: flex;
+	    flex-direction: column;
+	    row-gap: 20px;
 
-			#btn-cluster {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				flex-wrap: wrap;
-				gap: 10px;
-			}
-		}
+	    #btn-cluster {
+	      display: flex;
+	      justify-content: center;
+	      align-items: center;
+	      flex-wrap: wrap;
+	      gap: 10px;
+	    }
+	  }
 	}
 </style>
