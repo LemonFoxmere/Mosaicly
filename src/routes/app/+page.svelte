@@ -1,51 +1,78 @@
 <script lang="ts">
 	let { data } = $props()
 
+	// to be replaced with user data from db
 	let displayName = 'John Dough'
 	let profile_canvas = $state(false)
 	let bio = $state('')
+	let canvases = $state([]) // obj type
+
+	// toggle between Profile | Canvases tab
+	let isProfile = $state(true)
 
 	$inspect(profile_canvas)
 </script>
 
+<!-- greet user -->
 <div id="intro">
 	<h2>Hello, {displayName}</h2>
 	<p>You can edit your profile or manage your canvases here.</p>
 </div>
 
+<!-- toggle tabs -->
 <section id="btn-tabs">
-	<button>Profile</button>
-	<button class="outline">Canvasess</button>
+	<button
+		class={isProfile ? '' : 'outline'}
+		onclick={() => isProfile = !isProfile}
+	>
+		Profile
+	</button>
+	<button
+		class={isProfile ? 'outline' : ''}
+		onclick={() => isProfile = !isProfile}
+	>
+		Canvases
+	</button>
 </section>
 
-<form action="" id="profile">
-	<label for="disp_name">
-		<p class="field_desc">
-			Display Name
-		</p>
-		<input
-			class="input-style"
-			type="text"
-			placeholder="John Doe"
-			value={displayName}
-		>
-	</label>
+{#if isProfile}
+	<!-- profile render -->
+	<form method="POST" action="?/update_profile" id="profile_form">
+		<label>
+			<p class="field-desc">
+				Display Name
+			</p>
+			<input
+				class="input-style"
+				name="disp-name"
+				type="text"
+				placeholder="John Doe"
+				value={displayName}
+			>
+		</label>
 
-	<label>
-		<p class="field_desc">
-			Bio
-		</p>
-		<textarea
-			class="input-style"
-			name="bio"
-			placeholder="Little bit about yourself"
-			rows="3"
-			value={bio}
-		></textarea>
-	</label>
+		<label>
+			<p class="field-desc">
+				Bio
+			</p>
+			<textarea
+				class="input-style"
+				name="bio"
+				placeholder="Little bit about yourself"
+				rows="3"
+				value={bio}
+			></textarea>
+		</label>
 
-	<button style="margin: 1rem 0">Save</button>
-</form>
+		<button style="margin: 1rem 0">Save</button>
+	</form>
+{:else}
+	<!-- canvases list render -->
+	List of canvases
+	{#each canvases as canvas}
+		{canvas}
+	{/each}
+{/if}
 
 <style lang="scss">
 	#intro {
@@ -66,7 +93,7 @@
 	  margin: 2rem 0;
 	}
 
-	#profile {
+	#profile_form {
 	  display: flex;
 	  flex-direction: column;
 	  gap: 1rem;
@@ -77,7 +104,7 @@
 	  flex-direction: column;
 	}
 
-	.field_desc {
+	.field-desc {
 	  padding: 0.3rem 0.1rem;
 	  opacity: 0.9;
 	}
