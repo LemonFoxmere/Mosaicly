@@ -159,3 +159,38 @@ button {
 		}
 	}
 }
+
+input {
+	background-color: $background-primary;
+	border: 1.5px solid $text-primary;
+	border-bottom-width: 4px;
+	border-radius: 8px;
+
+	padding: 0px 20px;
+	height: 60px;
+
+	font-family: "Outfit", system-ui, Helvetica, sans-serif;
+	font-size: 16px;
+	line-height: 22px;
+	color: $text-secondary;
+	font-weight: 400;
+
+	-webkit-tap-highlight-color: transparent;
+	outline: none;
+
+	-webkit-user-drag: none;
+	-moz-user-select: none;
+	user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+
+	&::placeholder {
+		color: $text-tertiary;
+	}
+}
+
+textarea {
+	@extend input;
+	padding: 20px;
+	height: auto;
+}
