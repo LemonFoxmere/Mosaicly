@@ -1,16 +1,16 @@
 {
 	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
-		"baseUrl": ".",
+		// "baseUrl": ".",
 		"paths": {
-			"$static": ["static"],
-			"$static/*": ["static/*"],
-			"$comp": ["$lib/comp"],
-			"$comp/*": ["$lib/comp/*"],
-			"$route": ["src/routes"],
-			"$route/*": ["src/routes/*"],
-			"$lib": ["src/lib"],
-			"$lib/*": ["src/lib/*"]
+			"$static": ["./static"],
+			"$static/*": ["./static/*"],
+			"$comp": ["./$lib/comp"],
+			"$comp/*": ["./$lib/comp/*"],
+			"$route": ["./src/routes"],
+			"$route/*": ["./src/routes/*"],
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"]
 		},
 		
 		"allowJs": true,
