@@ -1,7 +1,6 @@
 <script lang="ts">
-	import Logo from "$lib/comp/ui/icons/Logo.svelte";
-
-	let { children } = $props();
+	import Logo from '$lib/comp/ui/icons/Logo.svelte'
+	let { children } = $props()
 </script>
 
 <main>
@@ -19,39 +18,39 @@
 	@use "$static/stylesheets/guideline" as *;
 
 	main {
-		// border: 1px solid blue;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
+	  // border: 1px solid blue;
+	  width: 100%;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
 
-		nav {
-			display: flex;
-			flex-direction: row;
-			justify-content: center; // will change in the future when we have a login button
-			align-items: center;
-			padding: 10px 30px;
+	  nav {
+	    display: flex;
+	    flex-direction: row;
+	    justify-content: center; // will change in the future when we have a login button
+	    align-items: center;
+	    padding: 10px 30px;
 
-			width: 100%;
-			max-width: 700px;
+	    width: 100%;
+	    max-width: 700px;
 
-			#logo {
-				color: $text-primary;
-			}
-		}
+	    #logo {
+	      color: $text-primary;
+	    }
+	  }
 
-		#content {
-			display: flex;
-			justify-content: center;
-			align-items: center;
+	  #content {
+	    display: flex;
+	    justify-content: center;
+	    align-items: center;
 
-			width: 100%;
-			max-width: 700px;
-		}
+	    width: 100%;
+	    max-width: 700px;
+	  }
 
-		@media screen and (min-width: $mobile-width) {
-			min-height: 100vh;
-			justify-content: center;
-		}
+	  @media screen and (min-width: $mobile-width) {
+	    min-height: 100vh;
+	    justify-content: center;
+	  }
 	}
 </style>
