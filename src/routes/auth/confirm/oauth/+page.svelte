@@ -4,6 +4,12 @@
 
 <main>
 	<LoadingSpinner />
+	<h1> Login </h1>
+	<form class="socials" method="POST">
+		<button formaction="?/login&provider=github" class="oAuth">Github</button>
+		<button formaction="?/login&provider=discord" class="oAuth">Discord</button>
+		<button formaction="?/login&provider=google" class="oAuth">Google</button>
+	</form>
 </main>
 
 <style lang="scss">

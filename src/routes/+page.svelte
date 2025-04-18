@@ -23,6 +23,10 @@
 			<button class="outline">Outline Button</button>
 			<button class="outline-small">Outline Small</button>
 		</section>
+
+		<p>Click to go to login:
+			<a href="src/routes/auth/confirm/oauth/+page.svelte" target="_blank">Big Ol Login Button</a>
+		</p>
 	</section>
 </main>
 
