@@ -1,9 +1,12 @@
-import type { Actions } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 
-export async function load() {
+export const load: PageServerLoad = async ({ url, cookies, locals: { supabase } }) => {
+	void url;
+	void cookies;
+	void supabase;
 	// check for auth (handled via hooks)
 	// get user name, displayName, bio
-}
+};
 
 export const actions = {
 	// save profile on focus lost
