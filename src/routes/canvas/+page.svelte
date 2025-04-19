@@ -1,18 +1,20 @@
 <script lang="ts">
-    import Palette from "./palette.svelte";
     import Canvas from "./canvas.svelte";
+    import Palette from "./palette.svelte";
 
-    const colors = ["#fff", "#000", "#4fa9cc", "#3f8d27"];
+    const colors = ["#ffffff", "#000000", "#ff0000", "#ffaa00", "#ffff00",
+                    "#0fff00", "#00ffff", "#000fff", "#8000ff", "#f300ff"];
     let color = colors[0];
 </script>
 
 <main>
     <Canvas {color}></Canvas>
-    <Palette {colors}
-    on:color="{({ detail }) => {
-        color = detail.color
-        console.log(detail.color)
-    }}">
+    <Palette
+        {colors}
+        ChangeColor={(_color) => {
+            color = _color;
+        }}
+    >
     </Palette>
 </main>
 

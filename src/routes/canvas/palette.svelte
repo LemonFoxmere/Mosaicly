@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let colors = ["#fff", "#000", "#4fa9cc", "#3f8d27"];
+	let { colors = ["#fff", "#000"], ChangeColor } = $props();
 
 	function ShowSelectedColor(color: string) {
 		document.getElementById("SelectedColor")!.style.backgroundColor = color;
@@ -7,12 +7,18 @@
 </script>
 
 <section>
-    <!-- Creating color button -->
+    <!-- 
+        Creating color button
+        On click:
+            change the selected color to show the button's color
+            send event to canvas to change the selected color
+    -->
 	<div>
 		{#each colors as color}
 			<button
-				on:click={() => {
+				onclick={() => {
 					ShowSelectedColor(color);
+                    ChangeColor(color);
 				}}
 				style:background={color}
 			>

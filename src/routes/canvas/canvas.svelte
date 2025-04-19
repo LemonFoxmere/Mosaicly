@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-
+    
     const background = '#fff'
     
     export let color = "#000";
@@ -13,6 +13,10 @@
         context = canvas.getContext("2d");
         context.lineWidth = penSize;
     })
+
+    $: if(context) {
+		context.strokeStyle = color
+	}
     
 
     let startPos = {};
@@ -58,6 +62,7 @@
         on:mousedown={drawStart}
         on:mousemove={drawMove}
         on:mouseup={drawEnd}
+        on:mouseleave={drawEnd}
     > </canvas>
 </section>
 
