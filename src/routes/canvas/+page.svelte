@@ -8,6 +8,7 @@
 </script>
 
 <main>
+    <h1>Canvas</h1>
     <Canvas {color}></Canvas>
     <Palette
         {colors}
@@ -19,4 +20,5 @@
 </main>
 
 <style lang="scss">
+    
 </style>

@@ -7,18 +7,18 @@
 </script>
 
 <section>
-    <!-- 
+	<!-- 
         Creating color button
         On click:
             change the selected color to show the button's color
             send event to canvas to change the selected color
     -->
-	<div>
-		{#each colors as color}
+	{#each colors as color}
+		<div>
 			<button
 				onclick={() => {
 					ShowSelectedColor(color);
-                    ChangeColor(color);
+					ChangeColor(color);
 				}}
 				style:background={color}
 			>
@@ -26,8 +26,8 @@
 					color: {color}
 				</span>
 			</button>
-		{/each}
-	</div>
+		</div>
+	{/each}
 	<p id="SelectedColor" class="square"></p>
 </section>
 
@@ -48,15 +48,7 @@
 		white-space: nowrap;
 	}
 
-	section {
+	div {
 		display: inline-block;
-	}
-
-	section > div {
-		flex-grow: 1;
-	}
-
-	section > svg {
-		flex-shrink: 0;
 	}
 </style>
