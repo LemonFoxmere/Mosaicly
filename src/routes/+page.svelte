@@ -27,6 +27,10 @@
 		<p> Click to go to login:
 			<a href="/login">Big Ol Login Button</a>
 		</p>
+
+		<p> Click to go to canvas:
+			<a href="/canvas">Canvas AWAY!!</a>
+		</p>
 	</section>
 </main>
 
