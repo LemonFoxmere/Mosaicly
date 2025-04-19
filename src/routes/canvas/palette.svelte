@@ -1,8 +1,6 @@
 <script lang="ts">
 	export let colors = ["#fff", "#000", "#4fa9cc", "#3f8d27"];
 
-	let currentColor = colors[0];
-
 	function ShowSelectedColor(color: string) {
 		document.getElementById("SelectedColor")!.style.backgroundColor = color;
 	}
@@ -14,7 +12,6 @@
 		{#each colors as color}
 			<button
 				on:click={() => {
-					currentColor = color;
 					ShowSelectedColor(color);
 				}}
 				style:background={color}
