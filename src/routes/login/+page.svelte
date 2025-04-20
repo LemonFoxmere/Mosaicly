@@ -13,7 +13,7 @@
 	<section id="oauth-form">
 		<p>
 			Choose one of the platforms below to continue signing in. If you don't have an account
-			yet, done worry — one will be created for you.
+			yet, don't worry — one will be created for you.
 		</p>
 
 		<!-- oauth selector -->
@@ -50,6 +50,10 @@
 			display: flex;
 			flex-direction: column;
 			row-gap: 10px;
+
+			h1 {
+				font-size: 46px;
+			}
 		}
 
 		#oauth-form {

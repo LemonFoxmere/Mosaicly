@@ -48,7 +48,7 @@
 	main {
 		width: 100%;
 		height: fit-content;
-		padding: 10px 30px;
+		padding: 10px 30px 50px 30px;
 
 		display: flex;
 		flex-direction: column;
