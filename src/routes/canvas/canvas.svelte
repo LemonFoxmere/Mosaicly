@@ -68,5 +68,6 @@
 	canvas {
 		margin: 15px;
         align-items: center;
+		border: 5px solid black;
 	}
 </style>

@@ -1,6 +1,10 @@
 <script lang="ts">
 	let { colors = ["#fff", "#000"], ChangeColor } = $props();
 
+	function OnButtonPress(color: string) {
+		console.log(color);
+	}
+
 	function ShowSelectedColor(color: string) {
 		document.getElementById("SelectedColor")!.style.backgroundColor = color;
 	}
@@ -28,7 +32,10 @@
 			</button>
 		</div>
 	{/each}
-	<p id="SelectedColor" class="square"></p>
+	<div>
+		<p id="SelectedColor" class="square" style="margin-left: 20px;"></p>
+	</div>
+	
 </section>
 
 <style lang="scss">
@@ -36,6 +43,12 @@
 		width: 50px;
 		height: 50px;
 		background-color: white;
+	}
+
+	.color-button {
+		width: 40px;
+		height: 40px;
+		cursor: pointer;
 	}
 
 	.visually-hidden:not(:focus):not(:active) {

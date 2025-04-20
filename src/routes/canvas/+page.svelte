@@ -8,8 +8,8 @@
 </script>
 
 <main>
+    <a href="./"> <button>Back</button> </a>
     <h1>Canvas</h1>
-    <Canvas {color}></Canvas>
     <Palette
         {colors}
         ChangeColor={(_color) => {
@@ -17,6 +17,7 @@
         }}
     >
     </Palette>
+    <Canvas {color}></Canvas>
 </main>
 
 <style lang="scss">
