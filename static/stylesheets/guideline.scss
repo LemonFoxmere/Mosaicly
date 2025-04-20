@@ -141,20 +141,20 @@ button {
 			border-bottom-width: 1.5px;
 			transform: translateY(1.5px);
 		}
-	}
 
-	&.outline-small {
-		@extend .outline;
+		&.small {
+			@extend .outline;
 
-		$button-height: 42px;
-		padding: 11px 20px;
-		height: $button-height;
-		font-size: 14px;
+			$button-height: 42px;
+			padding: 11px 20px;
+			height: $button-height;
+			font-size: 14px;
 
-		&:active {
-			height: calc($button-height - 1.5px);
-			border-bottom-width: 1.5px;
-			transform: translateY(1.5px);
+			&:active {
+				height: calc($button-height - 1.5px);
+				border-bottom-width: 1.5px;
+				transform: translateY(1.5px);
+			}
 		}
 	}
 }

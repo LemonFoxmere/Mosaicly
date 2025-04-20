@@ -3,7 +3,7 @@
 </script>
 
 <pre>
-canvas id: {data.canvas_id}
+	canvas id: {data.canvas_id}
 
-for db querying
+	for db querying
 </pre>
