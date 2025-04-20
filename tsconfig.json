@@ -12,7 +12,11 @@
 			"$lib": ["./src/lib"],
 			"$lib/*": ["./src/lib/*"]
 		},
-		
+		"plugins": [
+			{
+				"name": "typescript-svelte-plugin"
+			}
+		],
 		"allowJs": true,
 		"checkJs": true,
 		"esModuleInterop": true,
