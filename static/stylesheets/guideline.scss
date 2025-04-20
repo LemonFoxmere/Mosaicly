@@ -34,7 +34,6 @@ $out-generic-expo: cubic-bezier(0.3, 1, 0.22, 1);
 
 // SIZING
 $urlbar-height: 160px;
-$mobile-navbar-height: 70px;
 $navbar-height: 60px;
 
 $mobile-width: 621px;
@@ -117,7 +116,7 @@ button {
 		background: $text-primary;
 	}
 
-	&.solid-small {
+	&.small {
 		padding: 11px 20px;
 		height: 42px;
 		font-size: 14px;
@@ -193,4 +192,11 @@ textarea {
 	@extend input;
 	padding: 20px;
 	height: auto;
+}
+
+a {
+	&.wrapper {
+		// no underline
+		text-decoration: none;
+	}
 }

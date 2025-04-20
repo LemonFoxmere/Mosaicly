@@ -39,4 +39,6 @@ export const load: PageServerLoad = async ({ url, cookies, locals: { supabase } 
 		console.error("Error exchanging code for session:", error);
 		throw redirect(303, "/auth/auth-code-error");
 	}
+
+	throw redirect(200, "/");
 };

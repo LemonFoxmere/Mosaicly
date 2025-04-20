@@ -25,15 +25,21 @@ const config = {
 		}
 	},
 
-	vitePlugin: {
-		onwarn: (warning, handler) => {
-			// Suppress unused CSS selector warnings and accessibility warnings
-			if (warning.code === "css-unused-selector" || warning.code.startsWith("a11y-")) {
-				return;
-			}
-			handler(warning);
+	compilerOptions: {
+		warningFilter: (warning) => {
+			return warning.code === "css-unused-selector" || warning.code.startsWith("a11y-");
 		}
 	}
+
+	// vitePlugin: {
+	// 	onwarn: (warning, handler) => {
+	// 		// Suppress unused CSS selector warnings and accessibility warnings
+	// 		if (warning.code === "css-unused-selector" || warning.code.startsWith("a11y-")) {
+	// 			return;
+	// 		}
+	// 		handler(warning);
+	// 	}
+	// }
 };
 
 export default config;
