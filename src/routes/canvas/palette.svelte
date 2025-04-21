@@ -1,9 +1,11 @@
-<script lang="ts">
-	let { colors = ["#fff", "#000"], ChangeColor } = $props();
+<!--
+	Palette
+	Gives user color selection
+	Shows current color selection using a square div
+-->
 
-	function OnButtonPress(color: string) {
-		console.log(color);
-	}
+<script lang="ts">
+	let { colors = ["#ffffff", "#000000"], ChangeColor } = $props(); // export stuff
 
 	function ShowSelectedColor(color: string) {
 		document.getElementById("SelectedColor")!.style.backgroundColor = color;
@@ -35,7 +37,6 @@
 	<div>
 		<p id="SelectedColor" class="square" style="margin-left: 20px;"></p>
 	</div>
-	
 </section>
 
 <style lang="scss">

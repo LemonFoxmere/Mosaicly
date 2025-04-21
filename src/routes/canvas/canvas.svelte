@@ -1,22 +1,30 @@
+<!--
+	Canvas element
+	Controls drawing using color from palette
+	Can exist without palette but would be drawing white pixels
+-->
+
 <script lang="ts">
 	import { onMount } from "svelte";
 
-	const background = "#fff";
+	let { color = "#000000", pixelAmount = $bindable(1) } = $props(); // export stuff
 
+	const background = "#ffffff";
+	/*
 	export let color = "#000";
-	export let penSize = 1;
-
+	export let pixelAmount = 10;
+	*/
 	let canvas;
 	let context;
 	onMount(() => {
 		canvas = document.getElementById("canvas");
 		context = canvas.getContext("2d");
-		context.lineWidth = penSize;
+		context.lineWidth = 1;
 	});
 
-	$: if (context) {
+	$effect(() => {
 		context.strokeStyle = color;
-	}
+	});
 
 	let startPos = {};
 	let isDrawing = false;
@@ -24,23 +32,29 @@
 		startPos = { x, y };
 		isDrawing = true;
 
-		context.beginPath();
-		context.moveTo(x, y);
-		context.lineTo(x - 1, y);
-		context.closePath();
-		context.stroke();
+		if (pixelAmount > 0) {
+			context.beginPath();
+			context.moveTo(x, y);
+			context.lineTo(x - 1, y);
+			context.closePath();
+			context.stroke();
+
+			pixelAmount--;
+		}
 	};
 
 	const drawMove = ({ offsetX: _x, offsetY: _y }) => {
 		if (!isDrawing) return;
-
 		const { x, y } = startPos;
-		context.beginPath();
-		context.moveTo(x, y);
-		context.lineTo(_x, _y);
-		context.closePath();
-		context.stroke();
+		if (pixelAmount > 0) {
+			context.beginPath();
+			context.moveTo(x, y);
+			context.lineTo(_x, _y);
+			context.closePath();
+			context.stroke();
 
+			pixelAmount--;
+		}
 		startPos = { x: _x, y: _y };
 	};
 
@@ -56,10 +70,10 @@
 		height="256px"
 		style:background
 		bind:this={canvas}
-		on:mousedown={drawStart}
-		on:mousemove={drawMove}
-		on:mouseup={drawEnd}
-		on:mouseleave={drawEnd}
+		onmousedown={drawStart}
+		onmousemove={drawMove}
+		onmouseup={drawEnd}
+		onmouseleave={drawEnd}
 	>
 	</canvas>
 </section>
@@ -67,7 +81,7 @@
 <style lang="scss">
 	canvas {
 		margin: 15px;
-        align-items: center;
+		align-items: center;
 		border: 5px solid black;
 	}
 </style>
