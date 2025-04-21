@@ -1,13 +1,23 @@
 <script lang="ts">
-	import Logo from "$lib/comp/ui/icons/Logo.svelte";
+	import Mosaicly from "$lib/comp/ui/logos/MosaiclyLogo.svelte";
 
-	let { children } = $props();
+	let { children, data } = $props();
+	let { showLogo, showCta } = $derived(data.apperance);
 </script>
 
 <main>
 	<nav>
-		<!-- <button class="solid-small">Log in</button> -->
-		<div id="logo"><Logo s={28} /></div>
+		<!-- <button class="small">Log in</button> -->
+		{#if showLogo}
+			<a class="wrapper" href="/">
+				<div id="logo"><Mosaicly s={28} /></div>
+			</a>
+		{/if}
+		{#if showCta}
+			<a class="wrapper" href="/login">
+				<button class="small">Log in</button>
+			</a>
+		{/if}
 	</nav>
 
 	<div id="content">
@@ -21,6 +31,7 @@
 	main {
 		// border: 1px solid blue;
 		width: 100%;
+		height: 100%;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -28,12 +39,19 @@
 		nav {
 			display: flex;
 			flex-direction: row;
-			justify-content: center; // will change in the future when we have a login button
+			justify-content: space-between;
 			align-items: center;
-			padding: 10px 30px;
+
+			padding: 0px 30px;
 
 			width: 100%;
 			max-width: 700px;
+			min-height: 60px;
+			height: 60px;
+
+			*:only-child {
+				margin: 0 auto;
+			}
 
 			#logo {
 				color: $text-primary;
@@ -42,15 +60,16 @@
 
 		#content {
 			display: flex;
-			justify-content: center;
+			flex-direction: column;
+			justify-content: flex-start;
 			align-items: center;
 
 			width: 100%;
+			height: 100%;
 			max-width: 700px;
 		}
 
 		@media screen and (min-width: $mobile-width) {
-			min-height: 100vh;
 			justify-content: center;
 		}
 	}

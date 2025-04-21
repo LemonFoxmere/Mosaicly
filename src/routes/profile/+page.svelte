@@ -1,16 +1,30 @@
 <script lang="ts">
+	import CanvasCard from "../../lib/comp/profile/CanvasCard.svelte";
+
 	let { data } = $props();
+
+	const dummyCanvas = [
+		{
+			id: "1",
+			name: "My Canvas",
+			loc: "Engineering 2",
+			createdOn: new Date()
+		},
+		{
+			id: "2",
+			name: "Frog",
+			loc: "Cowell",
+			createdOn: new Date()
+		}
+	];
 
 	// to be replaced with user data from db (will get from SSR)
 	let displayName = "John Dough";
-	let profile_canvas = $state(false);
 	let bio = $state("");
-	let canvases = $state([]); // obj type
+	let canvases = $state(dummyCanvas); // obj type
 
 	// toggle between Profile | Canvases tab
-	let isProfile = $state(true);
-
-	$inspect(profile_canvas);
+	let isProfile = $state(false);
 </script>
 
 <main>
@@ -22,16 +36,10 @@
 
 	<!-- toggle tabs -->
 	<section id="tabs-cta">
-		<button
-			class={`${!isProfile ? "outline" : "solid"}-small`}
-			onclick={() => (isProfile = !isProfile)}
-		>
+		<button class={!isProfile ? "outline" : ""} onclick={() => (isProfile = true)}>
 			Profile
 		</button>
-		<button
-			class={`${isProfile ? "outline" : "solid"}-small`}
-			onclick={() => (isProfile = !isProfile)}
-		>
+		<button class={isProfile ? "outline" : ""} onclick={() => (isProfile = false)}>
 			Canvases
 		</button>
 	</section>
@@ -64,16 +72,23 @@
 			</form>
 		{:else}
 			<!-- canvases list render -->
-			<p>List of canvases</p>
-			{#each canvases as canvas}
-				{canvas}
-			{/each}
+			<div class="canvas_list">
+				{#each canvases as canvas}
+					<CanvasCard {canvas} />
+				{/each}
+			</div>
 		{/if}
 	</section>
 </main>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
+
+	.canvas_list {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
 
 	main {
 		padding: 20px 30px;

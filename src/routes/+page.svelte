@@ -2,26 +2,19 @@
 </script>
 
 <main>
-	<section id="testing-box" class="item-frame">
-		<h1>This is a heading text.</h1>
-		<h2>This is a subheading</h2>
+	<section id="content">
+		<section id="titles">
+			<h1 id="main">Touching Grass</h1>
+			<h1 id="sub">At its finest.</h1>
+		</section>
 
-		<p>
-			Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem consectetur
-			error, maxime minima accusamus amet ex voluptas, similique reprehenderit architecto
-			neque. Voluptates expedita dolores quibusdam cupiditate dolore exercitationem totam
-			quam. Aliquid asperiores quod culpa qui, itaque sint mollitia amet perferendis eveniet
-			quis maxime nihil iste, omnis assumenda architecto consectetur ea, est facere odit! Qui
-			assumenda odio harum eum hic excepturi!
-		</p>
-
-		<p class="caption">This is a caption. It's quite small</p>
-
-		<section id="btn-cluster">
-			<button>Solid Button</button>
-			<button class="solid-small">Solid Small</button>
-			<button class="outline">Outline Button</button>
-			<button class="outline-small">Outline Small</button>
+		<section id="cta">
+			<a class="wrapper" href="/search">
+				<button id="search">Start touching grass</button>
+			</a>
+			<a class="wrapper" href="/about">
+				<button class="outline" id="about">What even is this</button>
+			</a>
 		</section>
 
 		<p> Click to go to login:
@@ -39,26 +32,39 @@
 
 	main {
 		width: 100%;
-		height: 100%;
-		padding: 30px;
+		height: calc(100% - $navbar-height);
+		padding: 0px 30px;
 		display: flex;
 		justify-content: center;
-		align-items: flex-start;
+		align-items: center;
 
-		#testing-box {
-			width: min(100%, 1000px);
-			padding: 40px;
+		// account for navbar to be truly centered
+		padding-bottom: $navbar-height;
 
+		#content {
+			width: 100%;
 			display: flex;
 			flex-direction: column;
-			row-gap: 20px;
+			row-gap: 30px;
 
-			#btn-cluster {
+			#titles {
+				#sub {
+					font-weight: 400;
+				}
+			}
+
+			#cta {
+				width: 100%;
 				display: flex;
-				justify-content: center;
-				align-items: center;
-				flex-wrap: wrap;
-				gap: 10px;
+				flex-direction: column;
+				row-gap: 10px;
+
+				a {
+					width: 100%;
+					button {
+						width: 100%;
+					}
+				}
 			}
 		}
 	}
