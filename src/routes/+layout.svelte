@@ -3,6 +3,7 @@
 
 	let { children, data } = $props();
 	let { showLogo, showCta } = $derived(data.apperance);
+	let session = $derived(data.session);
 </script>
 
 <main>
@@ -14,9 +15,16 @@
 			</a>
 		{/if}
 		{#if showCta}
-			<a class="wrapper" href="/login">
-				<button class="small">Log in</button>
-			</a>
+			{#if !session}
+				<a class="wrapper" href="/login">
+					<button class="small">Log in</button>
+				</a>
+			{:else}
+				<a class="wrapper" href="/profile">
+					<!-- TODO: replace with profile pic -->
+					<button class="small outline">Profile</button>
+				</a>
+			{/if}
 		{/if}
 	</nav>
 

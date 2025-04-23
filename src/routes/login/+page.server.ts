@@ -11,7 +11,7 @@ const SUPPORTED_PROVIDERS = ["google", "discord", "github"];
  */
 export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
 	const { session } = await safeGetSession();
-	if (session) redirect(303, "/"); // If the user is already signed in, redirect to the home page
+	if (session) redirect(303, "/profile"); // If the user is already signed in, redirect to profile
 };
 
 export const actions: Actions = {
