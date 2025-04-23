@@ -24,7 +24,7 @@
 			<button id="discord" formaction="?/signup&provider=discord">
 				<DiscordLogo s={24} />
 			</button>
-			<button id="twitter" formaction="?/signup&provider=twitter">
+			<button id="github" formaction="?/signup&provider=github">
 				<GithubLogo s={24} />
 			</button>
 		</form>

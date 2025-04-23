@@ -10,10 +10,7 @@
 	let { color = "#000000", pixelAmount = $bindable(1) } = $props(); // export stuff
 
 	const background = "#ffffff";
-	/*
-	export let color = "#000";
-	export let pixelAmount = 10;
-	*/
+
 	let canvas;
 	let context;
 	onMount(() => {
