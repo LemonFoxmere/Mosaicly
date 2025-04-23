@@ -24,8 +24,8 @@
 
 	main {
 		width: 100%;
-		height: calc(100% - $navbar-height);
-		padding: 0px 30px;
+		height: 100%;
+		padding: 30px;
 		display: flex;
 		justify-content: center;
 		align-items: center;

@@ -40,5 +40,5 @@ export const load: PageServerLoad = async ({ url, cookies, locals: { supabase } 
 		throw redirect(303, "/auth/auth-code-error");
 	}
 
-	throw redirect(200, "/");
+	throw redirect(303, "/"); // redirect to home page after successful sign-in
 };
