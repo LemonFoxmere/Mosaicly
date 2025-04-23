@@ -1,3 +1,4 @@
+import type { Session } from "@supabase/supabase-js";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({
@@ -6,10 +7,9 @@ export const load: LayoutServerLoad = async ({
 }) => {
 	void supabase;
 	void user;
-	void safeGetSession;
 
-	// let session: Session | null = null;
-	// ({ session } = await safeGetSession());
+	let session: Session | null = null;
+	({ session } = await safeGetSession());
 
 	// configure navbar appearance
 	const appearanceConfig = {
@@ -17,12 +17,13 @@ export const load: LayoutServerLoad = async ({
 		showCta: true
 	};
 
-	if (url.pathname === "/login") {
+	if (["/login", "/profile"].includes(url.pathname)) {
 		appearanceConfig.showCta = false;
 	}
 
 	return {
 		url: url.pathname,
-		apperance: appearanceConfig
+		apperance: appearanceConfig,
+		session: session
 	};
 };
