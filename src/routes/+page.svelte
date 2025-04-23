@@ -16,11 +16,6 @@
 				<button class="outline" id="about">What even is this</button>
 			</a>
 		</section>
-
-		<p>
-			Click to go to canvas:
-			<a href="/canvas">Canvas AWAY!!</a>
-		</p>
 	</section>
 </main>
 

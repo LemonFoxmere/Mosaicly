@@ -90,10 +90,11 @@
 
 	// initializes event listeners to track mouse movement
 	const initListeners = () => {
+		// TODO: add touch event
 		canvasContainer.addEventListener("mousemove", onMouseMove);
 		canvasContainer.addEventListener("mousedown", onMouseDown);
 		canvasContainer.addEventListener("mouseup", onMouseUp);
-		canvasContainer.addEventListener("resize", onWindowResize);
+		window.addEventListener("resize", onWindowResize);
 
 		// TODO: add later
 		// canvasContainer.addEventListener(
@@ -107,6 +108,8 @@
 	};
 
 	const onMouseDown = (e: MouseEvent) => {
+		e.preventDefault();
+
 		// update cursor position
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
 		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
@@ -135,6 +138,8 @@
 	};
 
 	const onMouseMove = (e: MouseEvent) => {
+		e.preventDefault();
+
 		// performance shit
 		sctx.cursor.lastPoll = performance.now();
 		// set previous cursor position
@@ -317,6 +322,10 @@
 		height: 500px;
 		position: relative;
 		border: 2px solid $text-primary;
+
+		#main-canvas {
+			touch-action: none;
+		}
 
 		#debug {
 			position: absolute;
