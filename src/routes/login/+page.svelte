@@ -17,14 +17,14 @@
 		</p>
 
 		<!-- oauth selector -->
-		<form id="logos" method="post">
-			<button id="google" formaction="?/signup&provider=google">
+		<form id="logos" method="POST">
+			<button id="google" formaction="?/login&provider=google">
 				<GoogleLogo s={22} />
 			</button>
-			<button id="discord" formaction="?/signup&provider=discord">
+			<button id="discord" formaction="?/login&provider=discord">
 				<DiscordLogo s={24} />
 			</button>
-			<button id="github" formaction="?/signup&provider=github">
+			<button id="twitter" formaction="?/login&provider=twitter">
 				<GithubLogo s={24} />
 			</button>
 		</form>

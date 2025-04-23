@@ -16,11 +16,6 @@
 				<button class="outline" id="about">What even is this</button>
 			</a>
 		</section>
-
-		<p>
-			Click to go to canvas:
-			<a href="/canvas">Canvas AWAY!!</a>
-		</p>
 	</section>
 </main>
 
@@ -29,8 +24,8 @@
 
 	main {
 		width: 100%;
-		height: calc(100% - $navbar-height);
-		padding: 0px 30px;
+		height: 100%;
+		padding: 30px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
