@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Canvas from "./canvas.svelte";
-	import Palette from "./palette.svelte";
+	import Palette from "../../lib/comp/canvas/Palette.svelte";
+	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 
 	const colors = [
 		"#ffffff",
@@ -16,7 +16,7 @@
 	];
 	let selectedColor = colors[0];
 
-	let _pixelAmount = 20;
+	let pixelAmount = 9999;
 </script>
 
 <main>
@@ -28,9 +28,13 @@
 			selectedColor = _color;
 		}}
 	></Palette>
-	<Canvas color={selectedColor} bind:pixelAmount={_pixelAmount}></Canvas>
-	<p>Pixels left: {_pixelAmount}</p>
+
+	<PixelCanvas color={selectedColor} bind:pixelAmount load={() => {}} />
+	<p>Pixels left: {pixelAmount}</p>
 </main>
 
 <style lang="scss">
+	main {
+		width: 100%;
+	}
 </style>
