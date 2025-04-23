@@ -53,7 +53,6 @@
 	let canvas: HTMLCanvasElement;
 	let rctx: CanvasRenderingContext2D | null; // rendering context
 	let sctx: SceneContext = $state(defaultSceneCtx); // scene context (for canvas nav)
-	const background: string = "#ffffff";
 
 	// initialization routine
 	const init = (): Error | null => {
@@ -106,10 +105,6 @@
 		// 	{ passive: false }
 		// );
 	};
-
-	// $effect(() => {
-	// 	rctx.strokeStyle = color;
-	// });
 
 	const onMouseDown = (e: MouseEvent) => {
 		// update cursor position
@@ -243,7 +238,9 @@
 		sctx.s = Math.round(sctx.s * 1000) / 1000;
 
 		// update objects or whatever here
-		// TODO
+		if (rctx) {
+			rctx.strokeStyle = color;
+		}
 
 		// recursively call the update function
 		requestAnimationFrame(() => update());
@@ -291,8 +288,8 @@
 	});
 </script>
 
-<section bind:this={canvasContainer} id="canvas-container">
-	<canvas bind:this={canvas} id="main-canvas" />
+<section bind:this={canvasContainer} id="canvas-container" class="no-drag">
+	<canvas bind:this={canvas} id="main-canvas" class="no-drag" />
 
 	<pre id="debug">{JSON.stringify(
 			sctx,
@@ -318,22 +315,21 @@
 	#canvas-container {
 		width: 100%;
 		height: 500px;
-
-		#main-canvas {
-			margin: 15px;
-			align-items: center;
-			border: 5px solid black;
-		}
+		position: relative;
+		border: 2px solid $text-primary;
 
 		#debug {
 			position: absolute;
-			top: 20px;
-			left: 20px;
+			top: 100%;
+			left: -2px;
 			z-index: 20;
+
+			padding: 20px;
 
 			font-family: monospace;
 			color: $background-accent;
-			font-size: 18px;
+			background-color: $text-primary;
+			font-size: 16px;
 			line-height: 100%;
 		}
 	}
