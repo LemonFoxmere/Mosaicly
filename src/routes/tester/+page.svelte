@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DivCanvas from "$lib/comp/canvas/DivCanvas.svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 
@@ -33,8 +34,7 @@
 				selectedColor = _color;
 			}}
 		></Palette>
-
-		<PixelCanvas color={selectedColor} bind:pixelAmount load={() => {}} />
+		<PixelCanvas color={selectedColor} --height="300" bind:pixelAmount load={() => {}} />
 	</section>
 </main>
 

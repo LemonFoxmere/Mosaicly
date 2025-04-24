@@ -44,6 +44,7 @@
 	// external bindings
 	let {
 		color = "#000000",
+		backgroundColor = "#ffffff",
 		pixelAmount = $bindable(1),
 		load // dispatcher
 	} = $props();
@@ -76,6 +77,8 @@
 		canvas.width = sctx.width = canvasContainer.getBoundingClientRect().width;
 		canvas.height = sctx.height = canvasContainer.getBoundingClientRect().height;
 
+		canvas.style.backgroundColor = backgroundColor;
+
 		// get rendering context
 		rctx = canvas.getContext("2d");
 		if (!rctx) return new Error("Cannot initialize canvas context"); // error
@@ -94,6 +97,7 @@
 		canvasContainer.addEventListener("mousemove", onMouseMove);
 		canvasContainer.addEventListener("mousedown", onMouseDown);
 		canvasContainer.addEventListener("mouseup", onMouseUp);
+		canvasContainer.addEventListener("mouseleave", onMouseLeave);
 		window.addEventListener("resize", onWindowResize);
 
 		// TODO: add later
@@ -183,6 +187,10 @@
 		sctx.iy = 0;
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
+		sctx.cursor.active = false;
+	};
+
+	const onMouseLeave = (e: MouseEvent) => {
 		sctx.cursor.active = false;
 	};
 
@@ -322,6 +330,7 @@
 		height: 500px;
 		position: relative;
 		border: 2px solid $text-primary;
+		overflow: hidden;
 
 		#main-canvas {
 			touch-action: none;
