@@ -4,25 +4,36 @@
 	let { children, data } = $props();
 	let { showLogo, showCta } = $derived(data.apperance);
 	let session = $derived(data.session);
+	let user = $derived(data.user);
+
+	$effect(() => {
+		if (user) {
+			console.log(user);
+		}
+	});
 </script>
 
 <main>
 	<nav>
 		<!-- <button class="small">Log in</button> -->
 		{#if showLogo}
-			<a class="wrapper" href="/">
+			<a class="wrapper item" href="/">
 				<div id="logo"><Mosaicly s={28} /></div>
 			</a>
 		{/if}
 		{#if showCta}
 			{#if !session}
-				<a class="wrapper" href="/login">
+				<a class="wrapper item" href="/login">
 					<button class="small">Log in</button>
 				</a>
 			{:else}
-				<a class="wrapper" href="/profile">
+				<a class="wrapper item large" href="/profile">
 					<!-- TODO: replace with profile pic -->
-					<button class="small outline">Profile</button>
+					{#if user?.profile?.avatarUrl}
+						<img src={user.profile.avatarUrl} alt="Profile Picture" id="pfp" />
+					{:else}
+						<button class="small outline">Profile</button>
+					{/if}
 				</a>
 			{/if}
 		{/if}
@@ -59,6 +70,27 @@
 
 			*:only-child {
 				margin: 0 auto;
+			}
+
+			.item {
+				width: 28px;
+				height: 28px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				&.large {
+					width: 42px;
+					height: 42px;
+				}
+			}
+
+			#pfp {
+				width: 100%;
+				height: 100%;
+				border-radius: 100px;
+				object-fit: cover;
 			}
 
 			#logo {

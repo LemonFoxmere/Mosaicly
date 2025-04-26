@@ -1,7 +1,16 @@
 <script lang="ts">
 	import CanvasCard from "../../lib/comp/profile/CanvasCard.svelte";
+	import type { PageProps } from "./$types";
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
+
+	// get session and user from the page data
+	let session = $derived(data.session);
+	let user = $derived(data.user);
+
+	let localUser = user;
+	let localDisplayName = $derived(localUser?.profile?.displayName ?? "");
+	let localBio = $derived(localUser?.profile?.bio ?? "");
 
 	const dummyCanvas = [
 		{
@@ -19,18 +28,16 @@
 	];
 
 	// to be replaced with user data from db (will get from SSR)
-	let displayName = "John Dough";
-	let bio = $state("");
 	let canvases = $state(dummyCanvas); // obj type
 
 	// toggle between Profile | Canvases tab
-	let isProfile = $state(false);
+	let isProfile = $state(true);
 </script>
 
 <main>
 	<!-- greet user -->
 	<section id="intro">
-		<h2>Hello, {displayName}</h2>
+		<h2>Hello, {localDisplayName}.</h2>
 		<p>You can edit your profile or manage your canvases here.</p>
 	</section>
 
@@ -53,8 +60,8 @@
 					<input
 						name="disp-name"
 						type="text"
-						placeholder="John Doe"
-						value={displayName}
+						placeholder="Guy"
+						bind:value={localDisplayName}
 					/>
 				</label>
 
@@ -62,9 +69,9 @@
 					<p class="caption">Bio</p>
 					<textarea
 						name="bio"
-						placeholder="Little bit about yourself"
+						placeholder="I'm just a chill guy."
 						rows="3"
-						value={bio}
+						value={localBio}
 					></textarea>
 				</label>
 
@@ -91,7 +98,7 @@
 	}
 
 	main {
-		padding: 20px 30px;
+		padding: 5px 30px;
 		width: 100%;
 		height: 100%;
 

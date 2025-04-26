@@ -1,18 +1,21 @@
 declare global {
 	interface UserAccount {
 		// EXAMPLE. CHANGE LATER
-		uid: string;
-		email: string;
-		name: string;
-		provider: string | null;
-		handle?: string | null;
+		id?: string;
+		username?: string;
+		provider?: string | null;
+		createdAt?: Date;
+		lastLogin?: Date;
+		isDeactivated?: boolean;
+		isDeleted?: boolean;
 	}
 	interface UserProfile {
-		avatar?: string | null;
-		banner?: string | null;
+		displayName?: string | null;
+		avatarUrl?: string | null;
 		bio?: string | null;
+		githubHandle?: string | null;
+		discordHandle?: string | null;
 	}
-
 	interface AppUser {
 		account: UserAccount;
 		profile: UserProfile;
