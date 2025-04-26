@@ -1,8 +1,9 @@
 <script lang="ts">
 	import Mosaicly from "$lib/comp/ui/logos/MosaiclyLogo.svelte";
+	import type { PageData, Snippet } from "./$types";
 
-	let { children, data } = $props();
-	let { showLogo, showCta } = $derived(data.apperance);
+	let { children, data }: { children: Snippet; data: PageData } = $props();
+	let { showLogo, showCta } = $derived(data.appearance);
 	let session = $derived(data.session);
 	let user = $derived(data.user);
 
