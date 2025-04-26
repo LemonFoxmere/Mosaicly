@@ -188,6 +188,8 @@
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = false;
+
+		saveCanvas();
 	};
 
 	const onMouseLeave = (e: MouseEvent) => {
@@ -286,6 +288,29 @@
 		requestAnimationFrame(() => render(rctx, sctx));
 	};
 
+	// save canvas data to bring up later
+	const saveCanvas = () => {
+		// take the canvas and save to local storage
+		localStorage.setItem("Canvas", canvas.toDataURL());
+		console.log("SAVE");
+	};
+
+	const loadCanvas = () => {
+		// take canvas from local storage
+		// set canvas to that loaded canvas
+		let dataURL = localStorage.getItem("Canvas")!;
+		if (dataURL) {
+			var img = new Image();
+			img.src = dataURL;
+			img.onload = function () {
+				rctx!.drawImage(img, 0, 0);
+			};
+			console.log("LOAD success");
+		} else {
+			console.log("nothing to load");
+		}
+	};
+
 	// start routine to calculate fps
 	setInterval(() => {
 		sctx.fps = sctx.frameBuf / (sctx.fpsPollRate / 1000);
@@ -298,12 +323,13 @@
 		if (!err) {
 			loadErr = err;
 		}
+
+		loadCanvas();
 	});
 </script>
 
 <section bind:this={canvasContainer} id="canvas-container" class="no-drag">
 	<canvas bind:this={canvas} id="main-canvas" class="no-drag" />
-
 	<pre id="debug">{JSON.stringify(
 			sctx,
 			(k, v) => {

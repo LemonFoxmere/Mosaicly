@@ -1,5 +1,4 @@
 <script lang="ts">
-	import DivCanvas from "$lib/comp/canvas/DivCanvas.svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 
@@ -17,7 +16,7 @@
 	];
 	let selectedColor = colors[0];
 
-	let pixelAmount = 9999;
+	let pixelAmount = 100;
 </script>
 
 <main>
@@ -35,6 +34,13 @@
 			}}
 		></Palette>
 		<PixelCanvas color={selectedColor} --height="300" bind:pixelAmount load={() => {}} />
+		<button
+			onclick={() => {
+				localStorage.clear();
+			}}
+		>
+			Clear LocalStorage
+		</button>
 	</section>
 </main>
 
