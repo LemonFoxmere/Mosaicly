@@ -307,7 +307,7 @@
 			};
 			console.log("LOAD success");
 		} else {
-			console.log("nothing to load");
+			console.log("No canvas to load");
 		}
 	};
 
