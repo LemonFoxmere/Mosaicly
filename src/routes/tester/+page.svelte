@@ -2,45 +2,59 @@
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 
-	const colors = [
-		"#ffffff",
-		"#000000",
-		"#ff0000",
-		"#ffaa00",
-		"#ffff00",
-		"#0fff00",
-		"#00ffff",
-		"#000fff",
-		"#8000ff",
-		"#f300ff"
-	];
-	let selectedColor = colors[0];
+	let selectedColor = $state("#000000");
+	let editState: "view" | "edit" | "inspect" = $state("view");
 
-	let pixelAmount = 9999;
+	const updateState = (newState: "view" | "edit" | "inspect") => {
+		editState = newState;
+		// TODO: do checking here
+	};
 </script>
 
 <main>
 	<section id="title-container">
-		<a href="./"> <button>Back</button> </a>
-		<h1>Canvas</h1>
+		<h2>Frog</h2>
+		<p>On the pole near the entrance of the Cowell dining hall.</p>
 	</section>
 
-	<section>
-		<p>Pixels left: {pixelAmount}</p>
+	<section id="action-container">
+		<button
+			class={`${editState === "view" ? "solid" : "outline"}`}
+			on:click={() => updateState("view")}
+		>
+			View
+		</button>
+		<button
+			class={`${editState === "edit" ? "solid" : "outline"}`}
+			on:click={() => updateState("edit")}
+		>
+			Edit
+		</button>
+		<button
+			class={`${editState === "inspect" ? "solid" : "outline"}`}
+			on:click={() => updateState("inspect")}
+		>
+			Inspect</button
+		>
+	</section>
+
+	<section id="canvas-container">
 		<Palette
-			{colors}
-			ChangeColor={(_color: string) => {
+			changeColor={(_color: string) => {
 				selectedColor = _color;
 			}}
 		></Palette>
 
-		<PixelCanvas color={selectedColor} bind:pixelAmount load={() => {}} />
+		<PixelCanvas color={selectedColor} load={() => {}} />
 	</section>
 </main>
 
 <style lang="scss">
+	@use "$static/stylesheets/guideline" as *;
+
 	main {
 		width: 100%;
+		height: calc(100% - 10px);
 		padding: 10px 30px;
 
 		display: flex;
@@ -52,6 +66,23 @@
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
+		}
+
+		#action-container {
+			display: flex;
+			column-gap: 10px;
+			width: 100%;
+
+			button {
+				width: 100%;
+			}
+		}
+
+		#canvas-container {
+			display: flex;
+			flex-direction: column;
+			row-gap: 10px;
+			flex-grow: 1;
 		}
 	}
 </style>

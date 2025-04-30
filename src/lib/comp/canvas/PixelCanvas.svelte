@@ -2,7 +2,7 @@
 	let defaultSceneCtx = {
 		x: 0, // canvas x
 		y: 0, // canvas y
-		s: 1, // scale
+		s: 2, // scale
 		ix: 0, // inertia X
 		iy: 0, // inertia Y
 
@@ -15,6 +15,7 @@
 		frameBuf: 0,
 		fpsPollRate: 500, // ms
 		fps: 0,
+
 		cursor: {
 			x: 0, // real x
 			y: 0, // real y
@@ -30,6 +31,16 @@
 			active: false,
 			scrolling: false,
 			lastPoll: 0 // last poll time
+		},
+
+		pixelGrid: {
+			gridSize: 256, // size of the grid
+			pixelWorldSize: 1, // how big a virtual pixel should be in real pixel-space units at zoom = 1
+			brush: {
+				size: 1, // size of the brush in pixels (const for now)
+				color: "#000000", // color of the brush
+				active: false // are we drawing?
+			}
 		}
 	};
 	type SceneContext = typeof defaultSceneCtx;
@@ -40,19 +51,31 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { get } from "svelte/store";
+	import { CanvasObject } from "./objects/CanvasObject";
+	import { PixelGrid } from "./objects/PixelGrid";
 
 	// external bindings
 	let {
 		color = "#000000",
-		pixelAmount = $bindable(1),
 		load // dispatcher
 	} = $props();
 
 	let loadErr: string | null = null;
 	let canvasContainer: HTMLElement;
+
 	let canvas: HTMLCanvasElement;
+
 	let rctx: CanvasRenderingContext2D | null; // rendering context
 	let sctx: SceneContext = $state(defaultSceneCtx); // scene context (for canvas nav)
+
+	// dynamically match canvas data from element props
+	$effect(() => {
+		if (sctx) {
+			sctx.pixelGrid.brush.color = color; // set the brush color
+		}
+	});
+
+	let objects: Record<string, CanvasObject> = $state({});
 
 	// initialization routine
 	const init = (): Error | null => {
@@ -60,7 +83,7 @@
 
 		err = initCanvas(); // initialize canvas
 		if (err !== null) return err;
-		// err = initObjects(); // initialize objects
+		err = initObjects(); // initialize objects
 		// if (err !== null) return err;
 		initListeners(); // start listeners
 		startRoutines(); // start the game loop
@@ -80,9 +103,21 @@
 		rctx = canvas.getContext("2d");
 		if (!rctx) return new Error("Cannot initialize canvas context"); // error
 
-		// temp: set the brush size to 1px
-		rctx.lineWidth = 1;
+		rctx.imageSmoothingEnabled = false; // disable image smoothing
 
+		return null;
+	};
+
+	const initObjects = (): Error | null => {
+		const pixelGrid = new PixelGrid(
+			0,
+			0,
+			sctx.pixelGrid.gridSize,
+			sctx.pixelGrid.pixelWorldSize,
+			sctx.s,
+			"pixelGrid"
+		);
+		objects["pixelGrid"] = pixelGrid;
 		return null;
 	};
 
@@ -91,9 +126,9 @@
 	// initializes event listeners to track mouse movement
 	const initListeners = () => {
 		// TODO: add touch event
-		canvasContainer.addEventListener("mousemove", onMouseMove);
-		canvasContainer.addEventListener("mousedown", onMouseDown);
-		canvasContainer.addEventListener("mouseup", onMouseUp);
+		window.addEventListener("mousemove", onMouseMove);
+		window.addEventListener("mousedown", onMouseDown);
+		window.addEventListener("mouseup", onMouseUp);
 		window.addEventListener("resize", onWindowResize);
 
 		// TODO: add later
@@ -110,11 +145,13 @@
 	const onMouseDown = (e: MouseEvent) => {
 		e.preventDefault();
 
+		let canvasBCR = canvasContainer.getBoundingClientRect();
+
 		// update cursor position
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
 		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
-		sctx.cursor.relx = e.offsetX;
-		sctx.cursor.rely = e.offsetY;
+		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
+		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
 		// reset velocity
 		sctx.cursor.vx = 0;
 		sctx.cursor.vy = 0;
@@ -125,20 +162,16 @@
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = true;
 
-		// start drawing
-		if (pixelAmount > 0 && rctx) {
-			rctx.beginPath();
-			rctx.moveTo(sctx.cursor.relx, sctx.cursor.rely);
-			rctx.lineTo(sctx.cursor.relx - 1, sctx.cursor.rely);
-			rctx.closePath();
-			rctx.stroke();
-
-			pixelAmount--;
+		// loop over all objects and call the onMouseDown function
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onMouseDown(sctx, e);
 		}
 	};
 
 	const onMouseMove = (e: MouseEvent) => {
 		e.preventDefault();
+
+		let canvasBCR = canvasContainer.getBoundingClientRect();
 
 		// performance shit
 		sctx.cursor.lastPoll = performance.now();
@@ -148,34 +181,23 @@
 		// upate current cursor position
 		sctx.cursor.x = e.clientX;
 		sctx.cursor.y = e.clientY;
-		sctx.cursor.relx = e.offsetX;
-		sctx.cursor.rely = e.offsetY;
+		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
+		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
 
-		// draw
-		if (pixelAmount > 0 && rctx && sctx.cursor.active) {
-			let offsetX = sctx.cursor.x - sctx.cursor.activeX;
-			let offsetY = sctx.cursor.y - sctx.cursor.activeY;
-
-			rctx.beginPath();
-			rctx.moveTo(sctx.cursor.relx + offsetX, sctx.cursor.rely + offsetY);
-			rctx.lineTo(sctx.cursor.relx, sctx.cursor.rely);
-			rctx.closePath();
-			rctx.stroke();
-
-			// update the last position
-			sctx.cursor.activeX = sctx.cursor.x;
-			sctx.cursor.activeY = sctx.cursor.y;
-
-			pixelAmount--;
+		// trigger all objects onMouseMove
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onMouseMove(sctx, e);
 		}
 	};
 
 	const onMouseUp = (e: MouseEvent) => {
+		let canvasBCR = canvasContainer.getBoundingClientRect();
+
 		// stop drawing and set active to false
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
 		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
-		sctx.cursor.relx = e.offsetX;
-		sctx.cursor.rely = e.offsetY;
+		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
+		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
 		// reset velocity (keep inertia for physics to do its work)
 		sctx.cursor.vx = 0;
 		sctx.cursor.vy = 0;
@@ -184,6 +206,11 @@
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = false;
+
+		// loop over all objects and call the onMouseUp function
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onMouseUp(sctx, e);
+		}
 	};
 
 	const onWindowResize = () => {
@@ -242,9 +269,9 @@
 		sctx.iy = Math.round(sctx.iy * 1000) / 1000;
 		sctx.s = Math.round(sctx.s * 1000) / 1000;
 
-		// update objects or whatever here
-		if (rctx) {
-			rctx.strokeStyle = color;
+		// update all object logic
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].update(sctx);
 		}
 
 		// recursively call the update function
@@ -256,24 +283,12 @@
 		sctx.frameBuf++;
 
 		// clear screen
-		// rctx.clearRect(0, 0, sctx.width, sctx.height);
+		rctx.clearRect(0, 0, sctx.width, sctx.height);
 
 		// draw all objects
-		// for (let i = 0; i < Object.keys(objects).length; i++) {
-		// 	objects[Object.keys(objects)[i]].draw(rctx, sctx);
-		// }
-
-		// draw a dummy cursor
-		// rctx.fillStyle = "red";
-		// rctx.beginPath();
-		// rctx.arc(
-		// 	sctx.cursor.wx + sctx.canvasWidth / 2,
-		// 	sctx.cursor.wy + sctx.canvasHeight / 2,
-		// 	5,
-		// 	0,
-		// 	2 * Math.PI
-		// );
-		// rctx.fill();
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].render(rctx, sctx);
+		}
 
 		requestAnimationFrame(() => render(rctx, sctx));
 	};
@@ -319,18 +334,22 @@
 
 	#canvas-container {
 		width: 100%;
-		height: 500px;
+		height: calc(100% - 100px);
 		position: relative;
-		border: 2px solid $text-primary;
 
 		#main-canvas {
 			touch-action: none;
+			image-rendering: crisp-edges; // turn off aliasing
+			border-radius: 8px;
+			overflow: hidden;
+
+			background: $text-primary; // constant bgc
 		}
 
 		#debug {
 			position: absolute;
-			top: 100%;
-			left: -2px;
+			top: -2px;
+			left: calc(100% + 20px);
 			z-index: 20;
 
 			padding: 20px;
