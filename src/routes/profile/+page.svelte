@@ -76,6 +76,7 @@
 				</label>
 
 				<button style="margin: 1rem 0">Save</button>
+				<a href="./"><button style="margin: 1rem 0">Back</button></a>
 			</form>
 		{:else}
 			<!-- canvases list render -->
