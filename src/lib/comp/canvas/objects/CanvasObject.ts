@@ -13,10 +13,10 @@ export abstract class CanvasObject {
 		this.scale = scale;
 	}
 
-	abstract draw(rctx: CanvasRenderingContext2D, sctx: SceneContext): void;
+	abstract render(rctx: CanvasRenderingContext2D, sctx: SceneContext): void;
 
 	abstract update(sctx: SceneContext): void;
-	abstract onMouseMove(e: MouseEvent): void;
-	abstract onMouseDown(e: MouseEvent): void;
-	abstract onMouseUp(e: MouseEvent): void;
+	abstract onMouseMove(sctx: SceneContext, e: MouseEvent): void;
+	abstract onMouseDown(sctx: SceneContext, e: MouseEvent): void;
+	abstract onMouseUp(sctx: SceneContext, e: MouseEvent): void;
 }

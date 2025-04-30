@@ -1,97 +1,183 @@
 import type { SceneContext } from "../PixelCanvas.svelte";
 import { CanvasObject } from "./CanvasObject";
-//added heavy documentation bcz i figure this is important
 
-// Define the structure for pixel data
+// Structure for storing pixel information
 export type PixelData = {
 	color: string;
-	lastedEditedUserID: string | null; // Placeholder type
-	lastedEditedName: string | null; // Placeholder type
-	lastedEditedTime: Date | null; // Placeholder type
+	lastedEditedUserID: string | null;
+	lastedEditedName: string | null;
+	lastedEditedTime: Date | null;
 };
 
+/**
+ * PixelGrid: manages a grid of pixels in a virtual world.
+ * pixelWorldSize: size of one cell in real pixel-space units.
+ * World coordinates: origin at center of grid.
+ * Cells: discrete grid cells addressed by (cellX, cellY).
+ */
 export class PixelGrid extends CanvasObject {
-	// Using a Record (hashmap) to store pixel data: key="x,y", value=PixelData
+	// key = "cellX,cellY", value = PixelData
 	pixels: Record<string, PixelData> = {};
+	gridSize = 256; // number of cells in one dimension
+	pixelWorldSize = 1; // how big a virtual pixel should be in real pixel-space units at zoom = 1
 
-	gridSize = 256; // Total size (e.g., -128 to 127)
-	pixelWorldSize = 1; // Set to 1 so grid units match world units
-
-	constructor(x: number, y: number, scale: number, id: string | null = null) {
+	constructor(
+		x: number,
+		y: number,
+		gridSize: number,
+		pixelWorldSize: number,
+		scale: number,
+		id: string | null = null
+	) {
 		super(x, y, scale, id);
+		this.gridSize = gridSize;
+		this.pixelWorldSize = pixelWorldSize;
+		this.pixels = {};
 	}
 
-	// Method to add or update a pixel in the grid data
-	addOrUpdatePixel(gridX: number, gridY: number, data: Partial<PixelData>) {
-		const key = `${gridX},${gridY}`;
+	// Merge or create pixel at given cell coordinates
+	addOrUpdatePixel(cellX: number, cellY: number, data: Partial<PixelData>) {
+		const cellKey = `${cellX},${cellY}`;
 		const now = new Date();
-		// merging existing data with new data, always updating time
-		this.pixels[key] = {
-			...this.pixels[key], // Keep existing data if any
-			...data, // Apply new data (e.g., color)
-			lastedEditedTime: now, // Always update time
-			// Default placeholders if not provided
-			lastedEditedUserID:
-				data.lastedEditedUserID ?? (this.pixels[key]?.lastedEditedUserID || null),
-			lastedEditedName: data.lastedEditedName ?? (this.pixels[key]?.lastedEditedName || null)
+		const existing = this.pixels[cellKey] || {};
+		this.pixels[cellKey] = {
+			...existing,
+			...data,
+			lastedEditedTime: now,
+			lastedEditedUserID: data.lastedEditedUserID ?? existing.lastedEditedUserID ?? null,
+			lastedEditedName: data.lastedEditedName ?? existing.lastedEditedName ?? null
 		};
 	}
 
-	draw(rctx: CanvasRenderingContext2D, sctx: SceneContext): void {
-		// Calculate the size pixels should be drawn based on world size and current scene scale
+	placePixel(targetX: number, targetY: number, color: string, sctx: SceneContext): void {
+		if (!this.pixels) return;
+
+		const fullGridPixelSize = this.gridSize * this.pixelWorldSize;
+		const halfGridPixelSize = fullGridPixelSize / 2;
+		const halfGridCellCount = this.gridSize / 2;
+
+		// Convert screen coordinates to centered world coordinates
+		const worldCoordX = targetX / sctx.s - halfGridPixelSize;
+		const worldCoordY = targetY / sctx.s - halfGridPixelSize;
+
+		// Determine which cell in the grid
+		const cellX = Math.floor(worldCoordX / this.pixelWorldSize);
+		const cellY = Math.floor(worldCoordY / this.pixelWorldSize);
+
+		const withinBounds =
+			cellX >= -halfGridCellCount &&
+			cellX < halfGridCellCount &&
+			cellY >= -halfGridCellCount &&
+			cellY < halfGridCellCount;
+
+		if (withinBounds) {
+			const cellKey = `${cellX},${cellY}`;
+			const existingPixel = this.pixels[cellKey];
+			const isNewPixel = !existingPixel;
+			const needsUpdate = isNewPixel || existingPixel.color !== color;
+
+			if (needsUpdate) {
+				this.addOrUpdatePixel(cellX, cellY, {
+					color,
+					lastedEditedUserID: null,
+					lastedEditedName: null
+				});
+			}
+		}
+	}
+
+	render(rctx: CanvasRenderingContext2D, sctx: SceneContext): void {
 		const pixelDrawSize = this.pixelWorldSize * sctx.s;
-		const halfGrid = this.gridSize / 2;
+		const halfGridCellCount = this.gridSize / 2;
 
-		// Iterate through the stored pixels and draw them relative to the canvas origin (0,0)
-		for (const key in this.pixels) {
-			const [gridX, gridY] = key.split(",").map(Number);
-			const pixelData = this.pixels[key];
+		this.drawBackground(rctx, pixelDrawSize); // render the white background first
 
-			// Map grid coordinate [-halfGrid, halfGrid) to canvas coordinate [0, canvasSize)
-			const canvasX = (gridX + halfGrid) * pixelDrawSize;
-			const canvasY = (gridY + halfGrid) * pixelDrawSize;
+		for (const cellKey in this.pixels) {
+			const [cellX, cellY] = cellKey.split(",").map(Number);
+			const pixelData = this.pixels[cellKey];
+
+			// Map cell coordinates to canvas coordinates
+			const canvasX = (cellX + halfGridCellCount) * pixelDrawSize;
+			const canvasY = (cellY + halfGridCellCount) * pixelDrawSize;
 
 			rctx.fillStyle = pixelData.color;
-			// Use Math.floor for potentially sharper rendering at integer scales
 			rctx.fillRect(Math.floor(canvasX), Math.floor(canvasY), pixelDrawSize, pixelDrawSize);
 		}
 
-		// Draw the grid boundary relative to the canvas origin (0,0)
-		this.drawBoundary(rctx, sctx, pixelDrawSize);
+		this.drawBrushPreview(rctx, sctx); // render the brush preview last
 	}
 
-	private drawBoundary(
-		rctx: CanvasRenderingContext2D,
-		sctx: SceneContext,
-		pixelDrawSize: number
-	): void {
-		// Boundary width in world pixels scaled to canvas pixels
-		const boundaryDrawWidth = this.gridSize * pixelDrawSize;
+	private drawBackground(rctx: CanvasRenderingContext2D, pixelDrawSize: number): void {
+		const fullGridDrawSize = this.gridSize * pixelDrawSize;
 
-		// calculating top-left corner relative to the canvas origin (0,0)
-		// should correspond to to the logical grid coordinate (-halfGrid, -halfGrid)
-		const boundaryX = 0; // (-halfGrid + halfGrid) * pixelDrawSize
-		const boundaryY = 0; // (-halfGrid + halfGrid) * pixelDrawSize
+		rctx.fillStyle = "white";
+		rctx.fillRect(0, 0, fullGridDrawSize, fullGridDrawSize);
+	}
 
-		rctx.strokeStyle = "rgba(150, 150, 150, 0.7)"; // A slightly visible grey
-		rctx.lineWidth = 1; // Keep it thin
-		// Use Math.floor for potentially sharper rendering
+	private drawBrushPreview(rctx: CanvasRenderingContext2D, sctx: SceneContext): void {
+		const pixelDrawSize = this.pixelWorldSize * sctx.s;
+
+		// calculate the matching cell coordinates
+		const cellX = Math.floor(sctx.cursor.relx / sctx.s / this.pixelWorldSize); // snap to grid
+		const cellY = Math.floor(sctx.cursor.rely / sctx.s / this.pixelWorldSize);
+
+		// check if the cell is within bounds
+		if (cellX < 0 || cellX >= this.gridSize || cellY < 0 || cellY >= this.gridSize) return;
+
+		// draw a black and white border around the brush
+		rctx.strokeStyle = "black";
+		rctx.lineWidth = 2; // prevents half-pixel rendering
 		rctx.strokeRect(
-			Math.floor(boundaryX),
-			Math.floor(boundaryY),
-			boundaryDrawWidth,
-			boundaryDrawWidth
+			cellX * pixelDrawSize + 1,
+			cellY * pixelDrawSize + 1,
+			pixelDrawSize - 2,
+			pixelDrawSize - 2
+		);
+		rctx.strokeStyle = "white";
+		rctx.lineWidth = 2;
+		rctx.strokeRect(
+			cellX * pixelDrawSize + 2,
+			cellY * pixelDrawSize + 2,
+			pixelDrawSize - 4,
+			pixelDrawSize - 4
+		);
+
+		// draw the brush color
+		rctx.fillStyle = sctx.pixelGrid.brush.color;
+		rctx.fillRect(
+			cellX * pixelDrawSize + 2,
+			cellY * pixelDrawSize + 2,
+			pixelDrawSize - 4,
+			pixelDrawSize - 4
 		);
 	}
 
 	update(sctx: SceneContext): void {
-		// Future updates related to scale or position could go here
-		// For now, scale is handled directly in draw based on sctx.s
+		void sctx;
 	}
 
-	// These methods are required by the abstract class but might not be needed
-	// if interaction is handled solely in PixelCanvas.svelte
-	onMouseMove(e: MouseEvent): void {}
-	onMouseDown(e: MouseEvent): void {}
-	onMouseUp(e: MouseEvent): void {}
+	onMouseDown(sctx: SceneContext, e: MouseEvent): void {
+		this.onMouseMove(sctx, e);
+	}
+	onMouseMove(sctx: SceneContext, e: MouseEvent): void {
+		void e;
+		if (
+			sctx.cursor.relx < 0 ||
+			sctx.cursor.relx > sctx.width ||
+			sctx.cursor.rely < 0 ||
+			sctx.cursor.rely > sctx.height
+		) {
+			sctx.pixelGrid.brush.active = false;
+			return;
+		}
+
+		sctx.pixelGrid.brush.active = sctx.cursor.active;
+		if (this.pixels && sctx.s > 0 && sctx.pixelGrid.brush.active) {
+			this.placePixel(sctx.cursor.relx, sctx.cursor.rely, sctx.pixelGrid.brush.color, sctx);
+		}
+	}
+	onMouseUp(sctx: SceneContext, e: MouseEvent): void {
+		void e;
+		sctx.pixelGrid.brush.active = false;
+	}
 }

@@ -1,387 +1,364 @@
 <script lang="ts" context="module">
 	let defaultSceneCtx = {
-		s: 1,
+		x: 0, // canvas x
+		y: 0, // canvas y
+		s: 2, // scale
+		ix: 0, // inertia X
+		iy: 0, // inertia Y
+
+		iE: 0.1, // inertia threshold (Episilon)
+		iMax: 100, // inertia max
+		zoomSensitivity: 0.0015,
+
 		width: 0,
 		height: 0,
+		frameBuf: 0,
+		fpsPollRate: 500, // ms
+		fps: 0,
+
 		cursor: {
-			x: 0,
-			y: 0,
-			gridX: 0,
-			gridY: 0,
-			prevGridX: 0,
-			prevGridY: 0,
-			px: 0,
-			py: 0,
-			activeX: 0,
-			activeY: 0,
+			x: 0, // real x
+			y: 0, // real y
+			relx: 0, // relative x (offset)
+			rely: 0, // relative y (offset)
+			px: 0, // previous x
+			py: 0, // previous y
+			vx: 0, // velocity x
+			vy: 0, // velocity y
+			ve: 0.1, // velocity threshold
+			activeX: 0, // x upon active (mousedown or last frame update). Used to calculate deltas
+			activeY: 0, // y upon active (mousedown or last frame update). Used to calculate deltas
 			active: false,
-			lastPoll: 0
+			scrolling: false,
+			lastPoll: 0 // last poll time
+		},
+
+		pixelGrid: {
+			gridSize: 256, // size of the grid
+			pixelWorldSize: 1, // how big a virtual pixel should be in real pixel-space units at zoom = 1
+			brush: {
+				size: 1, // size of the brush in pixels (const for now)
+				color: "#000000", // color of the brush
+				active: false // are we drawing?
+			}
 		}
 	};
 	type SceneContext = typeof defaultSceneCtx;
 
-	export type { SceneContext };
+	export type { SceneContext }; // type usage
 </script>
 
 <script lang="ts">
-	import { createEventDispatcher, onMount } from "svelte";
-	import type { CanvasObject } from "./objects/CanvasObject";
+	import { onMount } from "svelte";
+	import { get } from "svelte/store";
+	import { CanvasObject } from "./objects/CanvasObject";
 	import { PixelGrid } from "./objects/PixelGrid";
 
-	let { color = "#000000", pixelAmount = $bindable(1) } = $props();
+	// external bindings
+	let {
+		color = "#000000",
+		load // dispatcher
+	} = $props();
 
-	const disp = createEventDispatcher();
-
-	let loadErr: Error | null = null;
+	let loadErr: string | null = null;
 	let canvasContainer: HTMLElement;
-	let canvas: HTMLCanvasElement;
-	let rctx: CanvasRenderingContext2D | null;
-	let sctx: SceneContext = $state(defaultSceneCtx);
 
-	const GRID_SIZE = 256;
-	const PIXEL_WORLD_SIZE = 1;
-	const gridWorldSize = GRID_SIZE * PIXEL_WORLD_SIZE;
+	let canvas: HTMLCanvasElement;
+
+	let rctx: CanvasRenderingContext2D | null; // rendering context
+	let sctx: SceneContext = $state(defaultSceneCtx); // scene context (for canvas nav)
+
+	// dynamically match canvas data from element props
+	$effect(() => {
+		if (sctx) {
+			sctx.pixelGrid.brush.color = color; // set the brush color
+		}
+	});
 
 	let objects: Record<string, CanvasObject> = $state({});
 
-	const adjustSizeAndScale = () => {
-		if (!canvasContainer || !canvas) return;
-
-		const style = window.getComputedStyle(canvasContainer);
-		const maxWidth = parseFloat(style.maxWidth) || sctx.width;
-		const availableWidth = Math.min(
-			canvasContainer.parentElement?.clientWidth || window.innerWidth,
-			maxWidth
-		);
-
-		const targetPixelScale = Math.max(1, Math.floor(availableWidth / GRID_SIZE));
-
-		const containerSize = GRID_SIZE * targetPixelScale;
-
-		canvasContainer.style.width = `${containerSize}px`;
-		canvasContainer.style.height = `${containerSize}px`;
-
-		canvas.width = containerSize;
-		canvas.height = containerSize;
-		sctx.width = containerSize;
-		sctx.height = containerSize;
-		sctx.s = targetPixelScale;
-
-		if (rctx) {
-			rctx = canvas.getContext("2d");
-			if (rctx) {
-				rctx.imageSmoothingEnabled = false;
-			}
-		}
-	};
-
+	// initialization routine
 	const init = (): Error | null => {
 		let err: Error | null;
 
-		err = initObjects();
+		err = initCanvas(); // initialize canvas
 		if (err !== null) return err;
-		err = initCanvas();
-		if (err !== null) return err;
-		initListeners();
-		startRoutines();
+		err = initObjects(); // initialize objects
+		// if (err !== null) return err;
+		initListeners(); // start listeners
+		startRoutines(); // start the game loop
 
-		disp("load");
+		load(); // dispatch load event
 
 		return null;
 	};
 
+	// inits window canvas and context
 	const initCanvas = (): Error | null => {
-		rctx = canvas.getContext("2d");
-		if (!rctx) return new Error("Cannot initialize canvas context");
+		// set the canvas to the screen size
+		canvas.width = sctx.width = canvasContainer.getBoundingClientRect().width;
+		canvas.height = sctx.height = canvasContainer.getBoundingClientRect().height;
 
-		rctx.imageSmoothingEnabled = false;
+		// get rendering context
+		rctx = canvas.getContext("2d");
+		if (!rctx) return new Error("Cannot initialize canvas context"); // error
+
+		rctx.imageSmoothingEnabled = false; // disable image smoothing
 
 		return null;
 	};
 
 	const initObjects = (): Error | null => {
-		const pixelGrid = new PixelGrid(0, 0, 1, "pixelGrid");
+		const pixelGrid = new PixelGrid(
+			0,
+			0,
+			sctx.pixelGrid.gridSize,
+			sctx.pixelGrid.pixelWorldSize,
+			sctx.s,
+			"pixelGrid"
+		);
 		objects["pixelGrid"] = pixelGrid;
 		return null;
 	};
 
+	// ====================================== LISTENERS =====================================
+
+	// initializes event listeners to track mouse movement
 	const initListeners = () => {
-		canvas.addEventListener("mousemove", onMouseMove);
-		canvas.addEventListener("mousedown", onMouseDown);
+		// TODO: add touch event
+		window.addEventListener("mousemove", onMouseMove);
+		window.addEventListener("mousedown", onMouseDown);
 		window.addEventListener("mouseup", onMouseUp);
-		window.addEventListener("resize", adjustSizeAndScale);
-	};
+		window.addEventListener("resize", onWindowResize);
 
-	const placePixel = (canvasX: number, canvasY: number) => {
-		if (!objects.pixelGrid || sctx.s === 0) {
-			return;
-		}
-
-		const grid = objects.pixelGrid as PixelGrid;
-		const halfGrid = grid.gridSize / 2;
-
-		const worldX = canvasX / sctx.s - halfGrid;
-		const worldY = canvasY / sctx.s - halfGrid;
-
-		const gridX = Math.floor(worldX / PIXEL_WORLD_SIZE);
-		const gridY = Math.floor(worldY / PIXEL_WORLD_SIZE);
-
-		const isInBounds =
-			gridX >= -halfGrid && gridX < halfGrid && gridY >= -halfGrid && gridY < halfGrid;
-
-		if (isInBounds) {
-			const key = `${gridX},${gridY}`;
-			const currentPixelData = grid.pixels[key];
-			const isNewPixel = !currentPixelData;
-			const needsColorUpdate = isNewPixel || currentPixelData?.color !== color;
-
-			if (needsColorUpdate) {
-				grid.addOrUpdatePixel(gridX, gridY, {
-					color,
-					lastedEditedUserID: null,
-					lastedEditedName: null
-				});
-				if (isNewPixel && pixelAmount > 0) {
-					pixelAmount--;
-				}
-			}
-		}
-	};
-
-	const drawLine = (x0: number, y0: number, x1: number, y1: number) => {
-		const grid = objects.pixelGrid as PixelGrid;
-		if (!grid) return;
-
-		const dx = Math.abs(x1 - x0);
-		const dy = Math.abs(y1 - y0);
-		const sx = x0 < x1 ? 1 : -1;
-		const sy = y0 < y1 ? 1 : -1;
-		let err = dx - dy;
-
-		let currentX = x0;
-		let currentY = y0;
-
-		while (true) {
-			const halfGrid = grid.gridSize / 2;
-			const isInBounds =
-				currentX >= -halfGrid &&
-				currentX < halfGrid &&
-				currentY >= -halfGrid &&
-				currentY < halfGrid;
-
-			if (isInBounds) {
-				const key = `${currentX},${currentY}`;
-				const currentPixelData = grid.pixels[key];
-				const isNewPixel = !currentPixelData;
-				const needsColorUpdate = isNewPixel || currentPixelData?.color !== color;
-
-				if (needsColorUpdate) {
-					grid.addOrUpdatePixel(currentX, currentY, {
-						color,
-						lastedEditedUserID: null,
-						lastedEditedName: null
-					});
-					if (isNewPixel && pixelAmount > 0) {
-						pixelAmount--;
-					}
-				}
-			}
-
-			if (currentX === x1 && currentY === y1) break;
-
-			const e2 = 2 * err;
-			if (e2 > -dy) {
-				err -= dy;
-				currentX += sx;
-			}
-			if (e2 < dx) {
-				err += dx;
-				currentY += sy;
-			}
-		}
+		// TODO: add later
+		// canvasContainer.addEventListener(
+		// 	"wheel",
+		// 	(e: WheelEvent) => {
+		// 		e.preventDefault(); // makes trackpad work in non-safari browsers
+		// 		onMouseScroll(e);
+		// 	},
+		// 	{ passive: false }
+		// );
 	};
 
 	const onMouseDown = (e: MouseEvent) => {
 		e.preventDefault();
-		const rect = canvas.getBoundingClientRect();
 
+		let canvasBCR = canvasContainer.getBoundingClientRect();
+
+		// update cursor position
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
 		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
+		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
+		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
+		// reset velocity
+		sctx.cursor.vx = 0;
+		sctx.cursor.vy = 0;
+		// reset inertia
+		sctx.ix = 0;
+		sctx.iy = 0;
+		// reset last poll and set active
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = true;
 
-		const canvasRelX = e.clientX - rect.left;
-		const canvasRelY = e.clientY - rect.top;
-
-		const grid = objects.pixelGrid as PixelGrid;
-		if (grid && sctx.s > 0) {
-			const halfGrid = grid.gridSize / 2;
-			const worldX = canvasRelX / sctx.s - halfGrid;
-			const worldY = canvasRelY / sctx.s - halfGrid;
-
-			const initialGridX = Math.floor(worldX / PIXEL_WORLD_SIZE);
-			const initialGridY = Math.floor(worldY / PIXEL_WORLD_SIZE);
-
-			sctx.cursor.gridX = Math.max(-halfGrid, Math.min(initialGridX, halfGrid - 1));
-			sctx.cursor.gridY = Math.max(-halfGrid, Math.min(initialGridY, halfGrid - 1));
-			sctx.cursor.prevGridX = sctx.cursor.gridX;
-			sctx.cursor.prevGridY = sctx.cursor.gridY;
+		// loop over all objects and call the onMouseDown function
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onMouseDown(sctx, e);
 		}
-
-		placePixel(canvasRelX, canvasRelY);
 	};
 
 	const onMouseMove = (e: MouseEvent) => {
 		e.preventDefault();
-		const now = performance.now();
 
+		let canvasBCR = canvasContainer.getBoundingClientRect();
+
+		// performance shit
+		sctx.cursor.lastPoll = performance.now();
+		// set previous cursor position
 		sctx.cursor.px = sctx.cursor.x;
 		sctx.cursor.py = sctx.cursor.y;
-
-		const rect = canvas.getBoundingClientRect();
+		// upate current cursor position
 		sctx.cursor.x = e.clientX;
 		sctx.cursor.y = e.clientY;
+		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
+		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
 
-		const canvasRelX = e.clientX - rect.left;
-		const canvasRelY = e.clientY - rect.top;
-
-		const grid = objects.pixelGrid as PixelGrid;
-		let currentGridX = 0;
-		let currentGridY = 0;
-		if (grid && sctx.s > 0) {
-			const halfGrid = grid.gridSize / 2;
-			const worldX = canvasRelX / sctx.s - halfGrid;
-			const worldY = canvasRelY / sctx.s - halfGrid;
-
-			currentGridX = Math.floor(worldX / PIXEL_WORLD_SIZE);
-			currentGridY = Math.floor(worldY / PIXEL_WORLD_SIZE);
-
-			currentGridX = Math.max(-halfGrid, Math.min(currentGridX, halfGrid - 1));
-			currentGridY = Math.max(-halfGrid, Math.min(currentGridY, halfGrid - 1));
+		// trigger all objects onMouseMove
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onMouseMove(sctx, e);
 		}
-
-		sctx.cursor.gridX = currentGridX;
-		sctx.cursor.gridY = currentGridY;
-
-		if (sctx.cursor.active) {
-			if (!grid) return;
-			if (currentGridX !== sctx.cursor.prevGridX || currentGridY !== sctx.cursor.prevGridY) {
-				drawLine(sctx.cursor.prevGridX, sctx.cursor.prevGridY, currentGridX, currentGridY);
-				sctx.cursor.prevGridX = currentGridX;
-				sctx.cursor.prevGridY = currentGridY;
-			} else {
-				placePixel(canvasRelX, canvasRelY);
-			}
-		}
-
-		sctx.cursor.lastPoll = now;
 	};
 
 	const onMouseUp = (e: MouseEvent) => {
-		if (sctx.cursor.active) {
-			sctx.cursor.x = e.clientX;
-			sctx.cursor.y = e.clientY;
-			sctx.cursor.active = false;
+		let canvasBCR = canvasContainer.getBoundingClientRect();
+
+		// stop drawing and set active to false
+		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
+		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
+		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
+		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
+		// reset velocity (keep inertia for physics to do its work)
+		sctx.cursor.vx = 0;
+		sctx.cursor.vy = 0;
+		sctx.ix = 0;
+		sctx.iy = 0;
+		// performance update
+		sctx.cursor.lastPoll = performance.now();
+		sctx.cursor.active = false;
+
+		// loop over all objects and call the onMouseUp function
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onMouseUp(sctx, e);
 		}
 	};
+
+	const onWindowResize = () => {
+		if (canvas && canvasContainer) {
+			canvas.width = sctx.width = canvasContainer.getBoundingClientRect().width;
+			canvas.height = sctx.height = canvasContainer.getBoundingClientRect().height;
+		}
+	};
+
+	// ===================================== ROUTINES =====================================
 
 	const startRoutines = () => {
-		const updateLoop = () => {
-			if (!rctx) return;
-			render(rctx, sctx);
-			requestAnimationFrame(updateLoop);
-		};
-		requestAnimationFrame(updateLoop);
+		if (!rctx) throw new Error("Canvas context not initialized"); // error
+
+		// start render and update threads
+		// (js isn't technically multithreaded, so we shouldnt run into big issues with race conditions)
+		update();
+		render(rctx, sctx);
 	};
 
-	const render = (rctx: CanvasRenderingContext2D, sctx: SceneContext) => {
+	// logic update function (called async to not block the render loop)
+	const update = async () => {
+		// update the cursor velocity
+		if (performance.now() - sctx.cursor.lastPoll !== 0) {
+			sctx.cursor.vx =
+				(sctx.cursor.x - sctx.cursor.px) / (performance.now() - sctx.cursor.lastPoll);
+			sctx.cursor.vy =
+				(sctx.cursor.y - sctx.cursor.py) / (performance.now() - sctx.cursor.lastPoll);
+		}
+		// cut off any velocity below the threshold
+		sctx.cursor.vx = Math.abs(sctx.cursor.vx) > sctx.cursor.ve ? sctx.cursor.vx : 0;
+		sctx.cursor.vy = Math.abs(sctx.cursor.vy) > sctx.cursor.ve ? sctx.cursor.vy : 0;
+
+		// update the canvas position if dragged
+		if (sctx.cursor.active) {
+			// when dragging, update inertia
+			sctx.x = sctx.x + (sctx.cursor.x - sctx.cursor.activeX);
+			sctx.y = sctx.y + (sctx.cursor.y - sctx.cursor.activeY);
+
+			sctx.cursor.activeX = sctx.cursor.x;
+			sctx.cursor.activeY = sctx.cursor.y;
+
+			sctx.ix = Math.max(Math.min(sctx.cursor.vx * 15, sctx.iMax), -sctx.iMax);
+			sctx.iy = Math.max(Math.min(sctx.cursor.vy * 15, sctx.iMax), -sctx.iMax);
+		} else {
+			// apply friction to inertia when no drag
+			sctx.x += sctx.ix;
+			sctx.y += sctx.iy;
+			sctx.ix *= Math.abs(sctx.ix) > sctx.iE ? 0.9 : 0;
+			sctx.iy *= Math.abs(sctx.iy) > sctx.iE ? 0.9 : 0;
+		}
+		// round off all floating points to 3 decimal places
+		sctx.x = Math.round(sctx.x * 1000) / 1000;
+		sctx.y = Math.round(sctx.y * 1000) / 1000;
+		sctx.ix = Math.round(sctx.ix * 1000) / 1000;
+		sctx.iy = Math.round(sctx.iy * 1000) / 1000;
+		sctx.s = Math.round(sctx.s * 1000) / 1000;
+
+		// update all object logic
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].update(sctx);
+		}
+
+		// recursively call the update function
+		requestAnimationFrame(() => update());
+	};
+
+	// render function (also called async)
+	const render = async (rctx: CanvasRenderingContext2D, sctx: SceneContext) => {
+		sctx.frameBuf++;
+
+		// clear screen
 		rctx.clearRect(0, 0, sctx.width, sctx.height);
 
-		rctx.fillStyle = "white";
-		rctx.fillRect(0, 0, sctx.width, sctx.height);
-
-		rctx.imageSmoothingEnabled = false;
-
-		const grid = objects.pixelGrid as PixelGrid;
-
+		// draw all objects
 		for (let i = 0; i < Object.keys(objects).length; i++) {
-			objects[Object.keys(objects)[i]].draw(rctx, sctx);
+			objects[Object.keys(objects)[i]].render(rctx, sctx);
 		}
 
-		if (grid) {
-			const pixelDrawSize = PIXEL_WORLD_SIZE * sctx.s;
-			const halfGrid = grid.gridSize / 2;
-
-			const cursorCanvasX = (sctx.cursor.gridX + halfGrid) * pixelDrawSize;
-			const cursorCanvasY = (sctx.cursor.gridY + halfGrid) * pixelDrawSize;
-
-			rctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-			rctx.lineWidth = 1;
-			rctx.strokeRect(
-				Math.floor(cursorCanvasX),
-				Math.floor(cursorCanvasY),
-				pixelDrawSize,
-				pixelDrawSize
-			);
-		}
+		requestAnimationFrame(() => render(rctx, sctx));
 	};
 
+	// start routine to calculate fps
+	setInterval(() => {
+		sctx.fps = sctx.frameBuf / (sctx.fpsPollRate / 1000);
+		sctx.frameBuf = 0;
+	}, sctx.fpsPollRate);
+
+	// init sequence
 	onMount(() => {
-		adjustSizeAndScale();
 		const err: Error | null = init();
-		if (err) {
+		if (!err) {
 			loadErr = err;
-			console.error("Canvas initialization failed:", err);
 		}
-
-		return () => {
-			window.removeEventListener("resize", adjustSizeAndScale);
-			if (canvas) {
-				canvas.removeEventListener("mousemove", onMouseMove);
-				canvas.removeEventListener("mousedown", onMouseDown);
-			}
-			window.removeEventListener("mouseup", onMouseUp);
-		};
 	});
-
-	export const getPixelData = () => {
-		const grid = objects.pixelGrid as PixelGrid;
-		return grid ? grid.pixels : {};
-	};
 </script>
 
 <section bind:this={canvasContainer} id="canvas-container" class="no-drag">
 	<canvas bind:this={canvas} id="main-canvas" class="no-drag" />
-	{#if loadErr}
-		<p style="color: red; position: absolute; top: 10px; left: 10px;">
-			Error: {loadErr.message}
-		</p>
-	{/if}
+
+	<pre id="debug">{JSON.stringify(
+			sctx,
+			(k, v) => {
+				if (k === "frameBuf") return undefined;
+
+				// display x and y properly
+				if (k === "sTween") return get(v);
+
+				// round numbers
+				if (k === "vx" || k === "vy") return Math.round(v * 1000) / 1000;
+				if (k === "lastPoll") return Math.round(v);
+
+				return v;
+			},
+			4
+		)}</pre>
 </section>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
 	#canvas-container {
-		aspect-ratio: 1 / 1;
-		max-width: 600px;
+		width: 100%;
+		height: calc(100% - 100px);
 		position: relative;
-		margin: 20px auto;
-		border: 1px solid #ccc;
-		background: white;
 
 		#main-canvas {
 			touch-action: none;
-			display: block;
-			width: 100%;
-			height: 100%;
-			image-rendering: pixelated;
-			image-rendering: crisp-edges;
-		}
-	}
+			image-rendering: crisp-edges; // turn off aliasing
+			border-radius: 8px;
+			overflow: hidden;
 
-	.no-drag {
-		user-select: none;
-		-webkit-user-drag: none;
+			background: $text-primary; // constant bgc
+		}
+
+		#debug {
+			position: absolute;
+			top: -2px;
+			left: calc(100% + 20px);
+			z-index: 20;
+
+			padding: 20px;
+
+			font-family: monospace;
+			color: $background-accent;
+			background-color: $text-primary;
+			font-size: 16px;
+			line-height: 100%;
+		}
 	}
 </style>
