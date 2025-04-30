@@ -1,5 +1,4 @@
 <script lang="ts">
-	// temp type, Canvas type should be imported from db
 	type Canvas = {
 		id: string;
 		name: string;
