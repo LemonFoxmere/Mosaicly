@@ -2,19 +2,26 @@
 	let defaultSceneCtx = {
 		x: 0, // canvas x
 		y: 0, // canvas y
+		absx: 0, // absolute screen space canvas x (center 0, 0)
+		absy: 0, // absolute screen space canvas y (center 0, 0)
 		s: 2, // scale
 		ix: 0, // inertia X
 		iy: 0, // inertia Y
 
+		xBound: [-130, 130], // x bounds
+		yBound: [-130, 130], // y bounds
+
 		iE: 0.1, // inertia threshold (Episilon)
 		iMax: 100, // inertia max
-		zoomSensitivity: 0.0015,
+		zoomSensitivity: 0.003,
 
 		width: 0,
 		height: 0,
 		frameBuf: 0,
 		fpsPollRate: 500, // ms
 		fps: 0,
+
+		mode: "view" as "view" | "edit",
 
 		cursor: {
 			x: 0, // real x
@@ -50,13 +57,13 @@
 
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { get } from "svelte/store";
 	import { CanvasObject } from "./objects/CanvasObject";
 	import { PixelGrid } from "./objects/PixelGrid";
 
 	// external bindings
 	let {
 		color = "#000000",
+		mode = "view" as "view" | "edit",
 		load // dispatcher
 	} = $props();
 
@@ -72,6 +79,7 @@
 	$effect(() => {
 		if (sctx) {
 			sctx.pixelGrid.brush.color = color; // set the brush color
+			sctx.mode = mode; // set the mode
 		}
 	});
 
@@ -125,27 +133,34 @@
 
 	// initializes event listeners to track mouse movement
 	const initListeners = () => {
-		// TODO: add touch event
-		window.addEventListener("mousemove", onMouseMove);
 		window.addEventListener("mousedown", onMouseDown);
+		window.addEventListener("mousemove", onMouseMove);
 		window.addEventListener("mouseup", onMouseUp);
 		window.addEventListener("resize", onWindowResize);
 
-		// TODO: add later
-		// canvasContainer.addEventListener(
-		// 	"wheel",
-		// 	(e: WheelEvent) => {
-		// 		e.preventDefault(); // makes trackpad work in non-safari browsers
-		// 		onMouseScroll(e);
-		// 	},
-		// 	{ passive: false }
-		// );
+		canvasContainer.addEventListener(
+			"wheel",
+			(e: WheelEvent) => {
+				e.preventDefault(); // makes trackpad work in non-safari browsers
+				onMouseScroll(e);
+			},
+			{ passive: false }
+		);
 	};
 
 	const onMouseDown = (e: MouseEvent) => {
 		e.preventDefault();
 
 		let canvasBCR = canvasContainer.getBoundingClientRect();
+
+		// check if the mouse is inside the canvas first
+		if (
+			e.clientX < canvasBCR.left ||
+			e.clientX > canvasBCR.right ||
+			e.clientY < canvasBCR.top ||
+			e.clientY > canvasBCR.bottom
+		)
+			return;
 
 		// update cursor position
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
@@ -173,12 +188,21 @@
 
 		let canvasBCR = canvasContainer.getBoundingClientRect();
 
+		// check if the mouse is inside the canvas first
+		if (
+			!sctx.cursor.active && // still need to track if the mouse is active
+			(e.clientX < canvasBCR.left ||
+				e.clientX > canvasBCR.right ||
+				e.clientY < canvasBCR.top ||
+				e.clientY > canvasBCR.bottom)
+		)
+			return;
+
 		// performance shit
 		sctx.cursor.lastPoll = performance.now();
 		// set previous cursor position
 		sctx.cursor.px = sctx.cursor.x;
 		sctx.cursor.py = sctx.cursor.y;
-		// upate current cursor position
 		sctx.cursor.x = e.clientX;
 		sctx.cursor.y = e.clientY;
 		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
@@ -193,6 +217,16 @@
 	const onMouseUp = (e: MouseEvent) => {
 		let canvasBCR = canvasContainer.getBoundingClientRect();
 
+		// check if the mouse is inside the canvas first
+		if (
+			!sctx.cursor.active && // still need to track if the mouse is active
+			(e.clientX < canvasBCR.left ||
+				e.clientX > canvasBCR.right ||
+				e.clientY < canvasBCR.top ||
+				e.clientY > canvasBCR.bottom)
+		)
+			return;
+
 		// stop drawing and set active to false
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
 		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
@@ -201,8 +235,8 @@
 		// reset velocity (keep inertia for physics to do its work)
 		sctx.cursor.vx = 0;
 		sctx.cursor.vy = 0;
-		sctx.ix = 0;
-		sctx.iy = 0;
+		sctx.ix = Math.max(-30, Math.min(30, sctx.ix));
+		sctx.iy = Math.max(-30, Math.min(30, sctx.iy));
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = false;
@@ -213,10 +247,58 @@
 		}
 	};
 
+	let scrollingTimeout: ReturnType<typeof setTimeout>;
+	const onMouseScroll = (e: WheelEvent) => {
+		// clear the scrolling timeout
+		clearTimeout(scrollingTimeout);
+
+		sctx.cursor.scrolling = true;
+		const originalSCursorX = sctx.cursor.relx - sctx.absx; // original screen cursor x
+		const originalSCursorY = sctx.cursor.rely - sctx.absy;
+
+		let cursorX = originalSCursorX / sctx.s; // calculate the world cursor x prior to scaling
+		let cursorY = originalSCursorY / sctx.s;
+
+		sctx.s -= e.deltaY * sctx.zoomSensitivity * sctx.s;
+		// clamp between 0.5 and 3
+		sctx.s = Math.max(Math.min(sctx.s, 50), 1);
+
+		cursorX *= sctx.s; // calculate the new scaled position
+		cursorY *= sctx.s;
+
+		let dx = originalSCursorX - cursorX; // adjust the x and y to keep the cursor in the same position
+		let dy = originalSCursorY - cursorY;
+
+		updateCanvasXY(dx, dy); // update the canvas position
+
+		// set scroll to false after 150ms
+		scrollingTimeout = setTimeout(() => {
+			sctx.cursor.scrolling = false;
+		}, 150);
+	};
+
 	const onWindowResize = () => {
 		if (canvas && canvasContainer) {
 			canvas.width = sctx.width = canvasContainer.getBoundingClientRect().width;
 			canvas.height = sctx.height = canvasContainer.getBoundingClientRect().height;
+		}
+	};
+
+	const updateCanvasXY = (dx: number, dy: number) => {
+		if ((sctx.x + dx) / sctx.s < sctx.xBound[0]) {
+			sctx.x = sctx.xBound[0] * sctx.s;
+		} else if ((sctx.x + dx) / sctx.s > sctx.xBound[1]) {
+			sctx.x = sctx.xBound[1] * sctx.s;
+		} else {
+			sctx.x += dx;
+		}
+
+		if ((sctx.y + dy) / sctx.s < sctx.yBound[0]) {
+			sctx.y = sctx.yBound[0] * sctx.s;
+		} else if ((sctx.y + dy) / sctx.s > sctx.yBound[1]) {
+			sctx.y = sctx.yBound[1] * sctx.s;
+		} else {
+			sctx.y += dy;
 		}
 	};
 
@@ -244,11 +326,12 @@
 		sctx.cursor.vx = Math.abs(sctx.cursor.vx) > sctx.cursor.ve ? sctx.cursor.vx : 0;
 		sctx.cursor.vy = Math.abs(sctx.cursor.vy) > sctx.cursor.ve ? sctx.cursor.vy : 0;
 
-		// update the canvas position if dragged
-		if (sctx.cursor.active) {
-			// when dragging, update inertia
-			sctx.x = sctx.x + (sctx.cursor.x - sctx.cursor.activeX);
-			sctx.y = sctx.y + (sctx.cursor.y - sctx.cursor.activeY);
+		// update the canvas position if dragged AND it's not in edit mode
+		if (sctx.cursor.active && sctx.mode !== "edit") {
+			// when dragging, update inertia and canvas position
+			let dx = sctx.cursor.x - sctx.cursor.activeX;
+			let dy = sctx.cursor.y - sctx.cursor.activeY;
+			updateCanvasXY(dx, dy); // update the canvas position
 
 			sctx.cursor.activeX = sctx.cursor.x;
 			sctx.cursor.activeY = sctx.cursor.y;
@@ -257,14 +340,15 @@
 			sctx.iy = Math.max(Math.min(sctx.cursor.vy * 15, sctx.iMax), -sctx.iMax);
 		} else {
 			// apply friction to inertia when no drag
-			sctx.x += sctx.ix;
-			sctx.y += sctx.iy;
+			updateCanvasXY(sctx.ix, sctx.iy); // update the canvas position
 			sctx.ix *= Math.abs(sctx.ix) > sctx.iE ? 0.9 : 0;
 			sctx.iy *= Math.abs(sctx.iy) > sctx.iE ? 0.9 : 0;
 		}
 		// round off all floating points to 3 decimal places
 		sctx.x = Math.round(sctx.x * 1000) / 1000;
 		sctx.y = Math.round(sctx.y * 1000) / 1000;
+		sctx.absx = sctx.x + sctx.width / 2;
+		sctx.absy = sctx.y + sctx.height / 2;
 		sctx.ix = Math.round(sctx.ix * 1000) / 1000;
 		sctx.iy = Math.round(sctx.iy * 1000) / 1000;
 		sctx.s = Math.round(sctx.s * 1000) / 1000;
@@ -316,9 +400,6 @@
 			(k, v) => {
 				if (k === "frameBuf") return undefined;
 
-				// display x and y properly
-				if (k === "sTween") return get(v);
-
 				// round numbers
 				if (k === "vx" || k === "vy") return Math.round(v * 1000) / 1000;
 				if (k === "lastPoll") return Math.round(v);
@@ -334,23 +415,30 @@
 
 	#canvas-container {
 		width: 100%;
-		height: calc(100% - 100px);
+		height: 100%;
 		position: relative;
+		padding: 0;
 
 		#main-canvas {
+			position: absolute;
+			top: 0;
+			left: 0;
+
 			touch-action: none;
-			image-rendering: crisp-edges; // turn off aliasing
+			image-rendering: pixelated; // turn off aliasing
 			border-radius: 8px;
 			overflow: hidden;
+			display: block;
 
 			background: $text-primary; // constant bgc
 		}
 
 		#debug {
 			position: absolute;
-			top: -2px;
-			left: calc(100% + 20px);
+			top: 0px;
+			left: calc(100% + 10px);
 			z-index: 20;
+			border-radius: 8px;
 
 			padding: 20px;
 

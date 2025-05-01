@@ -35,7 +35,7 @@ export const ColorDefs = {
 	},
 	[ColorNames.ORANGE]: {
 		name: ColorNames.ORANGE,
-		hex: "#F89941"
+		hex: "#F26E36"
 	},
 	[ColorNames.ORANGE_LIGHT]: {
 		name: ColorNames.ORANGE_LIGHT,

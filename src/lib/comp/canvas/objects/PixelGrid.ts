@@ -49,16 +49,14 @@ export class PixelGrid extends CanvasObject {
 		};
 	}
 
-	placePixel(targetX: number, targetY: number, color: string, sctx: SceneContext): void {
+	placePixel(cursorX: number, cursorY: number, color: string, sctx: SceneContext): void {
 		if (!this.pixels) return;
 
-		const fullGridPixelSize = this.gridSize * this.pixelWorldSize;
-		const halfGridPixelSize = fullGridPixelSize / 2;
 		const halfGridCellCount = this.gridSize / 2;
 
 		// Convert screen coordinates to centered world coordinates
-		const worldCoordX = targetX / sctx.s - halfGridPixelSize;
-		const worldCoordY = targetY / sctx.s - halfGridPixelSize;
+		const worldCoordX = (cursorX - sctx.absx) / sctx.s;
+		const worldCoordY = (cursorY - sctx.absy) / sctx.s;
 
 		// Determine which cell in the grid
 		const cellX = Math.floor(worldCoordX / this.pixelWorldSize);
@@ -88,65 +86,90 @@ export class PixelGrid extends CanvasObject {
 
 	render(rctx: CanvasRenderingContext2D, sctx: SceneContext): void {
 		const pixelDrawSize = this.pixelWorldSize * sctx.s;
-		const halfGridCellCount = this.gridSize / 2;
 
-		this.drawBackground(rctx, pixelDrawSize); // render the white background first
+		this.drawBackground(rctx, sctx, pixelDrawSize); // render the white background first
 
 		for (const cellKey in this.pixels) {
 			const [cellX, cellY] = cellKey.split(",").map(Number);
 			const pixelData = this.pixels[cellKey];
 
 			// Map cell coordinates to canvas coordinates
-			const canvasX = (cellX + halfGridCellCount) * pixelDrawSize;
-			const canvasY = (cellY + halfGridCellCount) * pixelDrawSize;
+			const canvasX = cellX * pixelDrawSize;
+			const canvasY = cellY * pixelDrawSize;
 
 			rctx.fillStyle = pixelData.color;
-			rctx.fillRect(Math.floor(canvasX), Math.floor(canvasY), pixelDrawSize, pixelDrawSize);
+			rctx.fillRect(
+				Math.floor(canvasX) + sctx.absx - 0.5,
+				Math.floor(canvasY) + sctx.absy - 0.5,
+				pixelDrawSize + 1,
+				pixelDrawSize + 1
+			);
 		}
 
-		this.drawBrushPreview(rctx, sctx); // render the brush preview last
+		if (sctx.mode === "edit") {
+			this.drawBrushPreview(rctx, sctx); // render the brush preview last
+		}
 	}
 
-	private drawBackground(rctx: CanvasRenderingContext2D, pixelDrawSize: number): void {
+	private drawBackground(
+		rctx: CanvasRenderingContext2D,
+		sctx: SceneContext,
+		pixelDrawSize: number
+	): void {
 		const fullGridDrawSize = this.gridSize * pixelDrawSize;
 
 		rctx.fillStyle = "white";
-		rctx.fillRect(0, 0, fullGridDrawSize, fullGridDrawSize);
+		rctx.fillRect(
+			sctx.absx - fullGridDrawSize / 2,
+			sctx.absy - fullGridDrawSize / 2,
+			fullGridDrawSize,
+			fullGridDrawSize
+		);
 	}
 
 	private drawBrushPreview(rctx: CanvasRenderingContext2D, sctx: SceneContext): void {
 		const pixelDrawSize = this.pixelWorldSize * sctx.s;
 
+		// Convert screen coordinates to centered world coordinates
+		const worldCoordX = (sctx.cursor.relx - sctx.absx) / sctx.s;
+		const worldCoordY = (sctx.cursor.rely - sctx.absy) / sctx.s;
+
 		// calculate the matching cell coordinates
-		const cellX = Math.floor(sctx.cursor.relx / sctx.s / this.pixelWorldSize); // snap to grid
-		const cellY = Math.floor(sctx.cursor.rely / sctx.s / this.pixelWorldSize);
+		const cellX = Math.floor(worldCoordX / this.pixelWorldSize);
+		const cellY = Math.floor(worldCoordY / this.pixelWorldSize);
 
 		// check if the cell is within bounds
-		if (cellX < 0 || cellX >= this.gridSize || cellY < 0 || cellY >= this.gridSize) return;
+		if (
+			cellX < -this.gridSize / 2 ||
+			cellX >= this.gridSize / 2 ||
+			cellY < -this.gridSize / 2 ||
+			cellY >= this.gridSize / 2
+		)
+			return;
+
+		// draw the brush color
+		rctx.fillStyle = sctx.pixelGrid.brush.color;
+		rctx.fillRect(
+			cellX * pixelDrawSize + 2 + sctx.absx,
+			cellY * pixelDrawSize + 2 + sctx.absy,
+			pixelDrawSize - 4,
+			pixelDrawSize - 4
+		);
 
 		// draw a black and white border around the brush
 		rctx.strokeStyle = "black";
 		rctx.lineWidth = 2; // prevents half-pixel rendering
 		rctx.strokeRect(
-			cellX * pixelDrawSize + 1,
-			cellY * pixelDrawSize + 1,
-			pixelDrawSize - 2,
-			pixelDrawSize - 2
+			cellX * pixelDrawSize + sctx.absx,
+			cellY * pixelDrawSize + sctx.absy,
+			pixelDrawSize,
+			pixelDrawSize
 		);
 		rctx.strokeStyle = "white";
 		rctx.lineWidth = 2;
 		rctx.strokeRect(
-			cellX * pixelDrawSize + 2,
-			cellY * pixelDrawSize + 2,
-			pixelDrawSize - 4,
-			pixelDrawSize - 4
-		);
-
-		// draw the brush color
-		rctx.fillStyle = sctx.pixelGrid.brush.color;
-		rctx.fillRect(
-			cellX * pixelDrawSize + 2,
-			cellY * pixelDrawSize + 2,
+			cellX * pixelDrawSize + 2 + sctx.absx,
+			cellY * pixelDrawSize + 2 + sctx.absy,
 			pixelDrawSize - 4,
 			pixelDrawSize - 4
 		);
@@ -161,6 +184,9 @@ export class PixelGrid extends CanvasObject {
 	}
 	onMouseMove(sctx: SceneContext, e: MouseEvent): void {
 		void e;
+
+		if (sctx.mode !== "edit") return;
+
 		if (
 			sctx.cursor.relx < 0 ||
 			sctx.cursor.relx > sctx.width ||

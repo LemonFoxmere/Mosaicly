@@ -73,7 +73,7 @@
 
 	main {
 		width: 100%;
-		height: 70px;
+		height: 65px;
 		display: flex;
 		flex-direction: column;
 
