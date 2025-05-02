@@ -21,6 +21,10 @@ export class PixelGrid extends CanvasObject {
 	gridSize = 256; // number of cells in one dimension
 	pixelWorldSize = 1; // how big a virtual pixel should be in real pixel-space units at zoom = 1
 
+	private offscreenCanvas: HTMLCanvasElement;
+	private offscreenCtx: CanvasRenderingContext2D;
+	private imageBuffer: ImageData;
+
 	constructor(
 		x: number,
 		y: number,
@@ -33,6 +37,23 @@ export class PixelGrid extends CanvasObject {
 		this.gridSize = gridSize;
 		this.pixelWorldSize = pixelWorldSize;
 		this.pixels = {};
+
+		this.offscreenCanvas = document.createElement("canvas");
+		this.offscreenCanvas.width = this.gridSize;
+		this.offscreenCanvas.height = this.gridSize;
+		const ctx = this.offscreenCanvas.getContext("2d");
+		if (!ctx) throw new Error("Cannot initialize offscreen canvas");
+		this.offscreenCtx = ctx;
+		this.imageBuffer = this.offscreenCtx.createImageData(this.gridSize, this.gridSize);
+
+		// initialize buffer to white background
+		for (let i = 0; i < this.imageBuffer.data.length; i += 4) {
+			this.imageBuffer.data[i + 0] = 255;
+			this.imageBuffer.data[i + 1] = 255;
+			this.imageBuffer.data[i + 2] = 255;
+			this.imageBuffer.data[i + 3] = 255;
+		}
+		this.offscreenCtx.putImageData(this.imageBuffer, 0, 0);
 	}
 
 	// Merge or create pixel at given cell coordinates
@@ -47,6 +68,24 @@ export class PixelGrid extends CanvasObject {
 			lastedEditedUserID: data.lastedEditedUserID ?? existing.lastedEditedUserID ?? null,
 			lastedEditedName: data.lastedEditedName ?? existing.lastedEditedName ?? null
 		};
+
+		// update offscreen ImageData buffer
+		const half = this.gridSize / 2;
+		const bufferX = cellX + half;
+		const bufferY = cellY + half;
+		if (bufferX < 0 || bufferX >= this.gridSize || bufferY < 0 || bufferY >= this.gridSize) {
+			return;
+		}
+		const idx = (bufferY * this.gridSize + bufferX) * 4;
+		const hex = this.pixels[cellKey].color;
+		const r = parseInt(hex.substr(1, 2), 16);
+		const g = parseInt(hex.substr(3, 2), 16);
+		const b = parseInt(hex.substr(5, 2), 16);
+		this.imageBuffer.data[idx + 0] = r;
+		this.imageBuffer.data[idx + 1] = g;
+		this.imageBuffer.data[idx + 2] = b;
+		this.imageBuffer.data[idx + 3] = 255;
+		this.offscreenCtx.putImageData(this.imageBuffer, 0, 0);
 	}
 
 	placePixel(cursorX: number, cursorY: number, color: string, sctx: SceneContext): void {
@@ -89,22 +128,14 @@ export class PixelGrid extends CanvasObject {
 
 		this.drawBackground(rctx, sctx, pixelDrawSize); // render the white background first
 
-		for (const cellKey in this.pixels) {
-			const [cellX, cellY] = cellKey.split(",").map(Number);
-			const pixelData = this.pixels[cellKey];
-
-			// Map cell coordinates to canvas coordinates
-			const canvasX = cellX * pixelDrawSize;
-			const canvasY = cellY * pixelDrawSize;
-
-			rctx.fillStyle = pixelData.color;
-			rctx.fillRect(
-				Math.floor(canvasX + sctx.absx),
-				Math.floor(canvasY + sctx.absy),
-				Math.ceil(pixelDrawSize),
-				Math.ceil(pixelDrawSize)
-			);
-		}
+		const fullGridDrawSize = this.gridSize * pixelDrawSize;
+		rctx.drawImage(
+			this.offscreenCanvas,
+			Math.floor(sctx.absx - fullGridDrawSize / 2),
+			Math.floor(sctx.absy - fullGridDrawSize / 2),
+			Math.ceil(fullGridDrawSize),
+			Math.ceil(fullGridDrawSize)
+		);
 
 		if (sctx.mode === "edit") {
 			this.drawBrushPreview(rctx, sctx); // render the brush preview last
@@ -175,9 +206,7 @@ export class PixelGrid extends CanvasObject {
 		);
 	}
 
-	update(sctx: SceneContext): void {
-		void sctx;
-	}
+	update(sctx: SceneContext): void {}
 
 	onMouseDown(sctx: SceneContext, e: MouseEvent): void {
 		this.onMouseMove(sctx, e);
@@ -203,7 +232,6 @@ export class PixelGrid extends CanvasObject {
 		}
 	}
 	onMouseUp(sctx: SceneContext, e: MouseEvent): void {
-		void e;
 		sctx.pixelGrid.brush.active = false;
 	}
 }

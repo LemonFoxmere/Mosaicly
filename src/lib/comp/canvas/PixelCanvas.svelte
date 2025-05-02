@@ -323,7 +323,7 @@
 	};
 
 	// logic update function (called async to not block the render loop)
-	const update = async () => {
+	const update = () => {
 		// update the cursor velocity
 		if (performance.now() - sctx.cursor.lastPoll !== 0) {
 			sctx.cursor.vx =
@@ -368,7 +368,7 @@
 		}
 
 		// recursively call the update function
-		requestAnimationFrame(() => update());
+		requestAnimationFrame(update);
 	};
 
 	// render function (also called async)
