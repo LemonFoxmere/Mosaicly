@@ -99,10 +99,10 @@ export class PixelGrid extends CanvasObject {
 
 			rctx.fillStyle = pixelData.color;
 			rctx.fillRect(
-				Math.floor(canvasX) + sctx.absx - 0.5,
-				Math.floor(canvasY) + sctx.absy - 0.5,
-				pixelDrawSize + 1,
-				pixelDrawSize + 1
+				Math.floor(canvasX + sctx.absx),
+				Math.floor(canvasY + sctx.absy),
+				Math.ceil(pixelDrawSize),
+				Math.ceil(pixelDrawSize)
 			);
 		}
 
@@ -120,10 +120,10 @@ export class PixelGrid extends CanvasObject {
 
 		rctx.fillStyle = "white";
 		rctx.fillRect(
-			sctx.absx - fullGridDrawSize / 2,
-			sctx.absy - fullGridDrawSize / 2,
-			fullGridDrawSize,
-			fullGridDrawSize
+			Math.floor(sctx.absx - fullGridDrawSize / 2),
+			Math.floor(sctx.absy - fullGridDrawSize / 2),
+			Math.ceil(fullGridDrawSize),
+			Math.ceil(fullGridDrawSize)
 		);
 	}
 
@@ -150,28 +150,28 @@ export class PixelGrid extends CanvasObject {
 		// draw the brush color
 		rctx.fillStyle = sctx.pixelGrid.brush.color;
 		rctx.fillRect(
-			cellX * pixelDrawSize + 2 + sctx.absx,
-			cellY * pixelDrawSize + 2 + sctx.absy,
-			pixelDrawSize - 4,
-			pixelDrawSize - 4
+			Math.floor(cellX * pixelDrawSize + 2 + sctx.absx),
+			Math.floor(cellY * pixelDrawSize + 2 + sctx.absy),
+			Math.ceil(pixelDrawSize - 4),
+			Math.ceil(pixelDrawSize - 4)
 		);
 
 		// draw a black and white border around the brush
 		rctx.strokeStyle = "black";
 		rctx.lineWidth = 2; // prevents half-pixel rendering
 		rctx.strokeRect(
-			cellX * pixelDrawSize + sctx.absx,
-			cellY * pixelDrawSize + sctx.absy,
-			pixelDrawSize,
-			pixelDrawSize
+			Math.floor(cellX * pixelDrawSize + sctx.absx),
+			Math.floor(cellY * pixelDrawSize + sctx.absy),
+			Math.ceil(pixelDrawSize),
+			Math.ceil(pixelDrawSize)
 		);
 		rctx.strokeStyle = "white";
 		rctx.lineWidth = 2;
 		rctx.strokeRect(
-			cellX * pixelDrawSize + 2 + sctx.absx,
-			cellY * pixelDrawSize + 2 + sctx.absy,
-			pixelDrawSize - 4,
-			pixelDrawSize - 4
+			Math.floor(cellX * pixelDrawSize + 2 + sctx.absx),
+			Math.floor(cellY * pixelDrawSize + 2 + sctx.absy),
+			Math.ceil(pixelDrawSize - 4),
+			Math.ceil(pixelDrawSize - 4)
 		);
 	}
 
@@ -185,7 +185,7 @@ export class PixelGrid extends CanvasObject {
 	onMouseMove(sctx: SceneContext, e: MouseEvent): void {
 		void e;
 
-		if (sctx.mode !== "edit") return;
+		if (sctx.mode !== "edit" || sctx.cursor.rightActive) return;
 
 		if (
 			sctx.cursor.relx < 0 ||

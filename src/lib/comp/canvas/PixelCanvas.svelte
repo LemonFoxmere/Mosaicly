@@ -36,6 +36,7 @@
 			activeX: 0, // x upon active (mousedown or last frame update). Used to calculate deltas
 			activeY: 0, // y upon active (mousedown or last frame update). Used to calculate deltas
 			active: false,
+			rightActive: false, // if right click is active
 			scrolling: false,
 			lastPoll: 0 // last poll time
 		},
@@ -134,6 +135,7 @@
 	// initializes event listeners to track mouse movement
 	const initListeners = () => {
 		window.addEventListener("mousedown", onMouseDown);
+		canvasContainer.addEventListener("contextmenu", onMouseDown);
 		window.addEventListener("mousemove", onMouseMove);
 		window.addEventListener("mouseup", onMouseUp);
 		window.addEventListener("resize", onWindowResize);
@@ -161,6 +163,13 @@
 			e.clientY > canvasBCR.bottom
 		)
 			return;
+
+		// detect right click
+		if (e.button === 2) {
+			sctx.cursor.rightActive = true;
+		} else {
+			sctx.cursor.rightActive = false;
+		}
 
 		// update cursor position
 		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
@@ -239,7 +248,7 @@
 		sctx.iy = Math.max(-30, Math.min(30, sctx.iy));
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
-		sctx.cursor.active = false;
+		sctx.cursor.active = sctx.cursor.rightActive = false;
 
 		// loop over all objects and call the onMouseUp function
 		for (let i = 0; i < Object.keys(objects).length; i++) {
@@ -327,7 +336,7 @@
 		sctx.cursor.vy = Math.abs(sctx.cursor.vy) > sctx.cursor.ve ? sctx.cursor.vy : 0;
 
 		// update the canvas position if dragged AND it's not in edit mode
-		if (sctx.cursor.active && sctx.mode !== "edit") {
+		if ((sctx.cursor.active && sctx.mode !== "edit") || sctx.cursor.rightActive) {
 			// when dragging, update inertia and canvas position
 			let dx = sctx.cursor.x - sctx.cursor.activeX;
 			let dy = sctx.cursor.y - sctx.cursor.activeY;
