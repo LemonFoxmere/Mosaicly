@@ -122,8 +122,6 @@
 		rctx = canvas.getContext("2d");
 		if (!rctx) return new Error("Cannot initialize canvas context"); // error
 
-		// rctx.imageSmoothingEnabled = true; // disable image smoothing
-
 		return null;
 	};
 
@@ -398,7 +396,7 @@
 	};
 
 	// logic update function (called async to not block the render loop)
-	const update = async () => {
+	const update = () => {
 		// update the cursor velocity
 		if (performance.now() - sctx.cursor.lastPoll !== 0) {
 			sctx.cursor.vx =
@@ -445,7 +443,7 @@
 		}
 
 		// recursively call the update function
-		requestAnimationFrame(() => update());
+		requestAnimationFrame(update);
 	};
 
 	// render function (also called async)
@@ -513,7 +511,6 @@
 			left: 0;
 
 			touch-action: none;
-			// image-rendering: optimizeQuality; // turn off aliasing
 			border-radius: 8px;
 			overflow: hidden;
 			display: block;
