@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CanvasCard from "../../lib/comp/profile/CanvasCard.svelte";
+	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
 	import type { PageProps } from "./$types";
 
 	let { data }: PageProps = $props();

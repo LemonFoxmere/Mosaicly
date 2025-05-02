@@ -80,7 +80,7 @@ export const load: LayoutServerLoad = async ({
 
 	return {
 		url: url.pathname,
-		apperance: appearanceConfig,
+		appearance: appearanceConfig,
 		session: session,
 		user: payload
 	};

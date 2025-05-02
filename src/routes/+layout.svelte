@@ -1,8 +1,9 @@
 <script lang="ts">
 	import Mosaicly from "$lib/comp/ui/logos/MosaiclyLogo.svelte";
+	import type { PageData } from "./$types";
 
-	let { children, data } = $props();
-	let { showLogo, showCta } = $derived(data.apperance);
+	let { children, data }: { children: any; data: PageData } = $props();
+	let { showLogo, showCta } = $derived(data.appearance);
 	let session = $derived(data.session);
 	let user = $derived(data.user);
 
@@ -14,7 +15,7 @@
 </script>
 
 <main>
-	<nav>
+	<nav class="no-drag">
 		<!-- <button class="small">Log in</button> -->
 		{#if showLogo}
 			<a class="wrapper item" href="/">
@@ -73,9 +74,6 @@
 			}
 
 			.item {
-				width: 28px;
-				height: 28px;
-
 				display: flex;
 				justify-content: center;
 				align-items: center;

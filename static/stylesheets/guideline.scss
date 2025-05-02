@@ -75,7 +75,7 @@ button {
 	$button-height: 50px;
 	$shadow-height: 4px;
 
-	padding: 11px 30px;
+	padding: 11px 31.5px; // account for the border width changing from outline
 	height: $button-height;
 	border: none;
 	display: flex;
@@ -111,6 +111,11 @@ button {
 		opacity: 0.8;
 	}
 
+	&:disabled {
+		opacity: 0.3;
+		pointer-events: none;
+	}
+
 	// variants
 	&.solid {
 		background: $text-primary;
@@ -128,6 +133,8 @@ button {
 		border: 1.5px solid $text-primary;
 		border-radius: 8px;
 		border-bottom-width: $shadow-height;
+		margin: 0px;
+		padding: 11px 30px;
 
 		@media (hover: hover) {
 			&:hover {
