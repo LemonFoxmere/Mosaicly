@@ -1,20 +1,14 @@
 <script lang="ts">
-	let name = "";
+	let canvasCode = "";
 	let canvasFound = true;
 
-	function AddText(inputText: string) {
-		// as text is added check if need to add hyphen
-		if (inputText.length > 0) {
-		}
-	}
-
+	// check if the canvas exists
+	// if yes: redirect to canvas
+	// else: show error message  (text has its own if statement)
 	function Submit() {
-		console.log("Get text from input: " + name);
-		canvasFound = name.length > 0;
+		canvasFound = canvasCode.length > 0;
+		if (canvasFound) window.location.href = "/canvas";
 	}
-
-	// testing adding hyphens between text
-	AddText("o");
 </script>
 
 <main>
@@ -43,8 +37,9 @@
 
 	<section id="cta">
 		<div class="input-wrapper item-frame">
-			<input placeholder="0000-0000-0000" maxlength="12" bind:value={name} />
+			<input placeholder="0000-0000-0000" maxlength="12" bind:value={canvasCode} />
 			<button
+				disabled={canvasCode.length < 12}
 				onclick={() => {
 					Submit();
 				}}
