@@ -1,4 +1,20 @@
 <script lang="ts">
+	let name = "";
+	let canvasFound = true;
+
+	function AddText(inputText: string) {
+		// as text is added check if need to add hyphen
+		if (inputText.length > 0) {
+		}
+	}
+
+	function Submit() {
+		console.log("Get text from input: " + name);
+		canvasFound = name.length > 0;
+	}
+
+	// testing adding hyphens between text
+	AddText("o");
 </script>
 
 <main>
@@ -27,8 +43,11 @@
 
 	<section id="cta">
 		<div class="input-wrapper item-frame">
-			<input placeholder="0000-0000-0000" maxlength="12" />
+			<input placeholder="0000-0000-0000" maxlength="12" bind:value={name} />
 			<button
+				onclick={() => {
+					Submit();
+				}}
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -45,8 +64,9 @@
 				</svg>
 			</button>
 		</div>
-
-		<p class="error-text">No canvas found</p>
+		{#if canvasFound == false}
+			<p class="error-text">No canvas found</p>
+		{/if}
 		<a class="wrapper" href="/">
 			<button>Go back home</button>
 		</a>
