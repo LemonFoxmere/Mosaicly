@@ -4,7 +4,7 @@
 		y: 0, // canvas y
 		absx: 0, // absolute screen space canvas x (center 0, 0)
 		absy: 0, // absolute screen space canvas y (center 0, 0)
-		s: 2, // scale
+		s: 1.25, // scale
 		ix: 0, // inertia X
 		iy: 0, // inertia Y
 
@@ -22,6 +22,7 @@
 		fps: 0,
 
 		mode: "view" as "view" | "edit",
+		debugMode: false, // turn debugger off
 
 		cursor: {
 			x: 0, // real x
@@ -36,9 +37,16 @@
 			activeX: 0, // x upon active (mousedown or last frame update). Used to calculate deltas
 			activeY: 0, // y upon active (mousedown or last frame update). Used to calculate deltas
 			active: false,
-			rightActive: false, // if right click is active
+			secondaryActive: false, // if right click / double finger is active
 			scrolling: false,
-			lastPoll: 0 // last poll time
+			lastPoll: 0, // last poll time
+			touch: {
+				usingTouch: false, // if the current input is using touch or not
+				touchPtCt: 0, // touch point count. I.e., how many touch points there are
+				previousZoomDist: 0,
+				initX: 0, // initial average x (unchanged. Used to calculate threshold)
+				initY: 0 // initial average y (unchanged. Used to calculate threshold)
+			}
 		},
 
 		pixelGrid: {
@@ -60,6 +68,8 @@
 	import { onMount } from "svelte";
 	import { CanvasObject } from "./objects/CanvasObject";
 	import { PixelGrid } from "./objects/PixelGrid";
+	import { CanvasUtils } from "./utils/CanvasUtils";
+	import { CursorUtils } from "./utils/CursorUtils";
 
 	// external bindings
 	let {
@@ -112,7 +122,7 @@
 		rctx = canvas.getContext("2d");
 		if (!rctx) return new Error("Cannot initialize canvas context"); // error
 
-		rctx.imageSmoothingEnabled = false; // disable image smoothing
+		// rctx.imageSmoothingEnabled = true; // disable image smoothing
 
 		return null;
 	};
@@ -134,11 +144,17 @@
 
 	// initializes event listeners to track mouse movement
 	const initListeners = () => {
+		// cursor events
 		window.addEventListener("mousedown", onMouseDown);
 		canvasContainer.addEventListener("contextmenu", onMouseDown);
 		window.addEventListener("mousemove", onMouseMove);
 		window.addEventListener("mouseup", onMouseUp);
 		window.addEventListener("resize", onWindowResize);
+
+		// touch events
+		canvasContainer.addEventListener("touchstart", onTouchStart);
+		canvasContainer.addEventListener("touchmove", onTouchMove);
+		canvasContainer.addEventListener("touchend", onTouchEnd);
 
 		canvasContainer.addEventListener(
 			"wheel",
@@ -150,110 +166,187 @@
 		);
 	};
 
-	const onMouseDown = (e: MouseEvent) => {
+	// touch events
+
+	const onTouchStart = (e: TouchEvent) => {
+		if (!e.isTrusted) return; // ignore fake events
+
+		// set secondary active based on the number of touches
+		sctx.cursor.touch.touchPtCt = e.touches.length;
+		sctx.cursor.secondaryActive = e.touches.length === 2; // double finger = ignore draw mode
+
+		// average all touch points & check bound
+		const canvasBCR = canvasContainer.getBoundingClientRect();
+		let [avgX, avgY, numInBound] = CursorUtils.getAvgTouchPoint(e.touches);
+		if (numInBound === 0) return; // no touch points in bound. Do nothing
+
 		e.preventDefault();
 
-		let canvasBCR = canvasContainer.getBoundingClientRect();
+		// check if within bound
+		if (CursorUtils.isWithinBound(avgX, avgY, canvasBCR)) return;
 
-		// check if the mouse is inside the canvas first
-		if (
-			e.clientX < canvasBCR.left ||
-			e.clientX > canvasBCR.right ||
-			e.clientY < canvasBCR.top ||
-			e.clientY > canvasBCR.bottom
-		)
-			return;
+		// capture cursor positions
+		CursorUtils.captureCursor(sctx, avgX, avgY, canvasBCR);
+		sctx.cursor.active = sctx.cursor.touch.usingTouch = true;
 
-		// detect right click
-		if (e.button === 2) {
-			sctx.cursor.rightActive = true;
-		} else {
-			sctx.cursor.rightActive = false;
+		// if there's two fingers, calculate the initial distance between the two
+		if (e.touches.length === 2) {
+			sctx.cursor.touch.previousZoomDist = CursorUtils.getDist(
+				e.touches[0].clientX,
+				e.touches[0].clientY,
+				e.touches[1].clientX,
+				e.touches[1].clientY
+			);
 		}
-
-		// update cursor position
-		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
-		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
-		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
-		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
-		// reset velocity
-		sctx.cursor.vx = 0;
-		sctx.cursor.vy = 0;
-		// reset inertia
-		sctx.ix = 0;
-		sctx.iy = 0;
-		// reset last poll and set active
-		sctx.cursor.lastPoll = performance.now();
-		sctx.cursor.active = true;
+		sctx.cursor.touch.initX = avgX;
+		sctx.cursor.touch.initY = avgY;
 
 		// loop over all objects and call the onMouseDown function
 		for (let i = 0; i < Object.keys(objects).length; i++) {
-			objects[Object.keys(objects)[i]].onMouseDown(sctx, e);
+			objects[Object.keys(objects)[i]].onCursorDown(sctx);
+		}
+	};
+
+	const onTouchMove = (e: TouchEvent) => {
+		if (!e.isTrusted) return; // ignore fake events
+
+		// average all touch points & check bound
+		sctx.cursor.touch.touchPtCt = e.touches.length;
+		const canvasBCR = canvasContainer.getBoundingClientRect();
+		let [avgX, avgY, numInBound] = CursorUtils.getAvgTouchPoint(e.touches);
+		if (!sctx.cursor.active && numInBound === 0) return; // no touch points in bound. Do nothing
+
+		e.preventDefault();
+
+		// performance shit
+		sctx.cursor.lastPoll = performance.now();
+		// set previous cursor position
+		CursorUtils.stepCursor(sctx, avgX, avgY, canvasBCR);
+
+		// calculate zoom if there's two fingers
+		if (e.touches.length === 2) {
+			// calculate new dist
+			const newDist = CursorUtils.getDist(
+				e.touches[0].clientX,
+				e.touches[0].clientY,
+				e.touches[1].clientX,
+				e.touches[1].clientY
+			);
+			// calculate canvas offset (more natural zooming)
+			const originalSCursorX = sctx.cursor.relx - sctx.absx; // original screen cursor x
+			const originalSCursorY = sctx.cursor.rely - sctx.absy;
+			let cursorX = originalSCursorX / sctx.s; // calculate the world cursor x prior to scaling
+			let cursorY = originalSCursorY / sctx.s;
+
+			// scale inverse the previous dist and use it to calculate the new scale
+			const origDist = sctx.cursor.touch.previousZoomDist / sctx.s;
+			const ds = newDist / origDist - sctx.s; // difference in scale
+
+			sctx.s += ds * 1; // scale
+			// clamp between 1 and 50
+			sctx.s = Math.max(Math.min(sctx.s, 50), 1);
+
+			// update the previous dist
+			sctx.cursor.touch.previousZoomDist = newDist;
+
+			// update the canvas offset
+			cursorX *= sctx.s; // calculate the new scaled position
+			cursorY *= sctx.s;
+
+			let dx = originalSCursorX - cursorX; // adjust the x and y to keep the cursor in the same position
+			let dy = originalSCursorY - cursorY;
+
+			CanvasUtils.updateCanvasXY(sctx, dx, dy); // update the canvas position
+		}
+
+		// trigger all objects onMouseMove
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onCursorMove(sctx);
+		}
+	};
+
+	const onTouchEnd = (e: TouchEvent) => {
+		if (!e.isTrusted) return; // ignore fake events
+
+		// average all touch points & check bound
+		const canvasBCR = canvasContainer.getBoundingClientRect();
+		let [avgX, avgY, numInBound] = CursorUtils.getAvgTouchPoint(e.touches);
+		if (!sctx.cursor.active && numInBound === 0) return; // no touch points in bound. Do nothing
+
+		e.preventDefault();
+
+		// loop over all objects and call the onMouseUp function
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onCursorUp(sctx);
+		}
+
+		// release and reset cursor
+		CursorUtils.releaseCursor(sctx, avgX, avgY, canvasBCR);
+		// performance update
+		sctx.cursor.lastPoll = performance.now();
+		sctx.cursor.active = sctx.cursor.secondaryActive = false;
+	};
+
+	// mouse events
+
+	const onMouseDown = (e: MouseEvent) => {
+		e.preventDefault();
+
+		// check if the mouse is inside the canvas first
+		const canvasBCR = canvasContainer.getBoundingClientRect();
+		if (CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR)) return;
+
+		// detect right click
+		sctx.cursor.secondaryActive = e.button === 2;
+
+		// initialize cursor positions & physics params
+		CursorUtils.captureCursor(sctx, e.clientX, e.clientY, canvasBCR);
+		// reset last poll and set active
+		sctx.cursor.lastPoll = performance.now();
+		sctx.cursor.active = true;
+		sctx.cursor.touch.usingTouch = false;
+
+		// loop over all objects and call the onMouseDown function
+		for (let i = 0; i < Object.keys(objects).length; i++) {
+			objects[Object.keys(objects)[i]].onCursorDown(sctx);
 		}
 	};
 
 	const onMouseMove = (e: MouseEvent) => {
 		e.preventDefault();
 
-		let canvasBCR = canvasContainer.getBoundingClientRect();
-
-		// check if the mouse is inside the canvas first
-		if (
-			!sctx.cursor.active && // still need to track if the mouse is active
-			(e.clientX < canvasBCR.left ||
-				e.clientX > canvasBCR.right ||
-				e.clientY < canvasBCR.top ||
-				e.clientY > canvasBCR.bottom)
-		)
+		// check if the mouse is inside the canvas or active first
+		const canvasBCR = canvasContainer.getBoundingClientRect();
+		if (!sctx.cursor.active && CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR))
 			return;
 
 		// performance shit
 		sctx.cursor.lastPoll = performance.now();
 		// set previous cursor position
-		sctx.cursor.px = sctx.cursor.x;
-		sctx.cursor.py = sctx.cursor.y;
-		sctx.cursor.x = e.clientX;
-		sctx.cursor.y = e.clientY;
-		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
-		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
+		CursorUtils.stepCursor(sctx, e.clientX, e.clientY, canvasBCR);
 
 		// trigger all objects onMouseMove
 		for (let i = 0; i < Object.keys(objects).length; i++) {
-			objects[Object.keys(objects)[i]].onMouseMove(sctx, e);
+			objects[Object.keys(objects)[i]].onCursorMove(sctx);
 		}
 	};
 
 	const onMouseUp = (e: MouseEvent) => {
-		let canvasBCR = canvasContainer.getBoundingClientRect();
-
-		// check if the mouse is inside the canvas first
-		if (
-			!sctx.cursor.active && // still need to track if the mouse is active
-			(e.clientX < canvasBCR.left ||
-				e.clientX > canvasBCR.right ||
-				e.clientY < canvasBCR.top ||
-				e.clientY > canvasBCR.bottom)
-		)
+		// check if the mouse is inside the canvas or active first
+		const canvasBCR = canvasContainer.getBoundingClientRect();
+		if (!sctx.cursor.active && CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR))
 			return;
-
-		// stop drawing and set active to false
-		sctx.cursor.x = sctx.cursor.activeX = e.clientX;
-		sctx.cursor.y = sctx.cursor.activeY = e.clientY;
-		sctx.cursor.relx = sctx.cursor.x - canvasBCR.left;
-		sctx.cursor.rely = sctx.cursor.y - canvasBCR.top;
-		// reset velocity (keep inertia for physics to do its work)
-		sctx.cursor.vx = 0;
-		sctx.cursor.vy = 0;
-		sctx.ix = Math.max(-30, Math.min(30, sctx.ix));
-		sctx.iy = Math.max(-30, Math.min(30, sctx.iy));
-		// performance update
-		sctx.cursor.lastPoll = performance.now();
-		sctx.cursor.active = sctx.cursor.rightActive = false;
 
 		// loop over all objects and call the onMouseUp function
 		for (let i = 0; i < Object.keys(objects).length; i++) {
-			objects[Object.keys(objects)[i]].onMouseUp(sctx, e);
+			objects[Object.keys(objects)[i]].onCursorUp(sctx);
 		}
+
+		// release and reset cursor states
+		CursorUtils.releaseCursor(sctx, e.clientX, e.clientY, canvasBCR);
+		// performance update
+		sctx.cursor.lastPoll = performance.now();
+		sctx.cursor.active = sctx.cursor.secondaryActive = false;
 	};
 
 	let scrollingTimeout: ReturnType<typeof setTimeout>;
@@ -269,7 +362,7 @@
 		let cursorY = originalSCursorY / sctx.s;
 
 		sctx.s -= e.deltaY * sctx.zoomSensitivity * sctx.s;
-		// clamp between 0.5 and 3
+		// clamp between 1 and 50
 		sctx.s = Math.max(Math.min(sctx.s, 50), 1);
 
 		cursorX *= sctx.s; // calculate the new scaled position
@@ -278,7 +371,7 @@
 		let dx = originalSCursorX - cursorX; // adjust the x and y to keep the cursor in the same position
 		let dy = originalSCursorY - cursorY;
 
-		updateCanvasXY(dx, dy); // update the canvas position
+		CanvasUtils.updateCanvasXY(sctx, dx, dy); // update the canvas position
 
 		// set scroll to false after 150ms
 		scrollingTimeout = setTimeout(() => {
@@ -290,24 +383,6 @@
 		if (canvas && canvasContainer) {
 			canvas.width = sctx.width = canvasContainer.getBoundingClientRect().width;
 			canvas.height = sctx.height = canvasContainer.getBoundingClientRect().height;
-		}
-	};
-
-	const updateCanvasXY = (dx: number, dy: number) => {
-		if ((sctx.x + dx) / sctx.s < sctx.xBound[0]) {
-			sctx.x = sctx.xBound[0] * sctx.s;
-		} else if ((sctx.x + dx) / sctx.s > sctx.xBound[1]) {
-			sctx.x = sctx.xBound[1] * sctx.s;
-		} else {
-			sctx.x += dx;
-		}
-
-		if ((sctx.y + dy) / sctx.s < sctx.yBound[0]) {
-			sctx.y = sctx.yBound[0] * sctx.s;
-		} else if ((sctx.y + dy) / sctx.s > sctx.yBound[1]) {
-			sctx.y = sctx.yBound[1] * sctx.s;
-		} else {
-			sctx.y += dy;
 		}
 	};
 
@@ -336,20 +411,22 @@
 		sctx.cursor.vy = Math.abs(sctx.cursor.vy) > sctx.cursor.ve ? sctx.cursor.vy : 0;
 
 		// update the canvas position if dragged AND it's not in edit mode
-		if ((sctx.cursor.active && sctx.mode !== "edit") || sctx.cursor.rightActive) {
+		if ((sctx.cursor.active && sctx.mode !== "edit") || sctx.cursor.secondaryActive) {
 			// when dragging, update inertia and canvas position
 			let dx = sctx.cursor.x - sctx.cursor.activeX;
 			let dy = sctx.cursor.y - sctx.cursor.activeY;
-			updateCanvasXY(dx, dy); // update the canvas position
+			CanvasUtils.updateCanvasXY(sctx, dx, dy); // update the canvas position
 
 			sctx.cursor.activeX = sctx.cursor.x;
 			sctx.cursor.activeY = sctx.cursor.y;
 
-			sctx.ix = Math.max(Math.min(sctx.cursor.vx * 15, sctx.iMax), -sctx.iMax);
-			sctx.iy = Math.max(Math.min(sctx.cursor.vy * 15, sctx.iMax), -sctx.iMax);
+			// calculate inertia
+			const intertialScaler = sctx.cursor.touch.usingTouch ? 1 : 10; // regular for touch, higher for cursors
+			sctx.ix = Math.max(Math.min(sctx.cursor.vx * intertialScaler, sctx.iMax), -sctx.iMax);
+			sctx.iy = Math.max(Math.min(sctx.cursor.vy * intertialScaler, sctx.iMax), -sctx.iMax);
 		} else {
 			// apply friction to inertia when no drag
-			updateCanvasXY(sctx.ix, sctx.iy); // update the canvas position
+			CanvasUtils.updateCanvasXY(sctx, sctx.ix, sctx.iy); // update the canvas position
 			sctx.ix *= Math.abs(sctx.ix) > sctx.iE ? 0.9 : 0;
 			sctx.iy *= Math.abs(sctx.iy) > sctx.iE ? 0.9 : 0;
 		}
@@ -404,19 +481,21 @@
 <section bind:this={canvasContainer} id="canvas-container" class="no-drag">
 	<canvas bind:this={canvas} id="main-canvas" class="no-drag" />
 
-	<pre id="debug">{JSON.stringify(
-			sctx,
-			(k, v) => {
-				if (k === "frameBuf") return undefined;
+	{#if sctx.debugMode}
+		<pre id="debug">{JSON.stringify(
+				sctx,
+				(k, v) => {
+					if (k === "frameBuf") return undefined;
 
-				// round numbers
-				if (k === "vx" || k === "vy") return Math.round(v * 1000) / 1000;
-				if (k === "lastPoll") return Math.round(v);
+					// round numbers
+					if (k === "vx" || k === "vy") return Math.round(v * 1000) / 1000;
+					if (k === "lastPoll") return Math.round(v);
 
-				return v;
-			},
-			4
-		)}</pre>
+					return v;
+				},
+				4
+			)}</pre>
+	{/if}
 </section>
 
 <style lang="scss">
@@ -434,7 +513,7 @@
 			left: 0;
 
 			touch-action: none;
-			image-rendering: pixelated; // turn off aliasing
+			// image-rendering: optimizeQuality; // turn off aliasing
 			border-radius: 8px;
 			overflow: hidden;
 			display: block;
