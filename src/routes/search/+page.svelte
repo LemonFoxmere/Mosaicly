@@ -2,11 +2,15 @@
 	let canvasCode = "";
 	let canvasFound = true;
 
-	// check if the canvas exists
-	// if yes: redirect to canvas
-	// else: show error message  (text has its own if statement)
+	/* check if the canvas exists
+	   if yes: redirect to canvas
+	   else: show error message  (text has its own if statement)
+	*/
+
+	const dummyCode = "aaaaaaaaaaaa";
 	function Submit() {
-		canvasFound = canvasCode.length > 0;
+		// always true
+		canvasFound = canvasCode == dummyCode;
 		if (canvasFound) window.location.href = "/canvas";
 	}
 </script>
