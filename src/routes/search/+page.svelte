@@ -63,6 +63,13 @@
 				</svg>
 			</button>
 		</div>
+
+		<p>
+			Put in entire code to click button.<br />
+			If code is all lowercase a: go to canvas.<br />
+			Else: show error message.
+		</p>
+
 		{#if canvasFound == false}
 			<p class="error-text">No canvas found</p>
 		{/if}

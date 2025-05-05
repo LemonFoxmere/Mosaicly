@@ -12,7 +12,7 @@
 	let localDisplayName = $derived(localUser?.profile?.displayName ?? "");
 	let localBio = $derived(localUser?.profile?.bio ?? "");
 
-	const dummyCanvas = [
+	const dummyCanvas = $state([
 		{
 			id: "1",
 			name: "My Canvas",
@@ -25,13 +25,24 @@
 			loc: "Cowell",
 			createdOn: new Date()
 		}
-	];
+	]);
 
 	// to be replaced with user data from db (will get from SSR)
 	let canvases = $state(dummyCanvas); // obj type
 
 	// toggle between Profile | Canvases tab
 	let isProfile = $state(true);
+
+	// function that adds a canvas to the array "canvases"
+	function CreateCanvas() {
+		let newItem = {
+			id: (canvases.length + 1).toString(),
+			name: `Canvas ${canvases.length + 1}`,
+			loc: "Engineering 2",
+			createdOn: new Date()
+		};
+		canvases.push(newItem);
+	}
 </script>
 
 <main>
@@ -79,6 +90,7 @@
 				<a href="./"><button style="margin: 1rem 0">Back</button></a>
 			</form>
 		{:else}
+			<button onclick={CreateCanvas}>Create Canvas</button>
 			<!-- canvases list render -->
 			<div class="canvas_list">
 				{#each canvases as canvas}
