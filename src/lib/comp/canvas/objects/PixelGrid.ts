@@ -1,4 +1,6 @@
 import type { SceneContext } from "../PixelCanvas.svelte";
+import { CanvasUtils } from "../utils/CanvasUtils";
+import { CursorUtils } from "../utils/CursorUtils";
 import { CanvasObject } from "./CanvasObject";
 
 // Structure for storing pixel information
@@ -21,6 +23,9 @@ export class PixelGrid extends CanvasObject {
 	gridSize = 256; // number of cells in one dimension
 	pixelWorldSize = 1; // how big a virtual pixel should be in real pixel-space units at zoom = 1
 
+	private buffer = document.createElement("canvas"); // for buffered rendering
+	private bufferCtx: CanvasRenderingContext2D;
+
 	constructor(
 		x: number,
 		y: number,
@@ -33,6 +38,10 @@ export class PixelGrid extends CanvasObject {
 		this.gridSize = gridSize;
 		this.pixelWorldSize = pixelWorldSize;
 		this.pixels = {};
+
+		this.buffer.width = this.gridSize;
+		this.buffer.height = this.gridSize;
+		this.bufferCtx = this.buffer.getContext("2d")!;
 	}
 
 	// Merge or create pixel at given cell coordinates
@@ -89,26 +98,47 @@ export class PixelGrid extends CanvasObject {
 
 		this.drawBackground(rctx, sctx, pixelDrawSize); // render the white background first
 
-		for (const cellKey in this.pixels) {
-			const [cellX, cellY] = cellKey.split(",").map(Number);
-			const pixelData = this.pixels[cellKey];
+		this.drawPixels(rctx, sctx, pixelDrawSize);
 
-			// Map cell coordinates to canvas coordinates
-			const canvasX = cellX * pixelDrawSize;
-			const canvasY = cellY * pixelDrawSize;
-
-			rctx.fillStyle = pixelData.color;
-			rctx.fillRect(
-				Math.floor(canvasX + sctx.absx),
-				Math.floor(canvasY + sctx.absy),
-				Math.ceil(pixelDrawSize),
-				Math.ceil(pixelDrawSize)
-			);
-		}
-
-		if (sctx.mode === "edit") {
+		if (sctx.mode === "edit" && !sctx.cursor.touch.usingTouch) {
 			this.drawBrushPreview(rctx, sctx); // render the brush preview last
 		}
+	}
+
+	// updated drawPixels:
+	private drawPixels(
+		rctx: CanvasRenderingContext2D,
+		sctx: SceneContext,
+		pixelDrawSize: number
+	): void {
+		const canvasSize = this.gridSize;
+		const scene = new Uint8ClampedArray(canvasSize * canvasSize * 4).fill(1);
+
+		for (const cellKey in this.pixels) {
+			let [cellX, cellY] = cellKey.split(",").map(Number);
+			cellX += Math.floor(canvasSize / 2);
+			cellY += Math.floor(canvasSize / 2);
+			if (cellX < 0 || cellX >= canvasSize || cellY < 0 || cellY >= canvasSize) continue;
+
+			const pixelData = this.pixels[cellKey];
+			const [r, g, b, a] = CanvasUtils.hexToRgba(pixelData.color);
+			const idx = (cellY * canvasSize + cellX) * 4;
+			scene[idx] = r;
+			scene[idx + 1] = g;
+			scene[idx + 2] = b;
+			scene[idx + 3] = Math.round(a * 255);
+		}
+
+		const imageData = new ImageData(scene, canvasSize, canvasSize);
+		this.bufferCtx.putImageData(imageData, 0, 0);
+
+		const half = Math.floor(canvasSize / 2) * pixelDrawSize;
+		const dx = Math.floor(sctx.absx) - half;
+		const dy = Math.floor(sctx.absy) - half;
+		const size = canvasSize * pixelDrawSize;
+
+		rctx.imageSmoothingEnabled = false; // use nearest neightbor instead of lerp
+		rctx.drawImage(this.buffer, dx, dy, size, size);
 	}
 
 	private drawBackground(
@@ -179,19 +209,27 @@ export class PixelGrid extends CanvasObject {
 		void sctx;
 	}
 
-	onMouseDown(sctx: SceneContext, e: MouseEvent): void {
-		this.onMouseMove(sctx, e);
+	onCursorDown(sctx: SceneContext): void {
+		if (sctx.cursor.touch.usingTouch && sctx.cursor.touch.touchPtCt === 1) {
+			this.onCursorMove(sctx);
+		} else if (!sctx.cursor.touch.usingTouch) {
+			this.onCursorMove(sctx);
+		}
 	}
-	onMouseMove(sctx: SceneContext, e: MouseEvent): void {
-		void e;
-
-		if (sctx.mode !== "edit" || sctx.cursor.rightActive) return;
+	onCursorMove(sctx: SceneContext): void {
+		if (sctx.mode !== "edit" || sctx.cursor.secondaryActive) return;
 
 		if (
 			sctx.cursor.relx < 0 ||
 			sctx.cursor.relx > sctx.width ||
 			sctx.cursor.rely < 0 ||
-			sctx.cursor.rely > sctx.height
+			sctx.cursor.rely > sctx.height ||
+			CursorUtils.getDist(
+				sctx.cursor.x,
+				sctx.cursor.y,
+				sctx.cursor.touch.initX,
+				sctx.cursor.touch.initY
+			) < 5 // avoid accidental touch draw while zooming or panning
 		) {
 			sctx.pixelGrid.brush.active = false;
 			return;
@@ -202,8 +240,15 @@ export class PixelGrid extends CanvasObject {
 			this.placePixel(sctx.cursor.relx, sctx.cursor.rely, sctx.pixelGrid.brush.color, sctx);
 		}
 	}
-	onMouseUp(sctx: SceneContext, e: MouseEvent): void {
-		void e;
+	onCursorUp(sctx: SceneContext): void {
+		if (
+			sctx.cursor.touch.usingTouch &&
+			sctx.cursor.touch.touchPtCt === 1 &&
+			sctx.mode === "edit"
+		) {
+			this.placePixel(sctx.cursor.relx, sctx.cursor.rely, sctx.pixelGrid.brush.color, sctx);
+		}
+
 		sctx.pixelGrid.brush.active = false;
 	}
 }

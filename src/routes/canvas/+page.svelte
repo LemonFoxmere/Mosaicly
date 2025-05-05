@@ -69,7 +69,6 @@
 		padding: 10px 0px;
 
 		// overflow: hidden;
-
 		#title-container {
 			width: 100%;
 			display: flex;
