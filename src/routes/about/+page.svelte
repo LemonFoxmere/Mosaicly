@@ -48,7 +48,12 @@
 	main {
 		width: 100%;
 		height: fit-content;
-		padding: 10px 30px 50px 30px;
+		margin: auto 0;
+		padding: 10px 30px;
+		display: flex;
+
+		// account for navbar height
+		padding-bottom: $navbar-height;
 
 		display: flex;
 		flex-direction: column;

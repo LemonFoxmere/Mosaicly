@@ -24,13 +24,12 @@
 
 	main {
 		width: 100%;
-		height: 100%;
+		height: fit-content;
+		margin: auto 0;
 		padding: 30px;
 		display: flex;
-		justify-content: center;
-		align-items: center;
 
-		// account for navbar to be truly centered
+		// account for navbar height
 		padding-bottom: $navbar-height;
 
 		#content {
