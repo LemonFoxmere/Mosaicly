@@ -69,13 +69,9 @@ export const load: LayoutServerLoad = async ({
 		showCta: true
 	};
 
-	if (["/login", "/profile"].includes(url.pathname)) {
+	if (["/login", "/profile", "/profile"].includes(url.pathname)) {
 		appearanceConfig.showLogo = true;
 		appearanceConfig.showCta = false;
-	}
-	if (["/profile"].includes(url.pathname)) {
-		appearanceConfig.showLogo = false;
-		appearanceConfig.showCta = true;
 	}
 
 	return {

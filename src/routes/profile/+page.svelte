@@ -37,8 +37,13 @@
 <main>
 	<!-- greet user -->
 	<section id="intro">
-		<h2>Hello, {localDisplayName}.</h2>
-		<p>You can edit your profile or manage your canvases here.</p>
+		<section id="title-container">
+			<h2 id="title"><span>Greetings,</span><br />{localDisplayName}.</h2>
+			{#if user}
+				<img id="pfp" src={user.profile.avatarUrl} alt="Profile Picture" />
+			{/if}
+		</section>
+		<p id="desc">You can edit your profile or manage your canvases here.</p>
 	</section>
 
 	<!-- toggle tabs -->
@@ -75,7 +80,7 @@
 					></textarea>
 				</label>
 
-				<button style="margin: 1rem 0">Save</button>
+				<button>Save</button>
 			</form>
 		{:else}
 			<!-- canvases list render -->
@@ -100,7 +105,6 @@
 	main {
 		padding: 5px 30px;
 		width: 100%;
-		height: 100%;
 
 		display: flex;
 		flex-direction: column;
@@ -108,10 +112,35 @@
 
 		justify-self: center;
 
+		@media screen and (min-width: $mobile-width) {
+			height: fit-content;
+			margin: auto 0px;
+			padding-bottom: calc(5px + $urlbar-height);
+		}
+
 		#intro {
 			display: flex;
 			flex-direction: column;
-			gap: 0.3rem;
+			row-gap: 20px;
+
+			#title-container {
+				display: flex;
+				align-items: center;
+				column-gap: 25px;
+
+				#title {
+					flex-grow: 1;
+					span {
+						font-weight: 400;
+					}
+				}
+
+				#pfp {
+					width: 64px;
+					height: 64px;
+					border-radius: 100%;
+				}
+			}
 		}
 
 		#tabs-cta {

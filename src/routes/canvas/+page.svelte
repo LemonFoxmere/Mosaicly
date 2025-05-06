@@ -61,12 +61,21 @@
 
 	main {
 		width: 100%;
-		height: calc(100% - 2px);
-
+		height: 100%;
 		display: flex;
+		flex-grow: 1;
+
 		flex-direction: column;
 		row-gap: 20px;
-		padding: 10px 0px;
+		padding: 10px 0px 8px 0px; // less on the bottom cuz of some optical illustion shit
+
+		@media screen and (min-width: $mobile-width) {
+			// desktop
+			height: fit-content;
+			flex-grow: 0;
+			margin: auto 0;
+			padding-bottom: $navbar-height;
+		}
 
 		// overflow: hidden;
 		#title-container {
@@ -95,6 +104,12 @@
 			row-gap: 5px;
 			padding: 0px 10px;
 			flex-grow: 1;
+
+			@media screen and (min-width: $mobile-width) {
+				height: 100%;
+				flex-grow: 0;
+				height: fit-content;
+			}
 		}
 	}
 </style>
