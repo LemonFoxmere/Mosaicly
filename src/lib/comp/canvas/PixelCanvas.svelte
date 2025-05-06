@@ -501,9 +501,14 @@
 
 	#canvas-container {
 		width: 100%;
-		height: 100%;
+		flex-grow: 1;
 		position: relative;
 		padding: 0;
+
+		@media screen and (min-width: $mobile-width) {
+			height: auto;
+			aspect-ratio: 1/1;
+		}
 
 		#main-canvas {
 			position: absolute;
