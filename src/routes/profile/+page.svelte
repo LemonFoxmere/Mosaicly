@@ -103,7 +103,7 @@
 				}}>Create Canvas</button
 			>
 			{#if isOpen}
-				<CanvasCreator {isOpen}></CanvasCreator>
+				<CanvasCreator isFormOpen={isOpen}></CanvasCreator>
 			{/if}
 
 			<!-- canvases list render -->
