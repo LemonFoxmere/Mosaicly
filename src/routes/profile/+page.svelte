@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
+	import CanvasCreator from "$lib/comp/profile/CanvasCreator.svelte";
 	import type { PageProps } from "./$types";
 
 	let { data }: PageProps = $props();
@@ -33,8 +34,8 @@
 	// toggle between Profile | Canvases tab
 	let isProfile = $state(true);
 
-	// function that adds a canvas to the array "canvases"
-	function CreateCanvas() {
+	// DELETE LATER: function that adds a canvas to the array "canvases"
+	function AddCanvasToPage() {
 		let newItem = {
 			id: (canvases.length + 1).toString(),
 			name: `Canvas ${canvases.length + 1}`,
@@ -43,6 +44,8 @@
 		};
 		canvases.push(newItem);
 	}
+
+	let isOpen = $state(false);
 </script>
 
 <main>
@@ -94,7 +97,15 @@
 				<button>Save</button>
 			</form>
 		{:else}
-			<button onclick={CreateCanvas}>Create Canvas</button>
+			<button
+				onclick={() => {
+					isOpen = true;
+				}}>Create Canvas</button
+			>
+			{#if isOpen}
+				<CanvasCreator {isOpen}></CanvasCreator>
+			{/if}
+
 			<!-- canvases list render -->
 			<div class="canvas_list">
 				{#each canvases as canvas}
