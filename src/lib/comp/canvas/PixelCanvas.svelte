@@ -65,11 +65,13 @@
 </script>
 
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import { CanvasObject } from "./objects/CanvasObject";
 	import { PixelGrid } from "./objects/PixelGrid";
 	import { CanvasUtils } from "./utils/CanvasUtils";
 	import { CursorUtils } from "./utils/CursorUtils";
+	import { createClient, RealtimeChannel } from '@supabase/supabase-js'
+	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
 
 	// external bindings
 	let {
@@ -77,6 +79,11 @@
 		mode = "view" as "view" | "edit",
 		load // dispatcher
 	} = $props();
+
+	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+	const channelName = 'qwer-tyui-opas'; // TODO: will change dynamically
+	let canvasChannel: RealtimeChannel | null = $state(null);
+	let isDirtyCanvas: Boolean = $state(false);
 
 	let loadErr: string | null = null;
 	let canvasContainer: HTMLElement;
@@ -94,7 +101,7 @@
 		}
 	});
 
-	let objects: Record<string, CanvasObject> = $state({});
+	let objects: Record<string, PixelGrid> = $state({}); // TODO: generalize this to CanvasObject
 
 	// initialization routine
 	const init = (): Error | null => {
@@ -104,6 +111,7 @@
 		if (err !== null) return err;
 		err = initObjects(); // initialize objects
 		// if (err !== null) return err;
+		initCanvasChannel();
 		initListeners(); // start listeners
 		startRoutines(); // start the game loop
 
@@ -137,6 +145,26 @@
 		objects["pixelGrid"] = pixelGrid;
 		return null;
 	};
+
+	// inits canvas channel
+	const initCanvasChannel = (): Error | null => {
+		canvasChannel = supabase.channel(channelName);
+		canvasChannel.on(
+			'broadcast', 
+			{ event: 'sync' },
+
+			(payload) => {
+				// console.log(payload.payload.pixels.pixels);
+				// console.log(objects["pixelGrid"].pixels.id);
+
+				Object.assign(objects["pixelGrid"].pixels, payload.payload.pixels.pixels);
+				// console.log(objects["pixelGrid"]);
+			}
+		)
+		.subscribe((status) => console.log(status));
+
+		return null;
+	}
 
 	// ====================================== LISTENERS =====================================
 
@@ -345,6 +373,16 @@
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = sctx.cursor.secondaryActive = false;
+
+		canvasChannel?.send({
+			type: 'broadcast',
+			event: 'sync',
+			payload: { 
+				pixels: objects["pixelGrid"],
+				channelName: channelName
+			}
+		})
+		.then((resp) => console.log(resp))
 	};
 
 	let scrollingTimeout: ReturnType<typeof setTimeout>;
