@@ -1,10 +1,10 @@
-function getCurrentPos(): Promise<GeolocationPosition> {
+const getCurrentPos = (): Promise<GeolocationPosition> => {
 	return new Promise((resolve, reject) =>
 		navigator.geolocation.getCurrentPosition(resolve, reject)
 	);
-}
+};
 
-async function requestGeolocationPermission(): Promise<boolean> {
+const requestGeolocationPermission = async (): Promise<boolean> => {
 	if (!navigator.permissions) {
 		return true;
 	}
@@ -22,7 +22,7 @@ async function requestGeolocationPermission(): Promise<boolean> {
 		console.warn("Permissions API error, proceeding to prompt for geolocation", err);
 		return true;
 	}
-}
+};
 
 // called before form submission to inject location state for db
 export const injectGeography = async ({ formData }: { formData: FormData }) => {
