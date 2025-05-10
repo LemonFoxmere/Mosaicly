@@ -12,13 +12,13 @@
 	<div
 		id="mobile-menu"
 		class={mobileMenuOpened ? "" : "disabled"}
-		on:touchmove={(e) => {
+		ontouchmove={(e) => {
 			e.preventDefault();
 			e.stopPropagation();
 		}}
-		on:click={closeMobileMenu}
+		onclick={closeMobileMenu}
 	>
-		<div id="menu-bg" on:click={(e) => e.stopPropagation()}>
+		<div id="menu-bg" onclick={(e) => e.stopPropagation()}>
 			<slot />
 		</div>
 	</div>
