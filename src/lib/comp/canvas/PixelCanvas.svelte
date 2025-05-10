@@ -65,7 +65,7 @@
 </script>
 
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import { CanvasObject } from "./objects/CanvasObject";
 	import { PixelGrid } from "./objects/PixelGrid";
 	import { CanvasUtils } from "./utils/CanvasUtils";
@@ -162,6 +162,22 @@
 			},
 			{ passive: false }
 		);
+	};
+
+	const cleanUpListeners = () => {
+		// cursor events
+		window.removeEventListener("mousedown", onMouseDown);
+		canvasContainer.removeEventListener("contextmenu", onMouseDown);
+		window.removeEventListener("mousemove", onMouseMove);
+		window.removeEventListener("mouseup", onMouseUp);
+		window.removeEventListener("resize", onWindowResize);
+
+		// touch events
+		canvasContainer.removeEventListener("touchstart", onTouchStart);
+		canvasContainer.removeEventListener("touchmove", onTouchMove);
+		canvasContainer.removeEventListener("touchend", onTouchEnd);
+
+		canvasContainer.removeEventListener("wheel", onMouseScroll);
 	};
 
 	// touch events
@@ -473,6 +489,9 @@
 		if (!err) {
 			loadErr = err;
 		}
+	});
+	onDestroy(() => {
+		cleanUpListeners();
 	});
 </script>
 
