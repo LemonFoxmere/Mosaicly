@@ -42,9 +42,6 @@
 			scan QR codes and scan the canvas QR code. You should be redirected back here where
 			we'll check if the canvas you scanned is real, and you can start drawing your stuff.
 			<br /><br />
-			Just remember, don't walk too far away from the canvas. Because you'll lose access, and no
-			one likes losing privilege.
-			<br /><br />
 			In the case that the canvas QR code is broken or un-scannable, you can put in the canvas
 			backup code below, and we'll check it the same way.
 		</p>
@@ -83,10 +80,7 @@
 		width: 100%;
 		height: fit-content;
 		margin: auto 0;
-		padding: 10px 30px;
-
-		// account for navbar height
-		padding-bottom: $navbar-height;
+		padding: 0px 30px;
 
 		display: flex;
 		flex-direction: column;
@@ -110,13 +104,15 @@
 			height: fit-content;
 
 			display: flex;
-			justify-content: flex-start;
+			justify-content: center;
 			align-items: center;
 			column-gap: 10px;
 
 			div {
 				background-color: $text-tertiary;
 				height: 5px;
+				border-radius: 5px;
+
 				&.dash {
 					width: 24px;
 				}

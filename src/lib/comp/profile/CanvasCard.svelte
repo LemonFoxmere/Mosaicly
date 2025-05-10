@@ -1,21 +1,21 @@
 <script lang="ts">
 	type Canvas = {
 		id: string;
-		name: string;
-		loc: string;
+		title: string;
+		loc_desc: string;
 		createdOn: Date;
 	};
 
 	let { canvas }: { canvas: Canvas } = $props();
 
-	const { id, name, loc, createdOn } = canvas;
+	const { id, title, loc_desc, createdOn } = canvas;
 </script>
 
 <div class="item-frame container">
 	<section>
 		<aside>
-			<div id="name">{name}</div>
-			{loc}
+			<div id="title">{title}</div>
+			{loc_desc}
 		</aside>
 		Created on {createdOn.toLocaleDateString("en-US").toString()}
 	</section>
@@ -40,7 +40,7 @@
 		gap: 22px;
 	}
 
-	#name {
+	#title {
 		font-weight: 600;
 	}
 
@@ -48,11 +48,15 @@
 		background-color: transparent;
 		place-self: center;
 		padding: 10px 15px;
-	}
 
-	#edit:hover {
-		border: 1.5px solid #362121;
-		border-radius: 8px;
-		border-bottom-width: 4px;
+		@media (hover: hover) {
+			&:hover {
+				opacity: 0.7;
+			}
+		}
+
+		&:active {
+			opacity: 0.8;
+		}
 	}
 </style>

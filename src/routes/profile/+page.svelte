@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { page } from "$app/state";
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
+	import CreateCanvasMenu from "$lib/comp/profile/CreateCanvasMenu.svelte";
 	import type { PageProps } from "./$types";
 
 	let { data }: PageProps = $props();
@@ -15,14 +17,16 @@
 	const dummyCanvas = [
 		{
 			id: "1",
-			name: "My Canvas",
-			loc: "Engineering 2",
+			title: "My Canvas",
+			loc_desc: "Engineering 2",
+			location: "0101000020AD10000000000000000000000000000000000000",
 			createdOn: new Date()
 		},
 		{
 			id: "2",
-			name: "Frog",
-			loc: "Cowell",
+			title: "Frog",
+			loc_desc: "Cowell",
+			location: "0101000020AD10000000000000000000000000000000000000",
 			createdOn: new Date()
 		}
 	];
@@ -38,7 +42,10 @@
 	<!-- greet user -->
 	<section id="intro">
 		<section id="title-container">
-			<h2 id="title"><span>Greetings,</span><br />{localDisplayName}.</h2>
+			<h2 id="title">
+				<span>Greetings,</span>
+				<br />{localDisplayName}.
+			</h2>
 			{#if user}
 				<img id="pfp" src={user.profile.avatarUrl} alt="Profile Picture" />
 			{/if}
@@ -88,6 +95,9 @@
 				{#each canvases as canvas}
 					<CanvasCard {canvas} />
 				{/each}
+
+				<!-- add new canvas, popup like modal -->
+				<CreateCanvasMenu />
 			</div>
 		{/if}
 	</section>
@@ -136,8 +146,8 @@
 				}
 
 				#pfp {
-					width: 64px;
-					height: 64px;
+					width: 60px;
+					height: 60px;
 					border-radius: 100%;
 				}
 			}
