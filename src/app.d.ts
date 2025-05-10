@@ -7,7 +7,10 @@ declare global {
 	namespace App {
 		interface Locals {
 			supabase: SupabaseClient;
-			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
+			safeGetSession: () => Promise<{
+				session: Session | null;
+				user: User | null;
+			}>;
 			session: Session | null;
 			user: User | null;
 		}
@@ -32,10 +35,10 @@ declare global {
 		app_metadata: {
 			provider?: string;
 			providers?: string[];
-			[key: string];
+			[key: string]: unknown;
 		};
 		user_metadata: {
-			[key: string];
+			[key: string]: unknown;
 		};
 		role: string;
 		aal: string;
@@ -43,6 +46,21 @@ declare global {
 		session_id: string;
 		is_anonymous: boolean;
 	};
-}
 
-export {};
+	namespace DB {
+		type Canvas = {
+			id: string;
+			user_id: string;
+			created_on: string;
+
+			title: string | null;
+			loc_desc: string;
+			drawing?: Json | null;
+
+			longitude: number;
+			latitude: number;
+			accuracy: string;
+			location: unknown;
+		};
+	}
+}
