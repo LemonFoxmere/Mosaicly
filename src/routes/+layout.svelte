@@ -35,7 +35,7 @@
 	<nav bind:this={navbar} id="navbar" class="no-drag is-at-top">
 		<!-- <button class="small">Log in</button> -->
 		{#if showLogo}
-			<a class="wrapper item" href="/">
+			<a class="wrapper item" href="/" on:click={closeMobileMenu}>
 				<div id="logo"><MosaiclyLogo s={28} /></div>
 				<!-- <p id="logo-text">mosaicly</p> -->
 			</a>

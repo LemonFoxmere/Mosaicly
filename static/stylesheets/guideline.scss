@@ -78,8 +78,8 @@ $global-max-width: 700px;
 .glass-heavy {
 	background-color: $background-primary-translucent-heavy;
 
-	backdrop-filter: blur(40px);
-	-webkit-backdrop-filter: blur(40px);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
 }
 
 .glass-light {

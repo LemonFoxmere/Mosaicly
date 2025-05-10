@@ -49,7 +49,7 @@ The goal with Mosaicly is to give people something stupidly low-effort to bond o
 - **You have to show up IRL** to edit. No couch contributions allowed.
 - **It’s fast, lightweight, and works on your browser** — no install required.
 - **It uses real-time updates, points, and unlocks** — because who doesn’t like pixels and XP.
-  <!-- - **It’s fun and stupid**. Like most of UCSC demands. -->
+      <!-- - **It’s fun and stupid**. Like most of UCSC demands. -->
 
 It's probably not going to change your life. But it forces you to go outside and potentially meet people that you can talk to. That’s good enough for us.
 
