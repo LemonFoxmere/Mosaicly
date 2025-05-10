@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { page } from "$app/state";
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
 	import CreateCanvasMenu from "$lib/comp/profile/CreateCanvasMenu.svelte";
 	import type { PageProps } from "./$types";
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	// get session and user from the page data
 	let session = $derived(data.session);
@@ -12,9 +13,14 @@
 
 	let canvases = $derived<DB.Canvas[]>(data.canvas || []);
 
+	// user copy, for optimistic ui updates
 	let localUser = user;
 	let localDisplayName = $derived(localUser?.profile?.displayName ?? "");
 	let localBio = $derived(localUser?.profile?.bio ?? "");
+
+	let isUnsaved = $derived(
+		localBio != user?.profile.bio || localDisplayName != user.profile.displayName
+	);
 
 	// toggle between Profile | Canvases tab
 	let isProfile = $state(true);
@@ -48,13 +54,23 @@
 	<section id="edit-content">
 		{#if isProfile}
 			<!-- profile render -->
-			<form method="POST" action="?/update_profile" id="profile_form">
+			<form
+				method="POST"
+				action="?/update_profile"
+				id="profile_form"
+				use:enhance={() => {
+					return async ({ update }) => {
+						await update({ reset: false });
+					};
+				}}
+			>
 				<label>
 					<p class="caption">Display Name</p>
 					<input
 						name="disp-name"
 						type="text"
 						placeholder="Guy"
+						autocomplete="off"
 						bind:value={localDisplayName}
 					/>
 				</label>
@@ -65,10 +81,16 @@
 						name="bio"
 						placeholder="I'm just a chill guy."
 						rows="3"
-						value={localBio}
+						autocomplete="off"
+						bind:value={localBio}
 					></textarea>
 				</label>
 
+				{#if isUnsaved}
+					<p>There are unsaved changes!</p>
+				{:else if form?.success}
+					<p>Your changes are saved!</p>
+				{/if}
 				<button>Save</button>
 			</form>
 		{:else}

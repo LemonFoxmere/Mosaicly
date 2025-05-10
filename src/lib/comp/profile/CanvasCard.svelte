@@ -1,6 +1,8 @@
 <script lang="ts">
-	let { canvas }: { canvas: DB.Canvas } = $props();
+	import Modal from "./EditCanvasModal.svelte";
+	let isOpen = $state(false);
 
+	let { canvas }: { canvas: DB.Canvas } = $props();
 	const options: Intl.DateTimeFormatOptions = {
 		month: "long",
 		day: "numeric",
@@ -17,8 +19,11 @@
 			.replace(" at", " @");
 	};
 
-	const { id, title, loc_desc, created_on } = canvas;
+	const { title, loc_desc, created_on } = canvas;
 </script>
+
+<!-- overlays page when modal open -->
+<Modal bind:open={isOpen} {canvas} />
 
 <div class="item-frame container">
 	<section>
@@ -29,9 +34,9 @@
 		Created on {format(created_on)}
 	</section>
 
-	<a id="edit" href={`/canvas/${id}`}>
+	<button id="edit" onclick={() => (isOpen = true)}>
 		<img src="icons/pencil.svg" alt="edit" />
-	</a>
+	</button>
 </div>
 
 <style>
@@ -56,7 +61,7 @@
 	#edit {
 		background-color: transparent;
 		place-self: center;
-		padding: 10px 15px;
+		padding: 25px 15px;
 
 		@media (hover: hover) {
 			&:hover {

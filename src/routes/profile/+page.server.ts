@@ -12,16 +12,18 @@ export const load: PageServerLoad = async ({ locals: { supabase, user, safeGetSe
 
 export const actions = {
 	// save profile on focus lost
-	update_profile: async ({ request, locals: { supabase } }) => {
-		void request;
-		void supabase; // TODO: remove this line when supabase is used
+	update_profile: async ({ request, locals: { user, supabase } }) => {
+		const data = await request.formData();
+		const display_name = data.get("disp-name");
+		const bio = data.get("bio");
 
-		// const data = await request.formData();
-		// const name = data.get("disp-name");
-		// const bio = data.get("bio");
-
-		// console.log(name, bio);
-		// const user = await db.updateUser(displayName, bio);
+		const { error } = await supabase
+			.from("user_profile")
+			.update({ display_name, bio })
+			.eq("id", user.id);
+		if (error) {
+			return { success: false, message: `error: ${error}` };
+		}
 
 		return { success: true };
 	}
