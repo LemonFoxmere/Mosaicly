@@ -87,9 +87,9 @@
 				</label>
 
 				{#if isUnsaved}
-					<p>There are unsaved changes!</p>
+					<p class="warning center">There are unsaved changes!</p>
 				{:else if form?.success}
-					<p>Your changes are saved!</p>
+					<p class="center">Your changes are saved!</p>
 				{/if}
 				<button>Save</button>
 			</form>
@@ -178,6 +178,15 @@
 				label {
 					display: flex;
 					flex-direction: column;
+				}
+
+				.center {
+					align-self: center;
+					margin-top: 10px;
+				}
+
+				.warning {
+					color: #b11012;
 				}
 			}
 		}
