@@ -1,21 +1,21 @@
 <script lang="ts">
 	type Canvas = {
 		id: string;
-		name: string;
-		loc: string;
+		title: string;
+		loc_desc: string;
 		createdOn: Date;
 	};
 
 	let { canvas }: { canvas: Canvas } = $props();
 
-	const { id, name, loc, createdOn } = canvas;
+	const { id, title, loc_desc, createdOn } = canvas;
 </script>
 
 <div class="item-frame container">
 	<section>
 		<aside>
-			<div id="name">{name}</div>
-			{loc}
+			<div id="title">{title}</div>
+			{loc_desc}
 		</aside>
 		Created on {createdOn.toLocaleDateString("en-US").toString()}
 	</section>
@@ -40,7 +40,7 @@
 		gap: 22px;
 	}
 
-	#name {
+	#title {
 		font-weight: 600;
 	}
 
