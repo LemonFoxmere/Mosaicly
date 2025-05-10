@@ -48,11 +48,15 @@
 		background-color: transparent;
 		place-self: center;
 		padding: 10px 15px;
-	}
 
-	#edit:hover {
-		border: 1.5px solid #362121;
-		border-radius: 8px;
-		border-bottom-width: 4px;
+		@media (hover: hover) {
+			&:hover {
+				opacity: 0.7;
+			}
+		}
+
+		&:active {
+			opacity: 0.8;
+		}
 	}
 </style>
