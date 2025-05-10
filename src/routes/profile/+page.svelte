@@ -136,8 +136,8 @@
 				}
 
 				#pfp {
-					width: 64px;
-					height: 64px;
+					width: 60px;
+					height: 60px;
 					border-radius: 100%;
 				}
 			}
