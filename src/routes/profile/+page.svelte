@@ -10,29 +10,11 @@
 	let session = $derived(data.session);
 	let user = $derived(data.user);
 
+	let canvases = $derived<DB.Canvas[]>(data.canvas || []);
+
 	let localUser = user;
 	let localDisplayName = $derived(localUser?.profile?.displayName ?? "");
 	let localBio = $derived(localUser?.profile?.bio ?? "");
-
-	const dummyCanvas = [
-		{
-			id: "1",
-			title: "My Canvas",
-			loc_desc: "Engineering 2",
-			location: "0101000020AD10000000000000000000000000000000000000",
-			createdOn: new Date()
-		},
-		{
-			id: "2",
-			title: "Frog",
-			loc_desc: "Cowell",
-			location: "0101000020AD10000000000000000000000000000000000000",
-			createdOn: new Date()
-		}
-	];
-
-	// to be replaced with user data from db (will get from SSR)
-	let canvases = $state(dummyCanvas); // obj type
 
 	// toggle between Profile | Canvases tab
 	let isProfile = $state(true);

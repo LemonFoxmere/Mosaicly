@@ -1,4 +1,14 @@
 import type { Actions } from "./$types";
+import { redirect } from "@sveltejs/kit";
+import type { PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async ({ locals: { supabase, user, safeGetSession } }) => {
+	const { session } = await safeGetSession();
+	if (!session) redirect(403, "/login");
+
+	const { data, error } = await supabase.from("canvas").select().eq("user_id", user.id);
+	return { canvas: data };
+};
 
 export const actions = {
 	// save profile on focus lost

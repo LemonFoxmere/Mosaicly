@@ -1,14 +1,23 @@
 <script lang="ts">
-	type Canvas = {
-		id: string;
-		title: string;
-		loc_desc: string;
-		createdOn: Date;
+	let { canvas }: { canvas: DB.Canvas } = $props();
+
+	const options: Intl.DateTimeFormatOptions = {
+		month: "long",
+		day: "numeric",
+		year: "numeric",
+		// hour: 'numeric',
+		// minute: '2-digit',
+		hour12: true
 	};
 
-	let { canvas }: { canvas: Canvas } = $props();
+	const format = (datestr: string) => {
+		return new Date(datestr)
+			.toLocaleString("en-US", options)
+			.replace(",", "")
+			.replace(" at", " @");
+	};
 
-	const { id, title, loc_desc, createdOn } = canvas;
+	const { id, title, loc_desc, created_on } = canvas;
 </script>
 
 <div class="item-frame container">
@@ -17,10 +26,10 @@
 			<div id="title">{title}</div>
 			{loc_desc}
 		</aside>
-		Created on {createdOn.toLocaleDateString("en-US").toString()}
+		Created on {format(created_on)}
 	</section>
 
-	<a id="edit" href={`/canvas/${canvas.id}`}>
+	<a id="edit" href={`/canvas/${id}`}>
 		<img src="icons/pencil.svg" alt="edit" />
 	</a>
 </div>
