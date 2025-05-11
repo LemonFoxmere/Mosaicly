@@ -8,7 +8,7 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
 	const { session } = await safeGetSession();
 	if (!session) {
-		redirect(303, "/login"); // why did it do profile changed it to login
+		redirect(303, "/login");
 	}
 	// also you can return props to the page if needed for logged-in users
 	return {};
