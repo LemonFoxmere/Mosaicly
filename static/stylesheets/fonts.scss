@@ -33,6 +33,7 @@ h1 {
 	line-height: 46px;
 	font-weight: 800;
 }
+
 h2 {
 	font-size: 28px;
 	line-height: 36px;
@@ -51,12 +52,14 @@ pre {
 	color: $text-secondary;
 	font-weight: 400;
 }
+
 a {
 	// link color
 	color: $text-tertiary;
 	text-decoration-line: underline;
 	text-decoration-thickness: 10%; // thick ahh boi
 }
+
 ol,
 ul,
 li {
