@@ -1,61 +1,54 @@
 <script lang="ts">
 	export let currentStep: number;
-	const totalSteps = 3;
+	export let totalSteps: number = 3;
 </script>
 
-<div class="step-indicator-wrapper">
-	<div class="step-indicator">
-		{#each Array(totalSteps) as _, i}
-			<div class="step">
-				<div class="dot" class:active={i + 1 === currentStep} />
-				{#if i < totalSteps - 1}
-					<div class="line" class:active={i + 1 < currentStep} />
-				{/if}
-			</div>
-		{/each}
-	</div>
+<div class="step-indicator" aria-label="Progress">
+	{#each Array(totalSteps) as _, idx}
+		<span class="dot" class:active={idx + 1 === currentStep} />
+		{#if idx + 1 < totalSteps}
+			<span class="line" class:active={idx + 1 < currentStep} />
+		{/if}
+	{/each}
 </div>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
-	.step-indicator-wrapper {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		padding: 10px 0;
-		width: 100%; // Ensure it can be centered if parent is wider
-	}
-
 	.step-indicator {
 		display: flex;
 		align-items: center;
-	}
-
-	.step {
-		display: flex;
-		align-items: center;
+		width: 100%;
+		padding: 10px 0;
+		margin: 0;
 	}
 
 	.dot {
+		flex: none;
 		width: 12px;
 		height: 12px;
-		border-radius: 50%;
 		border: 2px solid $text-primary;
-		background-color: $background-primary; // empty circle ()
+		border-radius: 50%;
+		background-color: $background-primary;
 		transition:
-			background-color 0.3s ease,
-			border-color 0.3s ease;
+			background-color 0.3s $out-generic-expo,
+			border-color 0.3s $out-generic-expo;
+	}
 
-		&.active {
-			background-color: $text-primary; // filled circle ;)
-			border-color: $text-primary;
-		}
+	.dot.active {
+		background-color: $text-primary;
+		border-color: $text-primary;
 	}
 
 	.line {
+		flex: 1;
 		height: 2px;
-		width: 30px;
 		background-color: $text-primary;
+		opacity: 0.3;
+		transition: opacity 0.3s $out-generic-expo;
+	}
+
+	.line.active {
+		opacity: 1;
 	}
 </style>
