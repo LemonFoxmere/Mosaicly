@@ -1,37 +1,14 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
 
 	interface Props {
 		canvasName: string;
 		onSave: () => void;
 		currentStep: number;
+		onQrImage?: () => void;
+		onQrPdf?: () => void;
 	}
-	let { canvasName, onSave, currentStep }: Props = $props();
-
-	let actionButtonsGroup: HTMLElement;
-
-	// ts was made to function to adjust button heights based on their width
-	function adjustButtonHeights() {
-		if (!actionButtonsGroup) return;
-
-		const buttons = actionButtonsGroup.querySelectorAll(".action-button");
-		buttons.forEach((button) => {
-			const buttonWidth = button.clientWidth;
-			if (button.clientHeight > buttonWidth) {
-				(button as HTMLElement).style.height = `${buttonWidth}px`;
-			}
-		});
-	}
-
-	onMount(() => {
-		adjustButtonHeights();
-		window.addEventListener("resize", adjustButtonHeights);
-
-		return () => {
-			window.removeEventListener("resize", adjustButtonHeights);
-		};
-	});
+	let { canvasName, onSave, currentStep, onQrImage, onQrPdf }: Props = $props();
 </script>
 
 <section class="step step-3">
@@ -40,7 +17,6 @@
 	<div class="form-content">
 		<div class="final-message">
 			<p class="heading"><strong>Congratulations, you did it.</strong></p>
-			<p style="margin-top: 0.5rem;"></p>
 			<p>
 				Your "<strong>{canvasName || "Frog"}</strong>" canvas was created successfully, and
 				is now visible to the public. If people can find where you put your QR code, they
@@ -54,9 +30,19 @@
 			</p>
 		</div>
 
-		<div class="action-buttons-group" bind:this={actionButtonsGroup}>
-			<button type="button" class="action-button image-button" disabled></button>
-			<button type="button" class="action-button pdf-button" disabled></button>
+		<div class="action-buttons-group">
+			<button
+				type="button"
+				class="action-button image-button"
+				disabled={!onQrImage}
+				on:click={() => onQrImage && onQrImage()}
+			></button>
+			<button
+				type="button"
+				class="action-button pdf-button"
+				disabled={!onQrPdf}
+				on:click={() => onQrPdf && onQrPdf()}
+			></button>
 		</div>
 	</div>
 </section>
@@ -89,19 +75,18 @@
 			margin: 0;
 			padding: 0;
 			line-height: 1.5;
+			&:not(:first-child) {
+				margin-top: 0.5rem;
+			}
 			&.description {
 				margin-top: 0.5rem;
 			}
 		}
 
-		.spacing-element {
-			height: 0.5rem;
-		}
-
 		.heading {
 			@extend h2;
 			font-size: 18px;
-			font-weight: 700;
+			font-weight: 800;
 			color: $text-primary;
 
 			&.whats-next {
@@ -116,44 +101,53 @@
 		width: 100%;
 		margin-top: 0.5rem;
 		gap: 10px;
-		height: 30vh;
+		height: auto;
+		min-height: 6rem;
+		max-height: 30vh;
+
+		@media (max-width: 600px) {
+			flex-direction: column;
+			height: auto;
+		}
 
 		.action-button {
 			@extend button, .outline;
 			border-radius: 8px;
-			width: calc(50% - 5px);
+			width: 100%;
 			height: 100%;
-			min-height: 100px;
+			min-height: 6rem;
 			max-height: 100%;
 			padding: 0;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			opacity: 0.4;
-			cursor: not-allowed;
 			box-sizing: border-box;
 
 			&.image-button::before {
 				content: "🖼️";
-				font-size: 36px;
+				font-size: 2.25rem;
 			}
 
 			&.pdf-button::before {
 				content: "📄";
-				font-size: 36px;
+				font-size: 2.25rem;
 			}
 
-			&:hover,
-			&:focus {
-				opacity: 0.4 !important; // keep opacity consistent
+			&:focus-visible {
+				outline: 2px solid $text-tertiary;
+				outline-offset: 2px;
 			}
 
-			&:active {
-				opacity: 0.4 !important;
-				transform: translateY(1.5px);
-				border-bottom-width: 1.5px;
-				margin-top: 0;
-				height: 100%;
+			&:not(:disabled) {
+				cursor: pointer;
+				opacity: 1;
+				pointer-events: auto;
+			}
+
+			&:disabled {
+				cursor: not-allowed;
+				opacity: 0.4;
+				pointer-events: none;
 			}
 		}
 	}

@@ -86,6 +86,11 @@
 				padding: 0;
 				font-size: 24px;
 				box-sizing: border-box;
+
+				&:focus-visible {
+					outline: 2px solid $text-tertiary;
+					outline-offset: 2px;
+				}
 			}
 		}
 	}

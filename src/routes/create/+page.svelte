@@ -9,7 +9,6 @@
 	import Step3 from "./Step3.svelte";
 	import NavCluster from "$lib/comp/canvas/create/NavCluster.svelte";
 
-	// Local state (Svelte 5 idiom)
 	let currentStep = $state(1);
 	let canvasName = $state("");
 	let locationDescription = $state("");
@@ -18,10 +17,8 @@
 	let formLongitude = $state("");
 	let formAccuracy = $state("");
 
-	// Hidden form ref
 	let hiddenFormElement: HTMLFormElement;
 
-	// Error state
 	let errorState = $state({ flag: false, message: "" });
 
 	const nextStep = () => {
@@ -58,9 +55,7 @@
 
 	const submitOptions = () => {
 		return async ({
-			formData,
-			result,
-			update
+			result
 		}: {
 			formData: FormData;
 			result: ActionResult;

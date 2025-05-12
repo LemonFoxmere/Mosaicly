@@ -73,7 +73,6 @@
 		gap: 15px;
 
 		.location-description {
-			height: calc(100vh - 470px);
 			max-height: 40vh;
 		}
 	}

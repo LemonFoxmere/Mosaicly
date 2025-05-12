@@ -50,10 +50,15 @@
 			border-bottom-width: 1.5px;
 			transform: translateY(1.5px);
 		}
+
+		&:focus-visible {
+			outline: 2px solid $text-tertiary;
+			outline-offset: 2px;
+		}
 	}
 
 	.back-button:not(:disabled):active,
-	.next-button:active {
+	.next-button:not(:disabled):active {
 		margin-top: 1.5px;
 		height: calc(50px - 1.5px);
 		border-bottom-width: 1.5px;
