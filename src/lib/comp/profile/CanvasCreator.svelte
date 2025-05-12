@@ -25,7 +25,18 @@
 	}
 
 	function CreateCanvas() {
-		CloseForm();
+		let newCanvas = {
+			id: 1,
+			name: nameField,
+			loc: "Somewhere",
+			locDescription: descriptionField,
+			createdOn: new Date()
+		};
+
+		// probably redirect to canvas
+		window.location.href = "/canvas";
+
+		// CloseForm();
 	}
 </script>
 
