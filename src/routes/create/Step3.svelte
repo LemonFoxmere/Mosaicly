@@ -22,7 +22,7 @@
 				is now visible to the public. If people can find where you put your QR code, they
 				will be able to scan it and draw on your canvas.
 			</p>
-			<p class="heading whats-next"><strong>What's next?</strong></p>
+			<p class="heading"><strong>What's next?</strong></p>
 			<p class="description">
 				Click one of the buttons below to get a QR code of your canvas. You need to get this
 				code into the real world somehow (most people like to print it out) and stick it to
