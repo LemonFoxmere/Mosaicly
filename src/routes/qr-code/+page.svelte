@@ -1,29 +1,24 @@
 <script lang="ts">
 	import QrGenerator from "$lib/comp/qr-code/QRGenerator.svelte";
 
-	let inputQR = $state("wag");
-
-	function GenerateQR(link: string) {
-		return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + link;
-	}
-
-	let qrSRC = "";
+	let inputText = $state("wag");
+	let finalText = $state(inputText);
 </script>
 
 <main>
 	<h1>QR code generator testing</h1>
 	<div>
-		<input type="text" bind:value={inputQR} placeholder="link to generate" />
+		<input type="text" bind:value={inputText} placeholder="link to generate" />
 		<button
 			onclick={() => {
-				qrSRC = GenerateQR(inputQR);
-				console.log(qrSRC);
+				finalText = inputText;
+				console.log(finalText);
 			}}>Submit</button
 		>
 	</div>
 	<div id="QR-holder">
-		<p>Here is where the QR code should be:</p>
-		<QrGenerator {qrSRC}></QrGenerator>
+		<p>Where the QR code should be:</p>
+		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
 </main>
 
@@ -32,7 +27,7 @@
 
 	#QR-holder {
 		background: #fff;
-		padding: 2rem;
-		border-radius: 0.75rem;
+		padding: 2px;
+		border-radius: 5px;
 	}
 </style>
