@@ -1,33 +1,14 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
-	export let canvasName: string;
-	export let onSave: () => void;
-	export let currentStep: number;
 
-	let actionButtonsGroup: HTMLElement;
-
-	// ts was made to function to adjust button heights based on their width
-	function adjustButtonHeights() {
-		if (!actionButtonsGroup) return;
-
-		const buttons = actionButtonsGroup.querySelectorAll(".action-button");
-		buttons.forEach((button) => {
-			const buttonWidth = button.clientWidth;
-			if (button.clientHeight > buttonWidth) {
-				(button as HTMLElement).style.height = `${buttonWidth}px`;
-			}
-		});
+	interface Props {
+		canvasName: string;
+		onSave: () => void;
+		currentStep: number;
+		onQrImage?: () => void;
+		onQrPdf?: () => void;
 	}
-
-	onMount(() => {
-		adjustButtonHeights();
-		window.addEventListener("resize", adjustButtonHeights);
-
-		return () => {
-			window.removeEventListener("resize", adjustButtonHeights);
-		};
-	});
+	let { canvasName, onSave, currentStep, onQrImage, onQrPdf }: Props = $props();
 </script>
 
 <section class="step step-3">
@@ -36,13 +17,12 @@
 	<div class="form-content">
 		<div class="final-message">
 			<p class="heading"><strong>Congratulations, you did it.</strong></p>
-			<div class="spacing-element"></div>
-			<p>
+			<p class="description">
 				Your "<strong>{canvasName || "Frog"}</strong>" canvas was created successfully, and
 				is now visible to the public. If people can find where you put your QR code, they
 				will be able to scan it and draw on your canvas.
 			</p>
-			<p class="heading whats-next"><strong>What's next?</strong></p>
+			<p class="heading"><strong>What's next?</strong></p>
 			<p class="description">
 				Click one of the buttons below to get a QR code of your canvas. You need to get this
 				code into the real world somehow (most people like to print it out) and stick it to
@@ -50,17 +30,23 @@
 			</p>
 		</div>
 
-		<div class="action-buttons-group" bind:this={actionButtonsGroup}>
-			<button
-				type="button"
-				class="action-button image-button"
-				on:click|stopPropagation={() => {}}
-			></button>
-			<button
-				type="button"
-				class="action-button pdf-button"
-				on:click|stopPropagation={() => {}}
-			></button>
+		<div class="action-buttons-group">
+			<div class="action-button-wrapper">
+				<button
+					type="button"
+					class="action-button image-button"
+					disabled={!onQrImage}
+					on:click={() => onQrImage && onQrImage()}
+				></button>
+			</div>
+			<div class="action-button-wrapper">
+				<button
+					type="button"
+					class="action-button pdf-button"
+					disabled={!onQrPdf}
+					on:click={() => onQrPdf && onQrPdf()}
+				></button>
+			</div>
 		</div>
 	</div>
 </section>
@@ -74,38 +60,44 @@
 		display: flex;
 		flex-direction: column;
 		gap: 15px;
+		flex: 1 1 auto;
+		min-height: 0;
 	}
 
 	.form-content {
 		width: 100%;
 		display: flex;
 		flex-direction: column;
+		flex: 1 1 auto;
+		min-height: 0;
 		gap: 15px;
 	}
 
 	.final-message {
+		flex: 0 0 auto;
 		text-align: left;
 		margin-bottom: 0.5rem;
 		margin-top: 8px;
+		overflow: auto;
+		max-height: 30vh;
 
 		p {
 			@extend p;
 			margin: 0;
 			padding: 0;
 			line-height: 1.5;
+			&:not(:first-child) {
+				margin-top: 0.5rem;
+			}
 			&.description {
 				margin-top: 0.5rem;
 			}
 		}
 
-		.spacing-element {
-			height: 0.5rem;
-		}
-
 		.heading {
 			@extend h2;
 			font-size: 18px;
-			font-weight: 700;
+			font-weight: 800;
 			color: $text-primary;
 
 			&.whats-next {
@@ -116,48 +108,64 @@
 
 	.action-buttons-group {
 		display: flex;
-		justify-content: space-between;
-		width: 100%;
-		margin-top: 0.5rem;
+		align-items: flex-start;
+		justify-content: stretch;
 		gap: 10px;
-		height: 30vh;
+		min-height: 0;
+		margin-top: 0;
+	}
 
-		.action-button {
-			@extend button, .outline;
-			border-radius: 8px;
-			width: calc(50% - 5px);
-			height: 100%;
-			min-height: 100px;
-			max-height: 100%;
-			padding: 0;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			opacity: 0.4;
+	.action-button-wrapper {
+		width: 100%;
+		min-width: 0;
+		min-height: 0;
+		display: flex;
+		align-items: flex-start;
+		justify-content: stretch;
+	}
+
+	.action-button {
+		@extend button, .outline;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1/1;
+		border-radius: 8px;
+		padding: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		box-sizing: border-box;
+
+		&.image-button::before {
+			content: "🖼️";
+			font-size: 2.25rem;
+		}
+
+		&.pdf-button::before {
+			content: "📄";
+			font-size: 2.25rem;
+		}
+
+		&:focus-visible {
+			outline: 2px solid $text-tertiary;
+			outline-offset: 2px;
+		}
+
+		&:not(:disabled) {
+			cursor: pointer;
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		&:disabled {
 			cursor: not-allowed;
-			box-sizing: border-box;
-
-			&.image-button::before {
-				content: "🖼️";
-				font-size: 36px;
-			}
-
-			&.pdf-button::before {
-				content: "📄";
-				font-size: 36px;
-			}
-
-			&:hover,
-			&:focus {
-				opacity: 0.4 !important; // keep opacity consistent
-			}
-
+			opacity: 0.3;
+			pointer-events: none;
 			&:active {
-				opacity: 0.4 !important;
-				transform: translateY(1.5px);
-				border-bottom-width: 1.5px;
 				margin-top: 0;
-				height: 100%;
+				height: auto;
+				border-bottom-width: 4px;
+				transform: none;
 			}
 		}
 	}

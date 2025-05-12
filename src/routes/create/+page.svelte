@@ -9,21 +9,16 @@
 	import Step3 from "./Step3.svelte";
 	import NavCluster from "$lib/comp/canvas/create/NavCluster.svelte";
 
-	// reactive state
 	let currentStep = $state(1);
-
 	let canvasName = $state("");
 	let locationDescription = $state("");
 	let canvasCoordinates = $state("");
-
 	let formLatitude = $state("");
 	let formLongitude = $state("");
 	let formAccuracy = $state("");
 
-	// hidden form ref
 	let hiddenFormElement: HTMLFormElement;
 
-	// error handling
 	let errorState = $state({ flag: false, message: "" });
 
 	const nextStep = () => {
@@ -60,9 +55,7 @@
 
 	const submitOptions = () => {
 		return async ({
-			formData,
-			result,
-			update
+			result
 		}: {
 			formData: FormData;
 			result: ActionResult;
@@ -87,10 +80,6 @@
 
 <main class="create-canvas-page">
 	<div class="page-content">
-		<style>
-			/* Styles removed as they are now in Step2.svelte */
-		</style>
-
 		{#if currentStep === 1}
 			<Step1 bind:canvasName bind:locationDescription {currentStep} />
 		{:else if currentStep === 2}
@@ -104,6 +93,10 @@
 			<Step3 {canvasName} {currentStep} onSave={saveCanvas} />
 		{/if}
 	</div>
+
+	{#if errorState.flag}
+		<p class="global-error-message">{errorState.message}</p>
+	{/if}
 
 	{#if currentStep < 3}
 		<div class="bottom-nav-container" class:step-1={currentStep === 1}>
@@ -122,7 +115,7 @@
 		action="/api/canvas?/createCanvas"
 		use:enhance={submitOptions}
 		bind:this={hiddenFormElement}
-		style="display: none;"
+		class="hidden-form"
 	>
 		<input type="hidden" name="title" value={canvasName} />
 		<input type="hidden" name="loc_desc" value={locationDescription} />
@@ -144,25 +137,40 @@
 		padding: 0 20px;
 		padding-top: 20px;
 		min-height: 100vh;
-		background-color: $background-primary;
-		color: $text-primary;
+		height: 100vh;
 		width: 100%;
 		max-width: $global-max-width;
 		margin: 0 auto;
+		background-color: $background-primary;
+		color: $text-primary;
+		flex: 1 1 auto;
 		position: relative;
-		padding-bottom: 20px;
+		min-height: 0;
 	}
 
 	.page-content {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 auto;
+		min-height: 0;
 		width: 100%;
-		flex-grow: 1;
 		padding-bottom: 0;
-		margin-bottom: 20px;
+		margin-bottom: 0;
+	}
+
+	.global-error-message {
+		@extend p;
+		color: $accent-error;
+		font-size: 14px;
+		text-align: center;
+		width: 100%;
+		padding: 10px 0;
+		margin-top: auto;
+		margin-bottom: 10px;
 	}
 
 	.bottom-nav-container {
 		background-color: $background-primary;
-		padding: 15px 0;
 		width: 100%;
 		max-width: $global-max-width;
 		margin-left: auto;
@@ -181,5 +189,15 @@
 		width: 100%;
 		height: 50px;
 		font-size: 16px;
+		transition: opacity 300ms $out-generic-expo;
+
+		&:focus-visible {
+			outline: 2px solid $text-tertiary;
+			outline-offset: 2px;
+		}
+	}
+
+	.hidden-form {
+		display: none;
 	}
 </style>
