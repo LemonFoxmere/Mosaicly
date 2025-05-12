@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MobileMenu from "$lib/comp/layout/MobileMenu.svelte";
 	import MosaiclyLogo from "$lib/comp/ui/logos/MosaiclyLogo.svelte";
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
@@ -20,18 +21,21 @@
 		observer.observe(navbar);
 	});
 
-	$effect(() => {
-		if (user) {
-			console.log(user);
-		}
-	});
+	// mobile menu control
+	let mobileMenuOpened = $state(false);
+	const toggleMobileMenu = () => {
+		mobileMenuOpened = !mobileMenuOpened;
+	};
+	const closeMobileMenu = () => {
+		mobileMenuOpened = false;
+	};
 </script>
 
 <main>
 	<nav bind:this={navbar} id="navbar" class="no-drag is-at-top">
 		<!-- <button class="small">Log in</button> -->
 		{#if showLogo}
-			<a class="wrapper item" href="/">
+			<a class="wrapper item" href="/" on:click={closeMobileMenu}>
 				<div id="logo"><MosaiclyLogo s={28} /></div>
 				<!-- <p id="logo-text">mosaicly</p> -->
 			</a>
@@ -42,7 +46,7 @@
 					<button class="small">Log in</button>
 				</a>
 			{:else}
-				<a class="wrapper item large" href="/profile">
+				<a class="wrapper item large" href="" on:click={toggleMobileMenu}>
 					<!-- TODO: replace with profile pic -->
 					{#if user?.profile?.avatarUrl}
 						<img src={user.profile.avatarUrl} alt="Profile Picture" id="pfp" />
@@ -53,6 +57,34 @@
 			{/if}
 		{/if}
 	</nav>
+
+	<MobileMenu {mobileMenuOpened} {closeMobileMenu}>
+		<form class={mobileMenuOpened ? "" : "disabled"} id="mobile-cta" method="post">
+			<a class="menu-items" href="/profile" on:click={closeMobileMenu}>
+				<p>Account & Profile</p>
+			</a>
+
+			<hr class="menu-items" />
+
+			<a class="menu-items" href="/profile" on:click={closeMobileMenu}>
+				<p>My Canvases</p>
+			</a>
+
+			<hr class="menu-items" />
+
+			<a class="menu-items" href="/profile" on:click={closeMobileMenu}>
+				<p>Create a Canvas</p>
+			</a>
+
+			<hr class="menu-items" />
+
+			<a class="menu-items" id="sign-out">
+				<button class="none" formaction="/api/auth?/signout">
+					<p>Sign Out</p>
+				</button>
+			</a>
+		</form>
+	</MobileMenu>
 
 	<div id="content">
 		{@render children()}
@@ -131,6 +163,108 @@
 			}
 		}
 
+		#mobile-cta {
+			$stagger: 40ms; // Delay between animations
+			width: 100%;
+
+			.menu-items {
+				width: 100%;
+				display: flex;
+
+				button {
+					color: inherit;
+
+					// for the button wrappers
+					&.none {
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						width: 100%;
+						height: 100%;
+					}
+
+					p {
+						color: inherit;
+					}
+				}
+
+				@for $i from 1 through 7 {
+					// Change the number based on the number of buttons
+					&:nth-child(#{$i}) {
+						animation: fly-in 500ms $out-cubic #{($i - 1) * $stagger} forwards;
+						animation-fill-mode: both;
+					}
+				}
+
+				@keyframes fly-in {
+					0% {
+						opacity: 0;
+						transform: translateY(15px);
+					}
+					100% {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+			}
+
+			a {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				height: 60px;
+				padding: 0px 8px;
+
+				cursor: pointer;
+				color: $text-primary;
+
+				box-sizing: border-box;
+				text-decoration: none;
+				transform-origin: left;
+
+				transition: color 100ms $out-generic;
+
+				&:active {
+					color: $text-tertiary;
+				}
+
+				p {
+					color: inherit;
+				}
+			}
+
+			hr {
+				margin: 0;
+				height: 2px;
+				width: 100%;
+
+				border: none;
+				background-color: $text-tertiary;
+			}
+
+			&.disabled {
+				.menu-items {
+					@for $i from 1 through 7 {
+						// Change the number based on the number of buttons
+						&:nth-child(#{$i}) {
+							animation: fly-out 250ms $in-cubic #{($i - 1) * $stagger} forwards;
+						}
+					}
+
+					@keyframes fly-out {
+						0% {
+							opacity: 1;
+							transform: translateY(0);
+						}
+						100% {
+							opacity: 0;
+							transform: translateY(15px);
+						}
+					}
+				}
+			}
+		}
+
 		#content {
 			display: flex;
 			flex-grow: 1;
@@ -140,7 +274,7 @@
 
 			width: 100%;
 			height: 100%;
-			max-width: 700px;
+			max-width: $global-max-width;
 		}
 
 		@media screen and (min-width: $mobile-width) {

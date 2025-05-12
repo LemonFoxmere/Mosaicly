@@ -36,8 +36,12 @@
 
 	main {
 		width: 100%;
-		height: calc(100% - $navbar-height);
-		padding: 0px 30px;
+		height: fit-content;
+		margin: auto 0;
+		padding: 10px 30px;
+
+		// account for navbar height
+		padding-bottom: $navbar-height;
 
 		display: flex;
 		flex-direction: column;

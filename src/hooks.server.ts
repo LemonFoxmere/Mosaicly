@@ -21,11 +21,12 @@ const supabase: Handle = async ({ event, resolve }) => {
 			getAll: () => event.cookies.getAll(),
 
 			// Apply any cookie writes back to the response
+			//
 			setAll: (cookiesToSet) => {
-				cookiesToSet.forEach(({ name, value, options }) => {
+				for (const { name, value, options } of cookiesToSet) {
 					// replicate previous default behavior by forcing path
 					event.cookies.set(name, value, { ...options, path: "/" });
-				});
+				}
 			}
 		},
 
