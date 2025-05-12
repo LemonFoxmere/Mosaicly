@@ -26,6 +26,7 @@
 					type="text"
 					bind:value={canvasCoordinates}
 					placeholder="36.99979, 122.06337"
+					class="coordinate-input flex-fill"
 				/>
 				<button type="button" class="locate-button" on:click={onLocate}>🎯</button>
 			</div>
@@ -61,31 +62,42 @@
 			gap: 10px;
 			width: 100%;
 
-			input[type="text"] {
-				flex-grow: 1;
-				width: 100%;
-				background-color: transparent;
-				border: 1.5px solid $text-primary;
-				border-radius: 8px;
-				padding: 12px 16px;
-				font-size: 16px;
-				line-height: 1.4;
-				color: $text-primary;
-
-				&::placeholder {
-					color: $text-tertiary;
-				}
+			.coordinate-input {
+				flex: 1 1 auto;
+				min-width: 0;
 			}
 
 			.locate-button {
-				@extend button, .outline;
+				@extend button;
+				width: 60px;
+				height: 60px;
 				border-radius: 8px;
-				height: 50px;
-				width: 50px;
-				min-width: 50px;
-				padding: 0;
+				border: 1.5px solid $text-primary;
+				border-bottom-width: 4px;
+				background-color: $background-primary;
+				color: $text-primary;
+				display: flex;
+				align-items: center;
+				justify-content: center;
 				font-size: 24px;
-				box-sizing: border-box;
+				padding: 0;
+				transition: opacity 300ms $out-generic-expo;
+
+				&:active {
+					margin-top: 1.5px;
+					height: calc(60px - 1.5px);
+					border-bottom-width: 1.5px;
+					transform: translateY(1.5px);
+				}
+
+				&:disabled {
+					opacity: 0.3;
+					pointer-events: none;
+					margin-top: 0;
+					height: 60px;
+					border-bottom-width: 4px;
+					transform: none;
+				}
 
 				&:focus-visible {
 					outline: 2px solid $text-tertiary;
@@ -99,6 +111,6 @@
 		@extend p;
 		color: $accent-error;
 		font-size: 14px;
-		margin-top: 10px;
+		margin-top: 0;
 	}
 </style>

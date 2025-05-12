@@ -67,7 +67,11 @@
 
 	/* disabled back interactions cleaner */
 	.back-button:disabled {
-		opacity: 0.4;
+		opacity: 0.3;
 		pointer-events: none;
+		margin-top: 0;
+		height: 50px;
+		border-bottom-width: 4px;
+		transform: none;
 	}
 </style>

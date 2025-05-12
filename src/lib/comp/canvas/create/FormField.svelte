@@ -2,11 +2,12 @@
 	interface Props {
 		label: string;
 		required?: boolean;
+		stretch?: boolean;
 	}
-	let { label, required = false }: Props = $props();
+	let { label, required = false, stretch = false }: Props = $props();
 </script>
 
-<label>
+<label class:stretch>
 	<p class="caption">
 		{label}{required ? "*" : ""}
 		<slot name="label_append" />
@@ -22,6 +23,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+	}
+
+	label.stretch {
+		flex: 1 1 auto;
+		min-height: 0;
 	}
 
 	.caption {

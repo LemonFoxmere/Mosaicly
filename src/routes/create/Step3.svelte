@@ -17,7 +17,7 @@
 	<div class="form-content">
 		<div class="final-message">
 			<p class="heading"><strong>Congratulations, you did it.</strong></p>
-			<p>
+			<p class="description">
 				Your "<strong>{canvasName || "Frog"}</strong>" canvas was created successfully, and
 				is now visible to the public. If people can find where you put your QR code, they
 				will be able to scan it and draw on your canvas.
@@ -31,18 +31,22 @@
 		</div>
 
 		<div class="action-buttons-group">
-			<button
-				type="button"
-				class="action-button image-button"
-				disabled={!onQrImage}
-				on:click={() => onQrImage && onQrImage()}
-			></button>
-			<button
-				type="button"
-				class="action-button pdf-button"
-				disabled={!onQrPdf}
-				on:click={() => onQrPdf && onQrPdf()}
-			></button>
+			<div class="action-button-wrapper">
+				<button
+					type="button"
+					class="action-button image-button"
+					disabled={!onQrImage}
+					on:click={() => onQrImage && onQrImage()}
+				></button>
+			</div>
+			<div class="action-button-wrapper">
+				<button
+					type="button"
+					class="action-button pdf-button"
+					disabled={!onQrPdf}
+					on:click={() => onQrPdf && onQrPdf()}
+				></button>
+			</div>
 		</div>
 	</div>
 </section>
@@ -56,19 +60,26 @@
 		display: flex;
 		flex-direction: column;
 		gap: 15px;
+		flex: 1 1 auto;
+		min-height: 0;
 	}
 
 	.form-content {
 		width: 100%;
 		display: flex;
 		flex-direction: column;
+		flex: 1 1 auto;
+		min-height: 0;
 		gap: 15px;
 	}
 
 	.final-message {
+		flex: 0 0 auto;
 		text-align: left;
 		margin-bottom: 0.5rem;
 		margin-top: 8px;
+		overflow: auto;
+		max-height: 30vh;
 
 		p {
 			@extend p;
@@ -97,57 +108,64 @@
 
 	.action-buttons-group {
 		display: flex;
-		justify-content: space-between;
-		width: 100%;
-		margin-top: 0.5rem;
+		align-items: flex-start;
+		justify-content: stretch;
 		gap: 10px;
-		height: auto;
-		min-height: 6rem;
-		max-height: 30vh;
+		min-height: 0;
+		margin-top: 0;
+	}
 
-		@media (max-width: 600px) {
-			flex-direction: column;
-			height: auto;
+	.action-button-wrapper {
+		width: 100%;
+		min-width: 0;
+		min-height: 0;
+		display: flex;
+		align-items: flex-start;
+		justify-content: stretch;
+	}
+
+	.action-button {
+		@extend button, .outline;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1/1;
+		border-radius: 8px;
+		padding: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		box-sizing: border-box;
+
+		&.image-button::before {
+			content: "🖼️";
+			font-size: 2.25rem;
 		}
 
-		.action-button {
-			@extend button, .outline;
-			border-radius: 8px;
-			width: 100%;
-			height: 100%;
-			min-height: 6rem;
-			max-height: 100%;
-			padding: 0;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			box-sizing: border-box;
+		&.pdf-button::before {
+			content: "📄";
+			font-size: 2.25rem;
+		}
 
-			&.image-button::before {
-				content: "🖼️";
-				font-size: 2.25rem;
-			}
+		&:focus-visible {
+			outline: 2px solid $text-tertiary;
+			outline-offset: 2px;
+		}
 
-			&.pdf-button::before {
-				content: "📄";
-				font-size: 2.25rem;
-			}
+		&:not(:disabled) {
+			cursor: pointer;
+			opacity: 1;
+			pointer-events: auto;
+		}
 
-			&:focus-visible {
-				outline: 2px solid $text-tertiary;
-				outline-offset: 2px;
-			}
-
-			&:not(:disabled) {
-				cursor: pointer;
-				opacity: 1;
-				pointer-events: auto;
-			}
-
-			&:disabled {
-				cursor: not-allowed;
-				opacity: 0.4;
-				pointer-events: none;
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.3;
+			pointer-events: none;
+			&:active {
+				margin-top: 0;
+				height: auto;
+				border-bottom-width: 4px;
+				transform: none;
 			}
 		}
 	}
