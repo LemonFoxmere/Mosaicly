@@ -9,21 +9,19 @@
 	import Step3 from "./Step3.svelte";
 	import NavCluster from "$lib/comp/canvas/create/NavCluster.svelte";
 
-	// reactive state
+	// Local state (Svelte 5 idiom)
 	let currentStep = $state(1);
-
 	let canvasName = $state("");
 	let locationDescription = $state("");
 	let canvasCoordinates = $state("");
-
 	let formLatitude = $state("");
 	let formLongitude = $state("");
 	let formAccuracy = $state("");
 
-	// hidden form ref
+	// Hidden form ref
 	let hiddenFormElement: HTMLFormElement;
 
-	// error handling
+	// Error state
 	let errorState = $state({ flag: false, message: "" });
 
 	const nextStep = () => {
@@ -87,10 +85,6 @@
 
 <main class="create-canvas-page">
 	<div class="page-content">
-		<style>
-			/* Styles removed as they are now in Step2.svelte */
-		</style>
-
 		{#if currentStep === 1}
 			<Step1 bind:canvasName bind:locationDescription {currentStep} />
 		{:else if currentStep === 2}
@@ -122,7 +116,7 @@
 		action="/api/canvas?/createCanvas"
 		use:enhance={submitOptions}
 		bind:this={hiddenFormElement}
-		style="display: none;"
+		class="hidden-form"
 	>
 		<input type="hidden" name="title" value={canvasName} />
 		<input type="hidden" name="loc_desc" value={locationDescription} />
@@ -181,5 +175,15 @@
 		width: 100%;
 		height: 50px;
 		font-size: 16px;
+		transition: opacity 300ms $out-generic-expo;
+
+		&:focus-visible {
+			outline: 2px solid $text-tertiary;
+			outline-offset: 2px;
+		}
+	}
+
+	.hidden-form {
+		display: none;
 	}
 </style>

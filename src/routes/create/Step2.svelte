@@ -1,10 +1,19 @@
 <script lang="ts">
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
-	export let canvasCoordinates: string;
-	export let errorState: { flag: boolean; message: string };
-	export let onLocate: () => void;
-	export let currentStep: number;
+
+	interface Props {
+		canvasCoordinates: string;
+		errorState: { flag: boolean; message: string };
+		onLocate: () => void;
+		currentStep: number;
+	}
+	let {
+		canvasCoordinates = $bindable(),
+		errorState = $bindable(),
+		onLocate,
+		currentStep
+	}: Props = $props();
 </script>
 
 <section class="step step-2">

@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
-	export let canvasName: string;
-	export let onSave: () => void;
-	export let currentStep: number;
+
+	interface Props {
+		canvasName: string;
+		onSave: () => void;
+		currentStep: number;
+	}
+	let { canvasName, onSave, currentStep }: Props = $props();
 
 	let actionButtonsGroup: HTMLElement;
 
@@ -36,7 +40,7 @@
 	<div class="form-content">
 		<div class="final-message">
 			<p class="heading"><strong>Congratulations, you did it.</strong></p>
-			<div class="spacing-element"></div>
+			<p style="margin-top: 0.5rem;"></p>
 			<p>
 				Your "<strong>{canvasName || "Frog"}</strong>" canvas was created successfully, and
 				is now visible to the public. If people can find where you put your QR code, they
@@ -51,16 +55,8 @@
 		</div>
 
 		<div class="action-buttons-group" bind:this={actionButtonsGroup}>
-			<button
-				type="button"
-				class="action-button image-button"
-				on:click|stopPropagation={() => {}}
-			></button>
-			<button
-				type="button"
-				class="action-button pdf-button"
-				on:click|stopPropagation={() => {}}
-			></button>
+			<button type="button" class="action-button image-button" disabled></button>
+			<button type="button" class="action-button pdf-button" disabled></button>
 		</div>
 	</div>
 </section>

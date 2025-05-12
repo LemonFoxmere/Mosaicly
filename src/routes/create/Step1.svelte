@@ -1,9 +1,17 @@
 <script lang="ts">
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
-	export let canvasName: string;
-	export let locationDescription: string;
-	export let currentStep: number;
+
+	interface Props {
+		canvasName: string;
+		locationDescription: string;
+		currentStep: number;
+	}
+	let {
+		canvasName = $bindable(),
+		locationDescription = $bindable(),
+		currentStep
+	}: Props = $props();
 </script>
 
 <section class="step step-1">
@@ -17,7 +25,7 @@
 		</FormField>
 
 		<FormField label="Location Description">
-			<span slot="label_append" class="what-is-this">(What is this?)</span>
+			<span slot="label_append" aria-label="What is this?">(What is this?)</span>
 			<textarea
 				rows="8"
 				bind:value={locationDescription}

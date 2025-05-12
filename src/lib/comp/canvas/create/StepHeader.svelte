@@ -1,8 +1,11 @@
 <script lang="ts">
 	import StepIndicator from "$lib/comp/canvas/create/StepIndicator.svelte";
 
-	export let currentStep: number;
-	export let stepTitle: string;
+	interface Props {
+		currentStep: number;
+		stepTitle: string;
+	}
+	let { currentStep, stepTitle }: Props = $props();
 </script>
 
 <header class="step-header">

@@ -1,8 +1,9 @@
 <script lang="ts">
-	/** Label text for the field */
-	export let label: string;
-	/** Whether to show a required indicator */
-	export let required: boolean = false;
+	interface Props {
+		label: string;
+		required?: boolean;
+	}
+	let { label, required = false }: Props = $props();
 </script>
 
 <label>

@@ -1,9 +1,10 @@
 <script lang="ts">
-	export let onNext: () => void;
-
-	export let onBack: () => void;
-
-	export let hideBack: boolean = false;
+	interface Props {
+		onNext: () => void;
+		onBack: () => void;
+		hideBack?: boolean;
+	}
+	let { onNext, onBack, hideBack = false }: Props = $props();
 </script>
 
 <div id="navigation-buttons">
@@ -49,6 +50,14 @@
 			border-bottom-width: 1.5px;
 			transform: translateY(1.5px);
 		}
+	}
+
+	.back-button:not(:disabled):active,
+	.next-button:active {
+		margin-top: 1.5px;
+		height: calc(50px - 1.5px);
+		border-bottom-width: 1.5px;
+		transform: translateY(1.5px);
 	}
 
 	/* disabled back interactions cleaner */

@@ -1,6 +1,9 @@
 <script lang="ts">
-	export let currentStep: number;
-	export let totalSteps: number = 3;
+	interface Props {
+		currentStep: number;
+		totalSteps?: number;
+	}
+	let { currentStep, totalSteps = 3 }: Props = $props();
 </script>
 
 <div class="step-indicator" aria-label="Progress">
