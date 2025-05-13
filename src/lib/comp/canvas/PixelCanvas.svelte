@@ -527,9 +527,10 @@
 		if (!err) {
 			loadErr = err;
 		}
-	});
-	onDestroy(() => {
-		cleanUpListeners();
+
+		onDestroy(() => {
+			cleanUpListeners();
+		});
 	});
 </script>
 
