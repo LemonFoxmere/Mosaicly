@@ -6,52 +6,42 @@
 	let { currentStep, totalSteps = 3 }: Props = $props();
 </script>
 
-<div class="step-indicator" aria-label="Progress">
+<main aria-label="Progress">
 	{#each Array(totalSteps) as _, idx}
-		<span class="dot" class:active={idx + 1 === currentStep} />
+		<span class="dot" class:active={idx + 1 <= currentStep} />
 		{#if idx + 1 < totalSteps}
 			<span class="line" class:active={idx + 1 < currentStep} />
 		{/if}
 	{/each}
-</div>
+</main>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
-	.step-indicator {
+	main {
 		display: flex;
 		align-items: center;
-		width: 100%;
-		padding: 10px 0;
-		margin: 0;
-	}
 
-	.dot {
-		flex: none;
-		width: 12px;
-		height: 12px;
-		border: 2px solid $text-primary;
-		border-radius: 50%;
-		background-color: $background-primary;
-		transition:
-			background-color 0.3s $out-generic-expo,
-			border-color 0.3s $out-generic-expo;
-	}
+		.dot {
+			width: 12px;
+			height: 12px;
+			border-radius: 12px;
+			border: 2px solid $text-primary;
 
-	.dot.active {
-		background-color: $text-primary;
-		border-color: $text-primary;
-	}
+			transition: 300ms $out-generic-expo;
+			transition-property: background-color, border-color;
 
-	.line {
-		flex: 1;
-		height: 2px;
-		background-color: $text-primary;
-		opacity: 0.3;
-		transition: opacity 0.3s $out-generic-expo;
-	}
+			&.active {
+				background-color: $text-primary;
+				border-color: $text-primary;
+			}
+		}
 
-	.line.active {
-		opacity: 1;
+		.line {
+			width: 15px;
+			height: 2px;
+			background-color: $text-primary;
+			transition: opacity 0.3s $out-generic-expo;
+		}
 	}
 </style>

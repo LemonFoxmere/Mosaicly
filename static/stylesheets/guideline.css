@@ -3,19 +3,16 @@
 		display: none !important;
 	}
 }
-
 @media screen and (max-width: 621px) {
 	.only-desktop {
 		display: none !important;
 	}
 }
-
 .item-frame {
 	border: 1.5px solid #362121;
 	border-radius: 8px;
 	border-bottom-width: 4px;
 }
-
 .no-drag {
 	-webkit-user-drag: none;
 	-moz-user-select: none;
@@ -23,18 +20,15 @@
 	-webkit-user-select: none;
 	-ms-user-select: none;
 }
-
 .glass-heavy,
 .glass-light {
 	background-color: rgba(236, 120, 70, 0.7);
 	backdrop-filter: blur(20px);
 	-webkit-backdrop-filter: blur(20px);
 }
-
 .glass-light {
 	background-color: rgba(236, 120, 70, 0.4);
 }
-
 button {
 	padding: 11px 31.5px;
 	height: 50px;
@@ -58,36 +52,26 @@ button {
 	-ms-user-select: none;
 	transition: opacity 300ms cubic-bezier(0.3, 1, 0.22, 1);
 }
-
 @media (hover: hover) {
 	button:hover {
 		opacity: 0.7;
 	}
-
-	button:hover.none {
-		opacity: 1;
-	}
 }
-
 button:active {
 	opacity: 0.8;
 }
-
 button:disabled {
-	opacity: 0.3;
-	pointer-events: none;
+	opacity: 0.3 !important;
+	pointer-events: none !important;
 }
-
 button.solid {
 	background: #362121;
 }
-
 button.small {
 	padding: 11px 20px;
 	height: 42px;
 	font-size: 14px;
 }
-
 button.outline,
 button.outline.small {
 	background: #ec7846;
@@ -98,36 +82,38 @@ button.outline.small {
 	margin: 0px;
 	padding: 11px 30px;
 }
-
 @media (hover: hover) {
 	button.outline:hover {
 		opacity: 0.5;
 	}
 }
-
 button.outline:active {
 	margin-top: 1.5px;
 	height: 48.5px;
 	border-bottom-width: 1.5px;
 	transform: translateY(1.5px);
 }
-
 button.outline.small {
 	padding: 11px 20px;
 	height: 42px;
 	font-size: 14px;
 }
-
 button.outline.small:active {
 	height: 40.5px;
 	border-bottom-width: 1.5px;
 	transform: translateY(1.5px);
 }
-
 button.none {
 	all: unset;
 }
-
+@media (hover: hover) {
+	button.none:hover {
+		opacity: 0.5;
+	}
+}
+button.none:active {
+	opacity: 0.75;
+}
 input,
 textarea {
 	background-color: #ec7846;
@@ -149,30 +135,24 @@ textarea {
 	-webkit-user-select: none;
 	-ms-user-select: none;
 }
-
 input::-moz-placeholder,
 textarea::-moz-placeholder {
 	color: #964b3c;
 }
-
 input::placeholder,
 textarea::placeholder {
 	color: #964b3c;
 }
-
 textarea {
 	padding: 20px;
 	height: auto;
 }
-
 a {
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
-
 a:active {
 	opacity: 0.8;
 }
-
 a.wrapper {
 	text-decoration: none;
 }

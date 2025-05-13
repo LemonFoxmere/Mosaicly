@@ -115,6 +115,7 @@
 
 			position: sticky;
 			top: -1px;
+			z-index: 100;
 
 			display: flex;
 			flex-direction: row;

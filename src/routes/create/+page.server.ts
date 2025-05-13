@@ -10,6 +10,7 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
 	if (!session) {
 		redirect(303, "/login");
 	}
+
 	// also you can return props to the page if needed for logged-in users
 	return {};
 };

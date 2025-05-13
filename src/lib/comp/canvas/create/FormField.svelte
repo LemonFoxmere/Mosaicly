@@ -1,42 +1,42 @@
 <script lang="ts">
-	interface Props {
+	import type { Snippet } from "svelte";
+
+	let {
+		label,
+		required = false,
+		labelAction,
+		children
+	}: {
 		label: string;
 		required?: boolean;
 		stretch?: boolean;
-	}
-	let { label, required = false, stretch = false }: Props = $props();
+		labelAction?: Snippet; // snippets
+		children?: Snippet; // snippets
+	} = $props();
 </script>
 
-<label class:stretch>
+<main>
 	<p class="caption">
 		{label}{required ? "*" : ""}
-		<slot name="label_append" />
+
+		<!-- For any extra fields after the label -->
+		{@render labelAction?.()}
 	</p>
-	<slot />
-</label>
+	{@render children?.()}
+</main>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
-	label {
+	main {
 		width: 100%;
+		height: inherit;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-	}
-
-	label.stretch {
-		flex: 1 1 auto;
-		min-height: 0;
-	}
-
-	.caption {
-		color: $text-tertiary;
-		font-size: 14px;
-		font-weight: 500;
-		line-height: 1.2;
-		display: flex;
-		align-items: center;
 		gap: 5px;
+
+		&.stretch {
+			height: 100%;
+		}
 	}
 </style>
