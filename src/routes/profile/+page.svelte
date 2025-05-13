@@ -17,7 +17,7 @@
 	let isSaving = $state(false);
 
 	// toggle between Profile | Canvases tab
-	let isProfile = $state(true);
+	let isProfile = $state(data.tab === "canvases" ? false : true);
 
 	// check if there are unsaved changes
 	let isUnsaved = $derived(bio !== profile?.bio || displayName !== profile?.displayName);
@@ -31,7 +31,7 @@
 		isOpen = true;
 	};
 
-	$inspect(focusedCanvas);
+	$inspect("focused canvas", focusedCanvas);
 </script>
 
 <main>
