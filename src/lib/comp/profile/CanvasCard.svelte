@@ -1,8 +1,11 @@
 <script lang="ts">
-	import Modal from "./EditCanvasModal.svelte";
-	let isOpen = $state(false);
-
-	let { canvas }: { canvas: DB.Canvas } = $props();
+	let {
+		canvas,
+		setCurrCanvas
+	}: {
+		canvas: DB.Canvas;
+		setCurrCanvas: (canvas: DB.Canvas) => void;
+	} = $props();
 	const options: Intl.DateTimeFormatOptions = {
 		month: "long",
 		day: "numeric",
@@ -19,13 +22,10 @@
 			.replace(" at", " @");
 	};
 
-	const { title, loc_desc, created_on } = canvas;
+	const { title, loc_desc, created_on, is_archived } = $derived(canvas);
 </script>
 
-<!-- overlays page when modal open -->
-<Modal bind:open={isOpen} {canvas} />
-
-<div class="item-frame container">
+<div class="item-frame container" class:archived={is_archived}>
 	<section>
 		<aside>
 			<div id="title">{title}</div>
@@ -34,7 +34,7 @@
 		Created on {format(created_on)}
 	</section>
 
-	<button id="edit" onclick={() => (isOpen = true)}>
+	<button id="edit" onclick={() => setCurrCanvas(canvas)}>
 		<img src="icons/pencil.svg" alt="edit" />
 	</button>
 </div>
@@ -72,5 +72,9 @@
 		&:active {
 			opacity: 0.8;
 		}
+	}
+
+	.archived {
+		opacity: 0.5;
 	}
 </style>

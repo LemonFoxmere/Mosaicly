@@ -1,4 +1,4 @@
-import { redirect } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals: { supabase, user, safeGetSession } }) => {
@@ -24,7 +24,9 @@ export const actions = {
 			.update({ display_name: displayName, bio })
 			.eq("id", user.id);
 		if (error) {
-			return { success: false, message: `error: ${error}` };
+			return fail(400, {
+				message: `Error: ${error}`
+			});
 		}
 
 		return { success: true };
