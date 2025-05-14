@@ -1,28 +1,42 @@
 <script lang="ts">
-	type Canvas = {
-		id: string;
-		name: string;
-		loc: string;
-		createdOn: Date;
+	import Modal from "./EditCanvasModal.svelte";
+	let isOpen = $state(false);
+
+	let { canvas }: { canvas: DB.Canvas } = $props();
+	const options: Intl.DateTimeFormatOptions = {
+		month: "long",
+		day: "numeric",
+		year: "numeric",
+		// hour: 'numeric',
+		// minute: '2-digit',
+		hour12: true
 	};
 
-	let { canvas }: { canvas: Canvas } = $props();
+	const format = (datestr: string) => {
+		return new Date(datestr)
+			.toLocaleString("en-US", options)
+			.replace(",", "")
+			.replace(" at", " @");
+	};
 
-	const { id, name, loc, createdOn } = canvas;
+	const { title, loc_desc, created_on } = canvas;
 </script>
+
+<!-- overlays page when modal open -->
+<Modal bind:open={isOpen} {canvas} />
 
 <div class="item-frame container">
 	<section>
 		<aside>
-			<div id="name">{name}</div>
-			{loc}
+			<div id="title">{title}</div>
+			{loc_desc}
 		</aside>
-		Created on {createdOn.toLocaleDateString("en-US").toString()}
+		Created on {format(created_on)}
 	</section>
 
-	<a id="edit" href={`/canvas/${canvas.id}`}>
+	<button id="edit" onclick={() => (isOpen = true)}>
 		<img src="icons/pencil.svg" alt="edit" />
-	</a>
+	</button>
 </div>
 
 <style>
@@ -40,19 +54,23 @@
 		gap: 22px;
 	}
 
-	#name {
+	#title {
 		font-weight: 600;
 	}
 
 	#edit {
 		background-color: transparent;
 		place-self: center;
-		padding: 10px 15px;
-	}
+		padding: 25px 15px;
 
-	#edit:hover {
-		border: 1.5px solid #362121;
-		border-radius: 8px;
-		border-bottom-width: 4px;
+		@media (hover: hover) {
+			&:hover {
+				opacity: 0.7;
+			}
+		}
+
+		&:active {
+			opacity: 0.8;
+		}
 	}
 </style>

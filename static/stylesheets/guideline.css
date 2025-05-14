@@ -22,9 +22,9 @@
 }
 .glass-heavy,
 .glass-light {
-	background-color: rgba(236, 120, 70, 0.8);
-	backdrop-filter: blur(40px) saturate(200%);
-	-webkit-backdrop-filter: blur(40px) saturate(200%);
+	background-color: rgba(236, 120, 70, 0.7);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
 }
 .glass-light {
 	background-color: rgba(236, 120, 70, 0.4);
@@ -61,8 +61,8 @@ button:active {
 	opacity: 0.8;
 }
 button:disabled {
-	opacity: 0.3;
-	pointer-events: none;
+	opacity: 0.3 !important;
+	pointer-events: none !important;
 }
 button.solid {
 	background: #362121;
@@ -103,6 +103,17 @@ button.outline.small:active {
 	border-bottom-width: 1.5px;
 	transform: translateY(1.5px);
 }
+button.none {
+	all: unset;
+}
+@media (hover: hover) {
+	button.none:hover {
+		opacity: 0.5;
+	}
+}
+button.none:active {
+	opacity: 0.75;
+}
 input,
 textarea {
 	background-color: #ec7846;
@@ -135,6 +146,12 @@ textarea::placeholder {
 textarea {
 	padding: 20px;
 	height: auto;
+}
+a {
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+a:active {
+	opacity: 0.8;
 }
 a.wrapper {
 	text-decoration: none;

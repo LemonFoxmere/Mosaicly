@@ -1,34 +1,26 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
+	import { page } from "$app/state";
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
+	import CreateCanvasMenu from "$lib/comp/profile/CreateCanvasMenu.svelte";
 	import type { PageProps } from "./$types";
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	// get session and user from the page data
 	let session = $derived(data.session);
 	let user = $derived(data.user);
 
+	let canvases = $derived<DB.Canvas[]>(data.canvas || []);
+
+	// user copy, for optimistic ui updates
 	let localUser = user;
 	let localDisplayName = $derived(localUser?.profile?.displayName ?? "");
 	let localBio = $derived(localUser?.profile?.bio ?? "");
 
-	const dummyCanvas = [
-		{
-			id: "1",
-			name: "My Canvas",
-			loc: "Engineering 2",
-			createdOn: new Date()
-		},
-		{
-			id: "2",
-			name: "Frog",
-			loc: "Cowell",
-			createdOn: new Date()
-		}
-	];
-
-	// to be replaced with user data from db (will get from SSR)
-	let canvases = $state(dummyCanvas); // obj type
+	let isUnsaved = $derived(
+		localBio != user?.profile.bio || localDisplayName != user.profile.displayName
+	);
 
 	// toggle between Profile | Canvases tab
 	let isProfile = $state(true);
@@ -38,7 +30,10 @@
 	<!-- greet user -->
 	<section id="intro">
 		<section id="title-container">
-			<h2 id="title"><span>Greetings,</span><br />{localDisplayName}.</h2>
+			<h2 id="title">
+				<span>Greetings,</span>
+				<br />{localDisplayName}.
+			</h2>
 			{#if user}
 				<img id="pfp" src={user.profile.avatarUrl} alt="Profile Picture" />
 			{/if}
@@ -59,13 +54,23 @@
 	<section id="edit-content">
 		{#if isProfile}
 			<!-- profile render -->
-			<form method="POST" action="?/update_profile" id="profile_form">
+			<form
+				method="POST"
+				action="?/update_profile"
+				id="profile_form"
+				use:enhance={() => {
+					return async ({ update }) => {
+						await update({ reset: false });
+					};
+				}}
+			>
 				<label>
 					<p class="caption">Display Name</p>
 					<input
 						name="disp-name"
 						type="text"
 						placeholder="Guy"
+						autocomplete="off"
 						bind:value={localDisplayName}
 					/>
 				</label>
@@ -76,10 +81,16 @@
 						name="bio"
 						placeholder="I'm just a chill guy."
 						rows="3"
-						value={localBio}
+						autocomplete="off"
+						bind:value={localBio}
 					></textarea>
 				</label>
 
+				{#if isUnsaved}
+					<p class="warning center">There are unsaved changes!</p>
+				{:else if form?.success}
+					<p class="center">Your changes are saved!</p>
+				{/if}
 				<button>Save</button>
 			</form>
 		{:else}
@@ -88,6 +99,9 @@
 				{#each canvases as canvas}
 					<CanvasCard {canvas} />
 				{/each}
+
+				<!-- add new canvas, popup like modal -->
+				<CreateCanvasMenu />
 			</div>
 		{/if}
 	</section>
@@ -136,8 +150,8 @@
 				}
 
 				#pfp {
-					width: 64px;
-					height: 64px;
+					width: 60px;
+					height: 60px;
 					border-radius: 100%;
 				}
 			}
@@ -164,6 +178,15 @@
 				label {
 					display: flex;
 					flex-direction: column;
+				}
+
+				.center {
+					align-self: center;
+					margin-top: 10px;
+				}
+
+				.warning {
+					color: #b11012;
 				}
 			}
 		}

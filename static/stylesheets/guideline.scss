@@ -1,5 +1,8 @@
 // COLORS
 $background-primary: hsl(18, 81%, 60%);
+$background-primary-translucent-heavy: hsl(18, 81%, 60%, 70%);
+$background-primary-translucent-light: hsl(18, 81%, 60%, 40%);
+
 $background-secondary: hsl(0, 27%, 9%);
 $background-accent: hsl(15, 30%, 92%);
 
@@ -39,6 +42,8 @@ $navbar-height: 70px;
 $mobile-width: 621px;
 // $tablet-width: 1100px;
 
+$global-max-width: 700px;
+
 // ========================== COMMONLY USED CLASSES ==========================
 
 // RESPONSIVE DESIGN
@@ -71,16 +76,16 @@ $mobile-width: 621px;
 }
 
 .glass-heavy {
-	background-color: hsla(18, 81%, 60%, 80%);
+	background-color: $background-primary-translucent-heavy;
 
-	backdrop-filter: blur(40px) saturate(200%);
-	-webkit-backdrop-filter: blur(40px) saturate(200%);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
 }
 
 .glass-light {
 	@extend .glass-heavy;
 
-	background-color: hsla(18, 81%, 60%, 40%);
+	background-color: $background-primary-translucent-light;
 }
 
 // ========================== GENERIC ELEMENT STYLING ==========================
@@ -120,6 +125,10 @@ button {
 	@media (hover: hover) {
 		&:hover {
 			opacity: 0.7;
+
+			// &.none {
+			// 	opacity: 1; // don't apply hover effect
+			// }
 		}
 	}
 
@@ -128,8 +137,9 @@ button {
 	}
 
 	&:disabled {
-		opacity: 0.3;
-		pointer-events: none;
+		// override none if it's ever set
+		opacity: 0.3 !important;
+		pointer-events: none !important;
 	}
 
 	// variants
@@ -180,6 +190,21 @@ button {
 			}
 		}
 	}
+
+	&.none {
+		// no styling at all. Just a wrapper
+		all: unset;
+
+		@media (hover: hover) {
+			&:hover {
+				opacity: 0.5;
+			}
+		}
+
+		&:active {
+			opacity: 0.75;
+		}
+	}
 }
 
 input {
@@ -218,6 +243,12 @@ textarea {
 }
 
 a {
+	-webkit-tap-highlight-color: transparent;
+
+	&:active {
+		opacity: 0.8;
+	}
+
 	&.wrapper {
 		// no underline
 		text-decoration: none;

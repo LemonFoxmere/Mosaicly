@@ -58,7 +58,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-start;
-		row-gap: 20px;
+		row-gap: 30px;
 
 		#content {
 			width: 100%;
