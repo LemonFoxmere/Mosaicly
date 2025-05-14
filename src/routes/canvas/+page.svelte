@@ -4,7 +4,6 @@
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 	import type { PageProps } from "./$types";
-	
 
 	let selectedColor = $state("#000000");
 	let editState: "view" | "edit" | "inspect" = $state("view");
@@ -13,10 +12,10 @@
 
 	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		auth: {
-		flowType: "pkce",
-		autoRefreshToken: false,
-		persistSession: true
-	}
+			flowType: "pkce",
+			autoRefreshToken: false,
+			persistSession: true
+		}
 	});
 	const canvasInfo = <DB.Canvas>(data.canvas || {});
 	const channelName = data.channelName;
@@ -73,7 +72,7 @@
 			color={selectedColor}
 			mode={editState === "edit" ? "edit" : "view"}
 			load={() => {}}
-			info={{supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing}}
+			info={{ supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing }}
 		/>
 	</section>
 </main>
