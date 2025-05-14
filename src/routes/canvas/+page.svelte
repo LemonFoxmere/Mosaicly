@@ -1,9 +1,30 @@
 <script lang="ts">
+	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
+	import { createClient } from "@supabase/supabase-js";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
+	import type { PageProps } from "./$types";
+	
 
 	let selectedColor = $state("#000000");
 	let editState: "view" | "edit" | "inspect" = $state("view");
+
+	let { data }: PageProps = $props();
+
+	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		auth: {
+		flowType: "pkce",
+		autoRefreshToken: false,
+		persistSession: true
+	}
+	});
+	const canvasInfo = <DB.Canvas>(data.canvas || {});
+	const channelName = data.channelName;
+	const canvasChannel = supabase.channel(channelName);
+	const canvasID = canvasInfo.id;
+	const canvasDrawing = canvasInfo.drawing;
+	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");
+	let userID = $derived(data.user?.account.id ?? "0");
 
 	let editable = $state(true);
 
@@ -52,6 +73,7 @@
 			color={selectedColor}
 			mode={editState === "edit" ? "edit" : "view"}
 			load={() => {}}
+			info={{supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing}}
 		/>
 	</section>
 </main>

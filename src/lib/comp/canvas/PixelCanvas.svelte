@@ -70,20 +70,29 @@
 	import { PixelGrid } from "./objects/PixelGrid";
 	import { CanvasUtils } from "./utils/CanvasUtils";
 	import { CursorUtils } from "./utils/CursorUtils";
-	import { createClient, RealtimeChannel } from '@supabase/supabase-js'
-	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
+	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 
 	// external bindings
 	let {
 		color = "#000000",
-		mode = "view" as "view" | "edit",
-		load // dispatcher
+		mode = "view",
+		load, // dispatcher
+		info
+	} : {
+		color: string,
+		mode: "view" | "edit",
+		load: () => void,
+		info: {
+			supabase: SupabaseClient,
+			canvasChannel: RealtimeChannel,
+			userDisplayName: string,
+			userID: string,
+			canvasID: string,
+			canvasDrawing: JSON
+		}
 	} = $props();
 
-	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
-	const channelName = 'qwer-tyui-opas'; // TODO: will change dynamically
-	let canvasChannel: RealtimeChannel | null = $state(null);
-	let isDirtyCanvas: Boolean = $state(false);
+	const { supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing } = info;
 
 	let loadErr: string | null = null;
 	let canvasContainer: HTMLElement;
@@ -101,7 +110,8 @@
 		}
 	});
 
-	let objects: Record<string, PixelGrid> = $state({}); // TODO: generalize this to CanvasObject
+	// Definition of all objects (including PixelGrid) that will be rendered on the canvas
+	let objects: Record<string, CanvasObject> = $state({}); // TODO: generalize this to CanvasObject
 
 	// initialization routine
 	const init = (): Error | null => {
@@ -109,9 +119,9 @@
 
 		err = initCanvas(); // initialize canvas
 		if (err !== null) return err;
+		initCanvasChannel();
 		err = initObjects(); // initialize objects
 		// if (err !== null) return err;
-		initCanvasChannel();
 		initListeners(); // start listeners
 		startRoutines(); // start the game loop
 
@@ -133,6 +143,39 @@
 		return null;
 	};
 
+	// inits canvas channel
+	const initCanvasChannel = (): Error | null => {
+		canvasChannel.on(
+			'broadcast', 
+			{ event: 'sync' },
+
+			async (payload) => {				
+				Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.payload.pixels);
+
+				// TODO: check if authenticated
+				const error = await supabase.from("canvas")
+					.update({ drawing: (objects["pixelGrid"] as PixelGrid).pixels})
+					.eq("id", canvasID);
+				// TODO: error checking
+			}
+		)
+		.on(
+			'postgres_changes',
+			{
+				event: 'UPDATE',
+				schema: 'public',
+				table: 'canvas'
+			},
+			(payload) => {
+				Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.new.drawing);
+				console.log(payload);
+			}
+		)
+		.subscribe();
+
+		return null;
+	}
+
 	const initObjects = (): Error | null => {
 		const pixelGrid = new PixelGrid(
 			0,
@@ -140,31 +183,16 @@
 			sctx.pixelGrid.gridSize,
 			sctx.pixelGrid.pixelWorldSize,
 			sctx.s,
-			"pixelGrid"
+			"pixelGrid",
+			supabase,
+			canvasChannel,
+			userDisplayName,
+			userID
 		);
+		Object.assign(pixelGrid.pixels, canvasDrawing);
 		objects["pixelGrid"] = pixelGrid;
 		return null;
 	};
-
-	// inits canvas channel
-	const initCanvasChannel = (): Error | null => {
-		canvasChannel = supabase.channel(channelName);
-		canvasChannel.on(
-			'broadcast', 
-			{ event: 'sync' },
-
-			(payload) => {
-				// console.log(payload.payload.pixels.pixels);
-				// console.log(objects["pixelGrid"].pixels.id);
-
-				Object.assign(objects["pixelGrid"].pixels, payload.payload.pixels.pixels);
-				// console.log(objects["pixelGrid"]);
-			}
-		)
-		.subscribe((status) => console.log(status));
-
-		return null;
-	}
 
 	// ====================================== LISTENERS =====================================
 
@@ -389,16 +417,6 @@
 		// performance update
 		sctx.cursor.lastPoll = performance.now();
 		sctx.cursor.active = sctx.cursor.secondaryActive = false;
-
-		canvasChannel?.send({
-			type: 'broadcast',
-			event: 'sync',
-			payload: { 
-				pixels: objects["pixelGrid"],
-				channelName: channelName
-			}
-		})
-		.then((resp) => console.log(resp))
 	};
 
 	let scrollingTimeout: ReturnType<typeof setTimeout>;
@@ -527,9 +545,10 @@
 		if (!err) {
 			loadErr = err;
 		}
-
 		onDestroy(() => {
 			cleanUpListeners();
+			supabase.realtime.channel("realtime")
+			// supabase.unsubscribe();
 		});
 	});
 </script>

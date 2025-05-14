@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SceneContext } from "../PixelCanvas.svelte";
 
 export abstract class CanvasObject {
