@@ -2,7 +2,9 @@
 	let { QrSRC = "" } = $props();
 
 	function GenerateQR(link: string) {
-		return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + link;
+		const qrInitial = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
+		const mosaiclyLink = "";
+		return qrInitial + mosaiclyLink + link;
 	}
 </script>
 

@@ -1,18 +1,17 @@
 <script lang="ts">
 	import QrGenerator from "$lib/comp/qr-code/QRGenerator.svelte";
 
-	let inputText = $state("wag");
+	let inputText = $state("random");
 	let finalText = $state(inputText);
 </script>
 
 <main>
 	<h1>QR code generator testing</h1>
 	<div>
-		<input type="text" bind:value={inputText} placeholder="link to generate" />
+		<input type="text" bind:value={inputText} placeholder="canvas code" />
 		<button
 			onclick={() => {
 				finalText = inputText;
-				console.log(finalText);
 			}}>Submit</button
 		>
 	</div>
