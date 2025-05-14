@@ -70,7 +70,7 @@
 	import { PixelGrid } from "./objects/PixelGrid";
 	import { CanvasUtils } from "./utils/CanvasUtils";
 	import { CursorUtils } from "./utils/CursorUtils";
-	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
+	import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 	// external bindings
 	let {
@@ -78,18 +78,18 @@
 		mode = "view",
 		load, // dispatcher
 		info
-	} : {
-		color: string,
-		mode: "view" | "edit",
-		load: () => void,
+	}: {
+		color: string;
+		mode: "view" | "edit";
+		load: () => void;
 		info: {
-			supabase: SupabaseClient,
-			canvasChannel: RealtimeChannel,
-			userDisplayName: string,
-			userID: string,
-			canvasID: string,
-			canvasDrawing: JSON
-		}
+			supabase: SupabaseClient;
+			canvasChannel: RealtimeChannel;
+			userDisplayName: string;
+			userID: string;
+			canvasID: string;
+			canvasDrawing: JSON;
+		};
 	} = $props();
 
 	const { supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing } = info;
@@ -145,36 +145,34 @@
 
 	// inits canvas channel
 	const initCanvasChannel = (): Error | null => {
-		canvasChannel.on(
-			'broadcast', 
-			{ event: 'sync' },
+		canvasChannel
+			.on(
+				"broadcast",
+				{ event: "sync" },
 
-			async (payload) => {				
-				Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.payload.pixels);
-
-				// TODO: check if authenticated
-				const error = await supabase.from("canvas")
-					.update({ drawing: (objects["pixelGrid"] as PixelGrid).pixels})
-					.eq("id", canvasID);
-				// TODO: error checking
-			}
-		)
-		.on(
-			'postgres_changes',
-			{
-				event: 'UPDATE',
-				schema: 'public',
-				table: 'canvas'
-			},
-			(payload) => {
-				Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.new.drawing);
-				console.log(payload);
-			}
-		)
-		.subscribe();
+				async (payload) => {
+					Object.assign(
+						(objects["pixelGrid"] as PixelGrid).pixels,
+						payload.payload.pixels
+					);
+				}
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "UPDATE",
+					schema: "public",
+					table: "canvas"
+				},
+				(payload) => {
+					Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.new.drawing);
+					console.log(payload);
+				}
+			)
+			.subscribe();
 
 		return null;
-	}
+	};
 
 	const initObjects = (): Error | null => {
 		const pixelGrid = new PixelGrid(
@@ -187,7 +185,8 @@
 			supabase,
 			canvasChannel,
 			userDisplayName,
-			userID
+			userID,
+			canvasID
 		);
 		Object.assign(pixelGrid.pixels, canvasDrawing);
 		objects["pixelGrid"] = pixelGrid;
@@ -547,7 +546,7 @@
 		}
 		onDestroy(() => {
 			cleanUpListeners();
-			supabase.realtime.channel("realtime")
+			supabase.realtime.channel("realtime");
 			// supabase.unsubscribe();
 		});
 	});

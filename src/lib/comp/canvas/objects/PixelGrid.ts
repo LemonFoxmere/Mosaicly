@@ -29,6 +29,8 @@ export class PixelGrid extends CanvasObject {
 	canvasChannel: RealtimeChannel | null;
 	userDisplayName: string = "";
 	userID: string = "";
+	canvasID: string;
+	databaseTimeout: NodeJS.Timeout | undefined;
 
 	private buffer = document.createElement("canvas"); // for buffered rendering
 	private bufferCtx: CanvasRenderingContext2D;
@@ -43,7 +45,8 @@ export class PixelGrid extends CanvasObject {
 		supabase: SupabaseClient,
 		canvasChannel: RealtimeChannel | null,
 		userDisplayName: string,
-		userID: string
+		userID: string,
+		canvasID: string
 	) {
 		super(x, y, scale, id);
 		this.gridSize = gridSize;
@@ -53,10 +56,12 @@ export class PixelGrid extends CanvasObject {
 		this.buffer.width = this.gridSize;
 		this.buffer.height = this.gridSize;
 		this.bufferCtx = this.buffer.getContext("2d")!;
+
 		this.supabase = supabase;
 		this.canvasChannel = canvasChannel;
 		this.userDisplayName = userDisplayName;
 		this.userID = userID;
+		this.canvasID = canvasID;
 	}
 
 	// Merge or create pixel at given cell coordinates
@@ -101,6 +106,7 @@ export class PixelGrid extends CanvasObject {
 
 			if (needsUpdate) {
 				this.isDirty = true;
+				clearTimeout(this.databaseTimeout);
 				this.addOrUpdatePixel(cellX, cellY, {
 					color,
 					lastedEditedUserID: this.userID,
@@ -225,22 +231,40 @@ export class PixelGrid extends CanvasObject {
 	update(sctx: SceneContext): void {
 		void sctx;
 		if (this.isDirty && Object.keys(this.pixelQueue).length > 0) {
-			const current: string[] = Object.keys(this.pixelQueue); 
-			this.canvasChannel?.send({
-				type: 'broadcast',
-				event: 'sync',
-				payload: { 
-					pixels: this.pixelQueue,
-				}
-			})
-			.then(() => {
-				current.map((cellKey) => delete this.pixelQueue[cellKey]);
-			});
+			const current: string[] = Object.keys(this.pixelQueue);
+			this.canvasChannel
+				?.send({
+					type: "broadcast",
+					event: "sync",
+					payload: {
+						pixels: this.pixelQueue
+					}
+				})
+				.then(() => {
+					current.map(async (cellKey) => {
+						delete this.pixelQueue[cellKey];
 
-			// check if there are any pixels waiting to be broadcasted before stopping rendering
-			if (Object.keys(this.pixelQueue).length == 0) {
-				this.isDirty = false;
-			}
+						// check if there are any pixels waiting to be broadcasted before stopping sending
+						if (Object.keys(this.pixelQueue).length == 0) {
+							this.isDirty = false;
+
+							// also start batching for the canvas sending
+							this.databaseTimeout = setTimeout(async () => {
+								// TODO: check if authenticated
+								const error = await this.supabase
+									.from("canvas")
+									.update({ drawing: this.pixels })
+									.eq("id", this.canvasID);
+								// TODO: error checking
+								console.log(error);
+
+								fetch("/api/something", {
+									method: "POST"
+								});
+							}, 1000);
+						}
+					});
+				});
 		}
 	}
 
