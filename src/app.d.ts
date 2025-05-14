@@ -53,14 +53,16 @@ declare global {
 			user_id: string;
 			created_on: string;
 
-			title: string | null;
+			title: string;
 			loc_desc: string;
-			drawing?: Json | null;
+			drawing: JSON;
 
 			longitude: number;
 			latitude: number;
 			accuracy: string;
 			location: unknown;
+
+			backup_code: string;
 		};
 	}
 }

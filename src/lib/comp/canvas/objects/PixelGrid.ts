@@ -1,3 +1,4 @@
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import type { SceneContext } from "../PixelCanvas.svelte";
 import { CanvasUtils } from "../utils/CanvasUtils";
 import { CursorUtils } from "../utils/CursorUtils";
@@ -22,6 +23,12 @@ export class PixelGrid extends CanvasObject {
 	pixels: Record<string, PixelData> = {};
 	gridSize = 256; // number of cells in one dimension
 	pixelWorldSize = 1; // how big a virtual pixel should be in real pixel-space units at zoom = 1
+	isDirty = false; // is the current pixel data stale?
+	pixelQueue: Record<string, PixelData> = {}; // pixels that are to be broadcasted
+	supabase: SupabaseClient;
+	canvasChannel: RealtimeChannel | null;
+	userDisplayName: string = "";
+	userID: string = "";
 
 	private buffer = document.createElement("canvas"); // for buffered rendering
 	private bufferCtx: CanvasRenderingContext2D;
@@ -32,7 +39,11 @@ export class PixelGrid extends CanvasObject {
 		gridSize: number,
 		pixelWorldSize: number,
 		scale: number,
-		id: string | null = null
+		id: string | null = null,
+		supabase: SupabaseClient,
+		canvasChannel: RealtimeChannel | null,
+		userDisplayName: string,
+		userID: string
 	) {
 		super(x, y, scale, id);
 		this.gridSize = gridSize;
@@ -42,6 +53,10 @@ export class PixelGrid extends CanvasObject {
 		this.buffer.width = this.gridSize;
 		this.buffer.height = this.gridSize;
 		this.bufferCtx = this.buffer.getContext("2d")!;
+		this.supabase = supabase;
+		this.canvasChannel = canvasChannel;
+		this.userDisplayName = userDisplayName;
+		this.userID = userID;
 	}
 
 	// Merge or create pixel at given cell coordinates
@@ -56,6 +71,7 @@ export class PixelGrid extends CanvasObject {
 			lastedEditedUserID: data.lastedEditedUserID ?? existing.lastedEditedUserID ?? null,
 			lastedEditedName: data.lastedEditedName ?? existing.lastedEditedName ?? null
 		};
+		this.pixelQueue[cellKey] = this.pixels[cellKey];
 	}
 
 	placePixel(cursorX: number, cursorY: number, color: string, sctx: SceneContext): void {
@@ -84,10 +100,11 @@ export class PixelGrid extends CanvasObject {
 			const needsUpdate = isNewPixel || existingPixel.color !== color;
 
 			if (needsUpdate) {
+				this.isDirty = true;
 				this.addOrUpdatePixel(cellX, cellY, {
 					color,
-					lastedEditedUserID: null,
-					lastedEditedName: null
+					lastedEditedUserID: this.userID,
+					lastedEditedName: this.userDisplayName
 				});
 			}
 		}
@@ -207,6 +224,24 @@ export class PixelGrid extends CanvasObject {
 
 	update(sctx: SceneContext): void {
 		void sctx;
+		if (this.isDirty && Object.keys(this.pixelQueue).length > 0) {
+			const current: string[] = Object.keys(this.pixelQueue); 
+			this.canvasChannel?.send({
+				type: 'broadcast',
+				event: 'sync',
+				payload: { 
+					pixels: this.pixelQueue,
+				}
+			})
+			.then(() => {
+				current.map((cellKey) => delete this.pixelQueue[cellKey]);
+			});
+
+			// check if there are any pixels waiting to be broadcasted before stopping rendering
+			if (Object.keys(this.pixelQueue).length == 0) {
+				this.isDirty = false;
+			}
+		}
 	}
 
 	onCursorDown(sctx: SceneContext): void {
