@@ -1,29 +1,37 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { page } from "$app/state";
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
+	import Modal from "$lib/comp/profile/EditCanvasModal.svelte";
 	import CreateCanvasMenu from "$lib/comp/profile/CreateCanvasMenu.svelte";
 	import type { PageProps } from "./$types";
+	import { LoaderCircle } from "@lucide/svelte";
 
 	let { data, form }: PageProps = $props();
 
-	// get session and user from the page data
-	let session = $derived(data.session);
-	let user = $derived(data.user);
+	// local state, sync from upstream as updates roll in
+	const profile = $derived(data.user?.profile);
+	let { displayName, bio } = $derived(data.user!.profile);
 
 	let canvases = $derived<DB.Canvas[]>(data.canvas || []);
 
-	// user copy, for optimistic ui updates
-	let localUser = user;
-	let localDisplayName = $derived(localUser?.profile?.displayName ?? "");
-	let localBio = $derived(localUser?.profile?.bio ?? "");
-
-	let isUnsaved = $derived(
-		localBio != user?.profile.bio || localDisplayName != user.profile.displayName
-	);
+	let isSaving = $state(false);
 
 	// toggle between Profile | Canvases tab
-	let isProfile = $state(true);
+	let isProfile = $state(data.tab === "canvases" ? false : true);
+
+	// check if there are unsaved changes
+	let isUnsaved = $derived(bio !== profile?.bio || displayName !== profile?.displayName);
+
+	// CANVAS / modal
+	let isOpen = $state(false);
+	let focusedCanvas = $state<DB.Canvas>();
+
+	const setCurrCanvas = (canvas: DB.Canvas) => {
+		focusedCanvas = canvas;
+		isOpen = true;
+	};
+
+	$inspect("focused canvas", focusedCanvas);
 </script>
 
 <main>
@@ -32,10 +40,10 @@
 		<section id="title-container">
 			<h2 id="title">
 				<span>Greetings,</span>
-				<br />{localDisplayName}.
+				<br />{displayName}.
 			</h2>
-			{#if user}
-				<img id="pfp" src={user.profile.avatarUrl} alt="Profile Picture" />
+			{#if profile}
+				<img id="pfp" src={profile?.avatarUrl} alt="Profile Picture" />
 			{/if}
 		</section>
 		<p id="desc">You can edit your profile or manage your canvases here.</p>
@@ -59,8 +67,11 @@
 				action="?/update_profile"
 				id="profile_form"
 				use:enhance={() => {
+					isSaving = true;
+
 					return async ({ update }) => {
 						await update({ reset: false });
+						isSaving = false;
 					};
 				}}
 			>
@@ -71,7 +82,7 @@
 						type="text"
 						placeholder="Guy"
 						autocomplete="off"
-						bind:value={localDisplayName}
+						bind:value={displayName}
 					/>
 				</label>
 
@@ -82,23 +93,36 @@
 						placeholder="I'm just a chill guy."
 						rows="3"
 						autocomplete="off"
-						bind:value={localBio}
+						bind:value={bio}
 					></textarea>
 				</label>
 
-				{#if isUnsaved}
+				{#if !displayName}
+					<p class="warning center">Display name cannot be empty!</p>
+				{:else if isUnsaved}
 					<p class="warning center">There are unsaved changes!</p>
 				{:else if form?.success}
 					<p class="center">Your changes are saved!</p>
 				{/if}
-				<button>Save</button>
+
+				<button disabled={!displayName}>
+					{#if isSaving}
+						<LoaderCircle class="animate-spin" />
+					{:else}
+						Save
+					{/if}
+				</button>
 			</form>
 		{:else}
 			<!-- canvases list render -->
 			<div class="canvas_list">
-				{#each canvases as canvas}
-					<CanvasCard {canvas} />
+				{#each canvases as canvas (canvas.id)}
+					<CanvasCard {canvas} {setCurrCanvas} />
 				{/each}
+
+				{#if focusedCanvas}
+					<Modal bind:open={isOpen} bind:isSaving canvas={focusedCanvas} />
+				{/if}
 
 				<!-- add new canvas, popup like modal -->
 				<CreateCanvasMenu />

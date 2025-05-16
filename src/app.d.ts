@@ -56,6 +56,7 @@ declare global {
 			title: string | null;
 			loc_desc: string;
 			drawing?: Json | null;
+			is_archived: bool;
 
 			longitude: number;
 			latitude: number;

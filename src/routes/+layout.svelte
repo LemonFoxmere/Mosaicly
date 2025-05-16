@@ -66,7 +66,7 @@
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/profile" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/profile?tab=canvases" on:click={closeMobileMenu}>
 				<p>My Canvases</p>
 			</a>
 
