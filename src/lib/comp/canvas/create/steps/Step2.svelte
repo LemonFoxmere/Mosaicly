@@ -1,21 +1,42 @@
 <script lang="ts">
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
 	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
+	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 
 	interface Props {
 		canvasCoordinates: string;
 		parsedLong: number;
 		parsedLat: number;
 		errorState: { flag: boolean; message: string };
+		accuracy: number;
 		onLocate: () => void;
+		isFocused: boolean;
 	}
 	let {
 		canvasCoordinates = $bindable(),
 		parsedLong = $bindable(),
 		parsedLat = $bindable(),
 		errorState = $bindable(),
-		onLocate
+		onLocate,
+		isFocused = $bindable(false)
 	}: Props = $props();
+
+	let mapboxLatitude = $state(parsedLat);
+	let mapboxLongitude = $state(parsedLong);
+
+	$effect(() => {
+		mapboxLatitude = parsedLat;
+		mapboxLongitude = parsedLong;
+	});
+
+	$effect(() => {
+		if (mapboxLatitude !== parsedLat) {
+			parsedLat = mapboxLatitude;
+		}
+		if (mapboxLongitude !== parsedLong) {
+			parsedLong = mapboxLongitude;
+		}
+	});
 </script>
 
 <main>
@@ -27,6 +48,8 @@
 					bind:value={canvasCoordinates}
 					placeholder="36.99979, 122.06337"
 					class="coordinate-input flex-fill"
+					on:focus={() => (isFocused = true)}
+					on:blur={() => (isFocused = false)}
 				/>
 				<button id="locate" class="none" on:click={onLocate}>
 					<GeoLocate s={32} />
@@ -37,11 +60,18 @@
 
 	<section id="map-wrapper">
 		<p class="caption {!canvasCoordinates ? 'hidden' : ''}">
-			Parsed as {parsedLat}, {parsedLong}
+			Parsed as {parsedLat.toFixed(7)}, {parsedLong.toFixed(7)}
 		</p>
 		<div id="map">
-			<!-- TODO: replace with the actual map in the future -->
-			<h1>𓀐𓂸</h1>
+			{#if typeof parsedLat === "number" && typeof parsedLong === "number" && parsedLat !== 0 && parsedLong !== 0}
+				<MapboxMap
+					bind:latitude={mapboxLatitude}
+					bind:longitude={mapboxLongitude}
+					allowClickToUpdateCoordinates={true}
+				/>
+			{:else}
+				<h1>𓀐𓂸</h1>
+			{/if}
 		</div>
 	</section>
 </main>
@@ -99,7 +129,7 @@
 			align-items: center;
 
 			.caption {
-				color: $text-secondary; // override
+				color: $text-secondary;
 			}
 
 			#map {

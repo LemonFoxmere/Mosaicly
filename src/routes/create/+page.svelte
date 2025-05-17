@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
-	import { fetchCoordinatesForDisplay } from "$lib/comp/canvas/utils/Geolocation";
+	import {
+		fetchCoordinatesForDisplay,
+		roundCoordinate
+	} from "$lib/comp/canvas/utils/Geolocation";
 	import type { ActionResult } from "@sveltejs/kit";
 
 	import ArrowNavCluster from "$lib/comp/canvas/create/ArrowNavCluster.svelte";
@@ -21,23 +24,23 @@
 	let formLongitude = $state(0.0);
 	let formAccuracy = $state(0.0);
 	let coordinateValid = $state(false);
+	let canvasInputFocused = $state(false);
 
-	let hiddenFormElement: HTMLFormElement;
-
+	// initialize to null so TS knows it's assigned
+	let hiddenFormElement: HTMLFormElement | null = null;
 	let errorState = $state({ flag: false, message: "" });
 
 	const nextStep = () => {
 		if (currentStep < 3) {
 			currentStep++;
-			// change URL anchor param
 			const newUrl = new URL(window.location.href);
 			newUrl.hash = `#s${currentStep}`;
 			window.history.pushState({}, "", newUrl);
 		}
 	};
+
 	const prevStep = () => {
 		if (currentStep > 1) currentStep--;
-		// change URL anchor param
 		const newUrl = new URL(window.location.href);
 		newUrl.hash = `#s${currentStep}`;
 		window.history.pushState({}, "", newUrl);
@@ -45,22 +48,24 @@
 
 	const handleLocateMeClick = async () => {
 		errorState = { flag: false, message: "" };
-		const coords = await fetchCoordinatesForDisplay();
-		if (coords) {
-			// round to max 7 digits
-			coords.latitude = Math.round(coords.latitude * 1e7) / 1e7;
-			coords.longitude = Math.round(coords.longitude * 1e7) / 1e7;
 
-			canvasCoordinates = `${coords.latitude}, ${coords.longitude}`;
-			formLatitude = coords.latitude;
-			formLongitude = coords.longitude;
-			formAccuracy = coords.accuracy;
-		} else {
+		const coords = await fetchCoordinatesForDisplay();
+		if (!coords) {
 			errorState = {
 				flag: true,
 				message: "Failed to fetch coordinates or permission denied."
 			};
+			return;
 		}
+
+		// round here once
+		coords.latitude = roundCoordinate(coords.latitude);
+		coords.longitude = roundCoordinate(coords.longitude);
+
+		canvasCoordinates = `${coords.latitude}, ${coords.longitude}`;
+		formLatitude = coords.latitude;
+		formLongitude = coords.longitude;
+		formAccuracy = coords.accuracy;
 	};
 
 	// Parse and validate the coordinates input
@@ -83,7 +88,6 @@
 		const [latStr, longStr] = parts.map((s) => s.trim());
 		const lat = Number(latStr);
 		const long = Number(longStr);
-
 		const valid =
 			isFinite(lat) && isFinite(long) && Math.abs(lat) <= 90 && Math.abs(long) <= 180;
 
@@ -101,13 +105,32 @@
 		errorState = { flag: false, message: "" };
 	});
 
+	// update canvasCoordinates from formLatitude/formLongitude when input is not focused
+	$effect(() => {
+		if (!canvasInputFocused) {
+			const targetLat = roundCoordinate(formLatitude);
+			const targetLong = roundCoordinate(formLongitude);
+			const expectedCanvasString = `${targetLat}, ${targetLong}`;
+
+			if (targetLat === 0 && targetLong === 0 && canvasCoordinates.trim() === "") {
+				return;
+			}
+
+			if (canvasCoordinates.trim() !== expectedCanvasString) {
+				canvasCoordinates = expectedCanvasString;
+			}
+		}
+	});
+
 	const saveCanvas = async () => {
-		if (hiddenFormElement) hiddenFormElement.requestSubmit();
-		else
+		if (hiddenFormElement) {
+			hiddenFormElement.requestSubmit();
+		} else {
 			errorState = {
 				flag: true,
 				message: "Error: Could not initiate save. Please try again."
 			};
+		}
 	};
 
 	const submitOptions = () => {
@@ -136,31 +159,23 @@
 
 	const routeChange = () => {
 		const hash = window.location.hash;
-
-		// TODO: add more checks in to prevent bad submissions
-
 		if (hash) {
 			const step = parseInt(hash.replace("#s", ""));
 			if (!isNaN(step) && step >= 1 && step <= 3) {
 				currentStep = step;
 			} else {
-				// change the current s hash to 1
 				const newUrl = new URL(window.location.href);
 				newUrl.hash = "#s1";
 				window.history.pushState({}, "", newUrl);
 			}
 		} else {
-			// change the current s hash to 1
 			const newUrl = new URL(window.location.href);
 			newUrl.hash = "#s1";
 			window.history.pushState({}, "", newUrl);
 		}
 	};
 
-	onMount(() => {
-		// set current step based on URL hash if there is one
-		routeChange();
-	});
+	onMount(routeChange);
 </script>
 
 <svelte:window on:hashchange={routeChange} />
@@ -179,6 +194,8 @@
 				bind:errorState
 				bind:parsedLong={formLongitude}
 				bind:parsedLat={formLatitude}
+				bind:isFocused={canvasInputFocused}
+				accuracy={formAccuracy}
 				onLocate={handleLocateMeClick}
 			/>
 		</GalleryItem>
@@ -231,22 +248,19 @@
 
 	main {
 		position: relative;
-
 		display: flex;
 		flex-grow: 1;
 		flex-direction: column;
 		row-gap: 30px;
 		align-items: center;
-
 		padding: 15px 30px;
-
 		width: 100%;
 		height: 100%;
 		margin: auto 0px;
 
 		@media screen and (min-width: $mobile-width) {
 			max-height: 700px;
-			padding-bottom: $navbar-height; // account for navbar
+			padding-bottom: $navbar-height;
 		}
 
 		#page-content {
@@ -261,7 +275,6 @@
 			width: 100%;
 			height: 50px;
 			position: relative;
-
 			display: flex;
 			justify-content: center;
 			align-items: center;
@@ -276,7 +289,6 @@
 
 			#return {
 				width: 100%;
-
 				@media screen and (min-width: $mobile-width) {
 					width: fit-content;
 				}

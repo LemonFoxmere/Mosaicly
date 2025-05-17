@@ -1,69 +1,90 @@
-let cachedCoords: { latitude: number; longitude: number; accuracy: number } | null = null;
+type Coordinates = { latitude: number; longitude: number; accuracy: number };
+let cachedCoords: Coordinates | null = null;
 
-const getCurrentPos = (): Promise<GeolocationPosition> => {
-	return new Promise((resolve, reject) =>
-		navigator.geolocation.getCurrentPosition(resolve, reject)
+const getCurrentPos = (): Promise<GeolocationPosition> =>
+	new Promise((resolve, reject) =>
+		navigator.geolocation.getCurrentPosition(resolve, reject, {
+			enableHighAccuracy: true,
+			timeout: 2000,
+			maximumAge: 0
+		})
 	);
-};
 
 const requestGeolocationPermission = async (): Promise<boolean> => {
-	if (!navigator.permissions) {
-		return true;
-	}
+	if (!navigator.permissions) return true;
 	try {
 		const status = await navigator.permissions.query({ name: "geolocation" });
 		if (status.state === "denied") {
-			console.error("Geolocation permission denied");
 			alert("Location access has been denied. Please enable it in your browser settings.");
 			return false;
 		}
 		return true;
-	} catch (err) {
-		console.warn("Permissions API error, proceeding to prompt for geolocation", err);
+	} catch {
 		return true;
 	}
 };
 
-export const fetchCoordinatesForDisplay = async (): Promise<{
-	latitude: number;
-	longitude: number;
-	accuracy: number;
-} | null> => {
-	if (cachedCoords) return cachedCoords; // i cache coords to avoid multiple permission prompts
-
+const ensureGeolocationReady = async (): Promise<boolean> => {
 	if (!navigator.geolocation) {
 		alert("Geolocation is not supported by your browser.");
-		return null;
+		return false;
 	}
+	return requestGeolocationPermission();
+};
 
-	const canRequest = await requestGeolocationPermission();
-	if (!canRequest) return null;
+const isGeoError = (error: any): error is { code: number; message: string } =>
+	error && typeof error.code === "number" && typeof error.message === "string";
+
+const handleGeolocationError = (error: any): void => {
+	if (isGeoError(error) && error.code === 1) {
+		alert("Location access was denied. Please enable it in your browser settings.");
+	}
+};
+
+export const fetchCoordinatesForDisplay = async (): Promise<Coordinates | null> => {
+	if (!(await ensureGeolocationReady())) return null;
 
 	try {
-		const gis = (await getCurrentPos()).coords;
-		const { latitude, longitude, accuracy } = gis;
-		cachedCoords = { latitude, longitude, accuracy };
-		console.log("Fetched GIS for display:", gis);
-		return cachedCoords;
+		const position = await getCurrentPos();
+		const coords = {
+			latitude: roundCoordinate(position.coords.latitude),
+			longitude: roundCoordinate(position.coords.longitude),
+			accuracy: position.coords.accuracy
+		};
+		cachedCoords = coords;
+
+		// try to get a more accurate position in the background
+		setTimeout(async () => {
+			try {
+				const betterPosition = await getCurrentPos();
+				if (betterPosition.coords.accuracy < coords.accuracy) {
+					cachedCoords = {
+						latitude: roundCoordinate(betterPosition.coords.latitude),
+						longitude: roundCoordinate(betterPosition.coords.longitude),
+						accuracy: betterPosition.coords.accuracy
+					};
+				}
+			} catch {
+				// silently fail - we already have initial coordinates
+			}
+		}, 1000);
+
+		return coords;
 	} catch (error) {
-		console.error("Error fetching current position for display:", error);
-		alert(
-			"Could not retrieve your location. Please ensure location services are enabled and try again."
-		);
+		handleGeolocationError(error);
 		return null;
 	}
 };
 
-// called before form submission to inject location state for db
+export const roundCoordinate = (num: number, decimalPlaces: number = 7): number => {
+	if (isNaN(num) || !isFinite(num)) return num;
+	const factor = Math.pow(10, decimalPlaces);
+	return Math.round(num * factor) / factor;
+};
+
 export const injectGeography = async ({ formData }: { formData: FormData }) => {
 	const coords = await fetchCoordinatesForDisplay();
-	if (!coords) {
-		console.warn(
-			"injectGeography: Coordinates not fetched, form data will not include new geo-location."
-		);
-		return;
-	}
-
+	if (!coords) return;
 	formData.set("longitude", String(coords.longitude));
 	formData.set("latitude", String(coords.latitude));
 	formData.set("accuracy", String(coords.accuracy));
