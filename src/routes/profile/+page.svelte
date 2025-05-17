@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
-	import Modal from "$lib/comp/profile/EditCanvasModal.svelte";
 	import CreateCanvasMenu from "$lib/comp/profile/CreateCanvasMenu.svelte";
-	import type { PageProps } from "./$types";
+	import Modal from "$lib/comp/profile/EditCanvasModal.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
+	import type { PageProps } from "./$types";
 
 	let { data, form }: PageProps = $props();
 
@@ -65,7 +65,7 @@
 			<form
 				method="POST"
 				action="?/update_profile"
-				id="profile_form"
+				id="profile-form"
 				use:enhance={() => {
 					isSaving = true;
 
@@ -114,19 +114,19 @@
 				</button>
 			</form>
 		{:else}
-			<!-- canvases list render -->
-			<div class="canvas_list">
-				{#each canvases as canvas (canvas.id)}
-					<CanvasCard {canvas} {setCurrCanvas} />
-				{/each}
+			<section id="canvas-form">
+				<!-- canvases list render -->
+				<div class="canvas_list">
+					{#each canvases as canvas (canvas.id)}
+						<CanvasCard {canvas} {setCurrCanvas} />
+					{/each}
+				</div>
 
-				{#if focusedCanvas}
-					<Modal bind:open={isOpen} bind:isSaving canvas={focusedCanvas} />
-				{/if}
+				<Modal bind:open={isOpen} bind:isSaving canvas={focusedCanvas} />
 
 				<!-- add new canvas, popup like modal -->
 				<CreateCanvasMenu />
-			</div>
+			</section>
 		{/if}
 	</section>
 </main>
@@ -194,7 +194,7 @@
 		}
 
 		#edit-content {
-			#profile_form {
+			#profile-form {
 				display: flex;
 				flex-direction: column;
 				row-gap: 15px;
@@ -212,6 +212,12 @@
 				.warning {
 					color: #b11012;
 				}
+			}
+
+			#canvas-form {
+				display: flex;
+				flex-direction: column;
+				row-gap: 30px;
 			}
 		}
 	}

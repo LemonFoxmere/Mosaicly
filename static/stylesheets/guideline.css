@@ -105,6 +105,7 @@ button.outline.small:active {
 }
 button.none {
 	all: unset;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 @media (hover: hover) {
 	button.none:hover {
@@ -156,15 +157,11 @@ a:active {
 a.wrapper {
 	text-decoration: none;
 }
-
-/* spin animation – because stillness is overrated */
 @keyframes spin {
 	to {
 		transform: rotate(360deg);
 	}
 }
-
 .animate-spin {
-	/* one full revolution every second, smooth as silk, forever */
 	animation: spin 1s linear infinite;
 }

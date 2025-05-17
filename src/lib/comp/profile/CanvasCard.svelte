@@ -22,16 +22,21 @@
 			.replace(" at", " @");
 	};
 
-	const { title, loc_desc, created_on, is_archived } = $derived(canvas);
+	const { title, locDesc, createdOn, isArchived } = $derived(canvas);
 </script>
 
-<div class="item-frame container" class:archived={is_archived}>
+<div class="item-frame container" class:archived={isArchived}>
 	<section>
 		<aside>
-			<div id="title">{title}</div>
-			{loc_desc}
+			<div id="title">
+				<p><strong>{title}</strong></p>
+			</div>
+			{locDesc}
 		</aside>
-		Created on {format(created_on)}
+
+		<p>
+			Created on {format(createdOn)}
+		</p>
 	</section>
 
 	<button id="edit" onclick={() => setCurrCanvas(canvas)}>
@@ -41,7 +46,6 @@
 
 <style>
 	.container {
-		font-family: "Outfit", system-ui, Helvetica, sans-serif;
 		display: flex;
 		justify-content: space-between;
 		padding: 16px;

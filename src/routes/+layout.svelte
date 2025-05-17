@@ -72,7 +72,7 @@
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/create" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/create#s1" on:click={closeMobileMenu}>
 				<p>Create a Canvas</p>
 			</a>
 

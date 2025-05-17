@@ -194,6 +194,7 @@ button {
 	&.none {
 		// no styling at all. Just a wrapper
 		all: unset;
+		-webkit-tap-highlight-color: transparent;
 
 		@media (hover: hover) {
 			&:hover {
@@ -253,4 +254,16 @@ a {
 		// no underline
 		text-decoration: none;
 	}
+}
+
+/* spin animation – because stillness is overrated */
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.animate-spin {
+	/* one full revolution every second, smooth as silk, forever */
+	animation: spin 1s linear infinite;
 }
