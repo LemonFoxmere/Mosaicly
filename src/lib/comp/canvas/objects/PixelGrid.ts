@@ -1,8 +1,8 @@
-import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import type { SceneContext } from "../PixelCanvas.svelte";
 import { CanvasUtils } from "../utils/CanvasUtils";
 import { CursorUtils } from "../utils/CursorUtils";
 import { CanvasObject } from "./CanvasObject";
+import { realtimePixelManager } from "./realtimePixelManager";
 
 // Structure for storing pixel information
 export type PixelData = {
@@ -23,14 +23,13 @@ export class PixelGrid extends CanvasObject {
 	pixels: Record<string, PixelData> = {};
 	gridSize = 256; // number of cells in one dimension
 	pixelWorldSize = 1; // how big a virtual pixel should be in real pixel-space units at zoom = 1
-	isDirty = false; // is the current pixel data stale?
-	pixelQueue: Record<string, PixelData> = {}; // pixels that are to be broadcasted
-	supabase: SupabaseClient;
-	canvasChannel: RealtimeChannel | null;
+
+	// used for when updating a pixel
 	userDisplayName: string = "";
 	userID: string = "";
-	canvasID: string;
-	databaseTimeout: NodeJS.Timeout | undefined;
+
+	// realtime for the pixelgrid (for broadcasting and saving to Supabase)
+	realtimeManager: realtimePixelManager;
 
 	private buffer = document.createElement("canvas"); // for buffered rendering
 	private bufferCtx: CanvasRenderingContext2D;
@@ -42,11 +41,9 @@ export class PixelGrid extends CanvasObject {
 		pixelWorldSize: number,
 		scale: number,
 		id: string | null = null,
-		supabase: SupabaseClient,
-		canvasChannel: RealtimeChannel | null,
 		userDisplayName: string,
 		userID: string,
-		canvasID: string
+		realtimeManager: realtimePixelManager
 	) {
 		super(x, y, scale, id);
 		this.gridSize = gridSize;
@@ -57,11 +54,9 @@ export class PixelGrid extends CanvasObject {
 		this.buffer.height = this.gridSize;
 		this.bufferCtx = this.buffer.getContext("2d")!;
 
-		this.supabase = supabase;
-		this.canvasChannel = canvasChannel;
 		this.userDisplayName = userDisplayName;
 		this.userID = userID;
-		this.canvasID = canvasID;
+		this.realtimeManager = realtimeManager;
 	}
 
 	// Merge or create pixel at given cell coordinates
@@ -76,7 +71,7 @@ export class PixelGrid extends CanvasObject {
 			lastedEditedUserID: data.lastedEditedUserID ?? existing.lastedEditedUserID ?? null,
 			lastedEditedName: data.lastedEditedName ?? existing.lastedEditedName ?? null
 		};
-		this.pixelQueue[cellKey] = this.pixels[cellKey];
+		this.realtimeManager.pushPixelQueue(cellKey, this.pixels);
 	}
 
 	placePixel(cursorX: number, cursorY: number, color: string, sctx: SceneContext): void {
@@ -105,8 +100,8 @@ export class PixelGrid extends CanvasObject {
 			const needsUpdate = isNewPixel || existingPixel.color !== color;
 
 			if (needsUpdate) {
-				this.isDirty = true;
-				clearTimeout(this.databaseTimeout);
+				this.realtimeManager.setDirty(true);
+				this.realtimeManager.clearDatabaseTimer();
 				this.addOrUpdatePixel(cellX, cellY, {
 					color,
 					lastedEditedUserID: this.userID,
@@ -230,44 +225,7 @@ export class PixelGrid extends CanvasObject {
 
 	update(sctx: SceneContext): void {
 		void sctx;
-		if (this.isDirty && Object.keys(this.pixelQueue).length > 0) {
-			const current: string[] = Object.keys(this.pixelQueue);
-			this.canvasChannel
-				?.send({
-					type: "broadcast",
-					event: "sync",
-					payload: {
-						pixels: this.pixelQueue
-					}
-				})
-				.then(() => {
-					current.map(async (cellKey) => {
-						delete this.pixelQueue[cellKey];
-
-						// check if there are any pixels waiting to be broadcasted before stopping sending
-						if (Object.keys(this.pixelQueue).length == 0) {
-							this.isDirty = false;
-
-							// if nothing waiting, start batching for the canvas sending (1 second)
-							this.databaseTimeout = setTimeout(async () => {
-								fetch("/api/canvas", {
-									method: "POST",
-									headers: {
-										Accept: "application/json",
-										"Content-Type": "application/json"
-									},
-									body: JSON.stringify({
-										canvasID: this.canvasID,
-										drawing: this.pixels
-									})
-								}).then((response) => {
-									// TODO: error handling
-								});
-							}, 1000);
-						}
-					});
-				});
-		}
+		this.realtimeManager.broadcastThenSave(this.pixels);
 	}
 
 	onCursorDown(sctx: SceneContext): void {

@@ -70,6 +70,7 @@
 	import { PixelGrid } from "./objects/PixelGrid";
 	import { CanvasUtils } from "./utils/CanvasUtils";
 	import { CursorUtils } from "./utils/CursorUtils";
+	import { realtimePixelManager } from "./objects/realtimePixelManager";
 	import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 	// external bindings
@@ -84,15 +85,20 @@
 		load: () => void;
 		info: {
 			supabase: SupabaseClient;
+			realtimeManager: realtimePixelManager;
 			canvasChannel: RealtimeChannel;
 			userDisplayName: string;
 			userID: string;
-			canvasID: string;
 			canvasDrawing: JSON;
 		};
 	} = $props();
 
-	const { supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing } = info;
+	const supabase = info.supabase;
+	let realtimeManager = $derived(info.realtimeManager);
+	let canvasChannel = $derived(info.canvasChannel);
+	let userDisplayName = $derived(info.userDisplayName);
+	let userID = $derived(info.userID);
+	let canvasDrawing = $derived(info.canvasDrawing);
 
 	let loadErr: string | null = null;
 	let canvasContainer: HTMLElement;
@@ -181,11 +187,9 @@
 			sctx.pixelGrid.pixelWorldSize,
 			sctx.s,
 			"pixelGrid",
-			supabase,
-			canvasChannel,
 			userDisplayName,
 			userID,
-			canvasID
+			realtimeManager
 		);
 		Object.assign(pixelGrid.pixels, canvasDrawing);
 		objects["pixelGrid"] = pixelGrid;
@@ -545,8 +549,7 @@
 		}
 		onDestroy(() => {
 			cleanUpListeners();
-			supabase.realtime.channel("realtime");
-			// supabase.unsubscribe();
+			supabase.removeChannel(canvasChannel);
 		});
 	});
 </script>

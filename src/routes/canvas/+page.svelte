@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
-	import { createClient } from "@supabase/supabase-js";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
+	import { realtimePixelManager } from "$lib/comp/canvas/objects/realtimePixelManager";
+	import { supabase } from "../../lib/supabaseClient";
 	import type { PageProps } from "./$types";
 
 	let selectedColor = $state("#000000");
@@ -10,14 +10,19 @@
 
 	let { data }: PageProps = $props();
 
-	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
-	const canvasInfo = <DB.Canvas>(data.canvas || {});
-	const channelName = data.channelName;
-	const canvasChannel = supabase.channel(channelName);
-	const canvasID = canvasInfo.id;
-	const canvasDrawing = canvasInfo.drawing;
+	// const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+
+	// props
+	let canvasInfo = $derived(<DB.Canvas>(data.canvas || {}));
+
+	let channelName = $derived(data.channelName);
+	let canvasChannel = $derived(supabase.channel(channelName));
+	let canvasID = $derived(canvasInfo.id);
+	let canvasDrawing = $derived(canvasInfo.drawing); // will be used for initial canvas state
 	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");
 	let userID = $derived(data.user?.account.id ?? "0");
+
+	let realtimeManager = $derived(new realtimePixelManager(canvasChannel, canvasID));
 
 	let editable = $state(true);
 
@@ -66,7 +71,14 @@
 			color={selectedColor}
 			mode={editState === "edit" ? "edit" : "view"}
 			load={() => {}}
-			info={{ supabase, canvasChannel, userDisplayName, userID, canvasID, canvasDrawing }}
+			info={{
+				supabase,
+				realtimeManager,
+				canvasChannel,
+				userDisplayName,
+				userID,
+				canvasDrawing
+			}}
 		/>
 	</section>
 </main>
