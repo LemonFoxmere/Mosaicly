@@ -46,23 +46,4 @@ declare global {
 		session_id: string;
 		is_anonymous: boolean;
 	};
-
-	namespace DB {
-		type Canvas = {
-			id: string;
-			user_id: string;
-			created_on: string;
-
-			title: string;
-			loc_desc: string;
-			drawing: JSON;
-
-			longitude: number;
-			latitude: number;
-			accuracy: string;
-			location: unknown;
-
-			backup_code: string;
-		};
-	}
 }

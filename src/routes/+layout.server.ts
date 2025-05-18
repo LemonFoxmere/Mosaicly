@@ -9,7 +9,7 @@ export const load: LayoutServerLoad = async ({
 	let session: Session | null = null;
 	({ session } = await safeGetSession());
 
-	let payload: AppUser | null = null;
+	let payload: DB.AppUser | null = null;
 
 	// fetch profile picture
 	if (session) {

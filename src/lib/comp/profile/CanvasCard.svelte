@@ -1,8 +1,11 @@
 <script lang="ts">
-	import Modal from "./EditCanvasModal.svelte";
-	let isOpen = $state(false);
-
-	let { canvas }: { canvas: DB.Canvas } = $props();
+	let {
+		canvas,
+		setCurrCanvas
+	}: {
+		canvas: DB.Canvas;
+		setCurrCanvas: (canvas: DB.Canvas) => void;
+	} = $props();
 	const options: Intl.DateTimeFormatOptions = {
 		month: "long",
 		day: "numeric",
@@ -19,29 +22,30 @@
 			.replace(" at", " @");
 	};
 
-	const { title, loc_desc, created_on } = canvas;
+	const { title, locDesc, createdOn, isArchived } = $derived(canvas);
 </script>
 
-<!-- overlays page when modal open -->
-<Modal bind:open={isOpen} {canvas} />
-
-<div class="item-frame container">
+<div class="item-frame container" class:archived={isArchived}>
 	<section>
 		<aside>
-			<div id="title">{title}</div>
-			{loc_desc}
+			<div id="title">
+				<p><strong>{title}</strong></p>
+			</div>
+			{locDesc}
 		</aside>
-		Created on {format(created_on)}
+
+		<p>
+			Created on {format(createdOn)}
+		</p>
 	</section>
 
-	<button id="edit" onclick={() => (isOpen = true)}>
+	<button id="edit" onclick={() => setCurrCanvas(canvas)}>
 		<img src="icons/pencil.svg" alt="edit" />
 	</button>
 </div>
 
 <style>
 	.container {
-		font-family: "Outfit", system-ui, Helvetica, sans-serif;
 		display: flex;
 		justify-content: space-between;
 		padding: 16px;
@@ -72,5 +76,9 @@
 		&:active {
 			opacity: 0.8;
 		}
+	}
+
+	.archived {
+		opacity: 0.5;
 	}
 </style>

@@ -10,7 +10,6 @@
 	import Step1 from "$lib/comp/canvas/create/steps/Step1.svelte";
 	import Step2 from "$lib/comp/canvas/create/steps/Step2.svelte";
 	import Step3 from "$lib/comp/canvas/create/steps/Step3.svelte";
-	import { onMount } from "svelte";
 
 	let currentStep = $state(1);
 	let canvasName = $state("");
@@ -55,11 +54,6 @@
 			formLatitude = coords.latitude;
 			formLongitude = coords.longitude;
 			formAccuracy = coords.accuracy;
-		} else {
-			errorState = {
-				flag: true,
-				message: "Failed to fetch coordinates or permission denied."
-			};
 		}
 	};
 
@@ -134,36 +128,50 @@
 		};
 	};
 
-	const routeChange = () => {
-		const hash = window.location.hash;
-
-		// TODO: add more checks in to prevent bad submissions
-
-		if (hash) {
-			const step = parseInt(hash.replace("#s", ""));
-			if (!isNaN(step) && step >= 1 && step <= 3) {
-				currentStep = step;
-			} else {
-				// change the current s hash to 1
-				const newUrl = new URL(window.location.href);
-				newUrl.hash = "#s1";
-				window.history.pushState({}, "", newUrl);
-			}
-		} else {
-			// change the current s hash to 1
-			const newUrl = new URL(window.location.href);
-			newUrl.hash = "#s1";
-			window.history.pushState({}, "", newUrl);
+	// checks if the current step is valid or not
+	const isStepValid = (step: number): boolean => {
+		switch (step) {
+			case 1:
+				return !!canvasName;
+			case 2:
+				return isStepValid(1) && !!coordinateValid && !!canvasCoordinates;
+			default:
+				return false; // default to invalid
 		}
 	};
 
-	onMount(() => {
-		// set current step based on URL hash if there is one
-		routeChange();
-	});
+	// const routeChange = () => {
+	// 	const hash = window.location.hash;
+
+	// 	// TODO: add more checks in to prevent bad submissions
+
+	// 	if (hash) {
+	// 		const step = parseInt(hash.replace("#s", ""));
+	// 		if (!isNaN(step) && step >= 1 && step <= 3) {
+	// 			if (isStepValid(step)) {
+	// 				currentStep = step;
+	// 			} else {
+	// 				// change the current s hash to 1
+	// 				const newUrl = new URL(window.location.href);
+	// 				newUrl.hash = "#s1";
+	// 				window.history.pushState({}, "", newUrl);
+	// 			}
+	// 		} else {
+	// 			// change the current s hash to 1
+	// 			const newUrl = new URL(window.location.href);
+	// 			newUrl.hash = "#s1";
+	// 			window.history.pushState({}, "", newUrl);
+	// 		}
+	// 	}
+	// };
+
+	// onMount(() => {
+	// 	// set current step based on URL hash if there is one
+	// 	routeChange();
+	// });
 </script>
 
-<svelte:window on:hashchange={routeChange} />
+<!-- <svelte:window on:hashchange={routeChange} /> -->
 
 <main>
 	<StepHeader {currentStep} stepTitle="Some basic stuff." />
@@ -195,8 +203,8 @@
 					onNext={nextStep}
 					onBack={prevStep}
 					leftDisabled={currentStep === 1}
-					rightDisabled={(currentStep === 1 && !canvasName) ||
-						(currentStep === 2 && (!coordinateValid || !canvasCoordinates))}
+					rightDisabled={(currentStep === 1 && !isStepValid(1)) ||
+						(currentStep === 2 && !isStepValid(2))}
 				/>
 				<p id="error-msg" class="status">
 					{errorState.message}
