@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals: { supabase, user, safeGetSession } }) => {
 	const { session } = await safeGetSession();
-	// if (!session) redirect(403, "/login");
+	// if (!session) redirect(404, "/login");
 	// TODO: 404 page
 
 	// TODO: Anonymous users can actually view the canvas too (as long as they are within the range)
@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, user, safeGetSe
 		.from("canvas")
 		.select("drawing, id, backup_code")
 		.eq("backup_code", channelName)
+		.limit(1)
 		.maybeSingle();
 	void error;
 	// TODO: preprocess the data first and error handling

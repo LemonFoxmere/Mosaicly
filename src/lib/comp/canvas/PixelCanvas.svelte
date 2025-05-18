@@ -166,7 +166,6 @@
 				},
 				(payload) => {
 					Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.new.drawing);
-					console.log(payload);
 				}
 			)
 			.subscribe();

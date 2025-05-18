@@ -248,18 +248,20 @@ export class PixelGrid extends CanvasObject {
 						if (Object.keys(this.pixelQueue).length == 0) {
 							this.isDirty = false;
 
-							// also start batching for the canvas sending
+							// if nothing waiting, start batching for the canvas sending (1 second)
 							this.databaseTimeout = setTimeout(async () => {
-								// TODO: check if authenticated
-								const error = await this.supabase
-									.from("canvas")
-									.update({ drawing: this.pixels })
-									.eq("id", this.canvasID);
-								// TODO: error checking
-								console.log(error);
-
-								fetch("/api/something", {
-									method: "POST"
+								fetch("/api/canvas", {
+									method: "POST",
+									headers: {
+										Accept: "application/json",
+										"Content-Type": "application/json"
+									},
+									body: JSON.stringify({
+										canvasID: this.canvasID,
+										drawing: this.pixels
+									})
+								}).then((response) => {
+									// TODO: error handling
 								});
 							}, 1000);
 						}
