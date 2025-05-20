@@ -1,7 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { SUPABASE_KEY, SUPABASE_URL } from "./@const/dynamic.env";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+export const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_KEY, {
 	auth: {
 		flowType: "pkce",
 		autoRefreshToken: false,

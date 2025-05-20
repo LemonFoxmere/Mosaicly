@@ -16,4 +16,7 @@ export async function POST({ request, locals: { supabase, safeGetSession } }) {
 		const response = new Response(JSON.stringify(error));
 		return response;
 	}
+
+	const response = new Response(null, {status: 403});
+	return response
 }

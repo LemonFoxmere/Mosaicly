@@ -10,13 +10,11 @@
 
 	let { data }: PageProps = $props();
 
-	// const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
-
 	// props
 	let canvasInfo = $derived(<DB.Canvas>(data.canvas || {}));
 
 	let channelName = $derived(data.channelName);
-	let canvasChannel = $derived(supabase.channel(channelName));
+	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
 	let canvasID = $derived(canvasInfo.id);
 	let canvasDrawing = $derived(canvasInfo.drawing); // will be used for initial canvas state
 	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");

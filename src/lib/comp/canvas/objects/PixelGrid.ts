@@ -71,7 +71,8 @@ export class PixelGrid extends CanvasObject {
 			lastedEditedUserID: data.lastedEditedUserID ?? existing.lastedEditedUserID ?? null,
 			lastedEditedName: data.lastedEditedName ?? existing.lastedEditedName ?? null
 		};
-		this.realtimeManager.pushPixelQueue(cellKey, this.pixels);
+		this.realtimeManager.pushPixelBroadcastQueue(cellKey, this.pixels);
+		this.realtimeManager.pushPixelDatabaseQueue(cellKey, this.pixels);
 	}
 
 	placePixel(cursorX: number, cursorY: number, color: string, sctx: SceneContext): void {
@@ -101,7 +102,6 @@ export class PixelGrid extends CanvasObject {
 
 			if (needsUpdate) {
 				this.realtimeManager.setDirty(true);
-				this.realtimeManager.clearDatabaseTimer();
 				this.addOrUpdatePixel(cellX, cellY, {
 					color,
 					lastedEditedUserID: this.userID,
