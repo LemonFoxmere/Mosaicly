@@ -32,6 +32,8 @@
 			window.location.href = "/canvas";
 		}
 	}
+
+	const brendanTestingJunk = "poop";
 </script>
 
 <main>
