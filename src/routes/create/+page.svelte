@@ -19,10 +19,12 @@
 	let canvasName = $state("");
 	let locationDescription = $state("");
 
-	let canvasCoordinates = $state("");
-	let formLatitude = $state(0.0);
-	let formLongitude = $state(0.0);
+	let canvasCoordinates = $state("36.9980995, -122.0555466");
+	let formLatitude = $state(36.9980995);
+	let formLongitude = $state(-122.0555466);
 	let formAccuracy = $state(0.0);
+	let formZoom = $state(18);
+	let forceZoomChange = $state(0);
 	let coordinateValid = $state(false);
 	let canvasInputFocused = $state(false);
 
@@ -66,6 +68,8 @@
 		formLatitude = coords.latitude;
 		formLongitude = coords.longitude;
 		formAccuracy = coords.accuracy;
+		formZoom = 18; // Reset zoom to default on locate
+		forceZoomChange += 1; // Increment to force zoom reset
 	};
 
 	// Parse and validate the coordinates input
@@ -197,6 +201,8 @@
 				bind:isFocused={canvasInputFocused}
 				accuracy={formAccuracy}
 				onLocate={handleLocateMeClick}
+				zoom={formZoom}
+				{forceZoomChange}
 			/>
 		</GalleryItem>
 

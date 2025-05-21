@@ -10,6 +10,8 @@
 		errorState: { flag: boolean; message: string };
 		accuracy: number;
 		isFocused: boolean;
+		zoom?: number;
+		forceZoomChange?: any;
 		onLocate: () => void;
 	}
 	let {
@@ -18,15 +20,21 @@
 		parsedLat = $bindable(),
 		errorState = $bindable(),
 		isFocused = $bindable(false),
+		zoom = 18,
+		forceZoomChange = undefined,
 		onLocate
 	}: Props = $props();
 
 	let mapboxLatitude = $state(parsedLat);
 	let mapboxLongitude = $state(parsedLong);
+	let mapboxZoom = $state(zoom);
+	let mapboxForceZoomChange = $state(forceZoomChange);
 
 	$effect(() => {
 		mapboxLatitude = parsedLat;
 		mapboxLongitude = parsedLong;
+		mapboxZoom = zoom;
+		mapboxForceZoomChange = forceZoomChange;
 	});
 
 	$effect(() => {
@@ -67,10 +75,10 @@
 				<MapboxMap
 					bind:latitude={mapboxLatitude}
 					bind:longitude={mapboxLongitude}
+					zoom={mapboxZoom}
+					forceZoomChange={mapboxForceZoomChange}
 					allowClickToUpdateCoordinates={true}
 				/>
-			{:else}
-				<h1>𓀐𓂸</h1>
 			{/if}
 		</div>
 	</section>

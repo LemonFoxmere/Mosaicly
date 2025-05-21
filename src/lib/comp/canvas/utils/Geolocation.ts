@@ -1,5 +1,4 @@
 type Coordinates = { latitude: number; longitude: number; accuracy: number };
-let cachedCoords: Coordinates | null = null;
 
 const getCurrentPos = (): Promise<GeolocationPosition> =>
 	new Promise((resolve, reject) =>
@@ -51,24 +50,6 @@ export const fetchCoordinatesForDisplay = async (): Promise<Coordinates | null> 
 			longitude: roundCoordinate(position.coords.longitude),
 			accuracy: position.coords.accuracy
 		};
-		cachedCoords = coords;
-
-		// try to get a more accurate position in the background
-		setTimeout(async () => {
-			try {
-				const betterPosition = await getCurrentPos();
-				if (betterPosition.coords.accuracy < coords.accuracy) {
-					cachedCoords = {
-						latitude: roundCoordinate(betterPosition.coords.latitude),
-						longitude: roundCoordinate(betterPosition.coords.longitude),
-						accuracy: betterPosition.coords.accuracy
-					};
-				}
-			} catch {
-				// silently fail - we already have initial coordinates
-			}
-		}, 1000);
-
 		return coords;
 	} catch (error) {
 		handleGeolocationError(error);
