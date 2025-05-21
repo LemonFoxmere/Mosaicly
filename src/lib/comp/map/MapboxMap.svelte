@@ -126,7 +126,9 @@
 
 <div bind:this={mapContainer} class="map-container"></div>
 
-<style>
+<style lang="scss">
+	@use "$static/stylesheets/guideline" as *;
+
 	.map-container {
 		width: 100%;
 		height: 100%;
