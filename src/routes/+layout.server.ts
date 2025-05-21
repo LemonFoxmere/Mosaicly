@@ -15,7 +15,13 @@ export const load: LayoutServerLoad = async ({
 	if (session) {
 		payload = {
 			account: {},
-			profile: {}
+			profile: {
+				displayName: "",
+				avatarUrl: "",
+				bio: "",
+				githubHandle: "",
+				discordHandle: ""
+			}
 		};
 
 		// fetch from account table first
@@ -48,11 +54,11 @@ export const load: LayoutServerLoad = async ({
 		if (!error) {
 			if (data && data.length > 0) {
 				payload.profile = {
-					displayName: data[0].display_name ?? null,
-					avatarUrl: data[0].avatar_url ?? null,
-					bio: data[0].bio ?? null,
-					githubHandle: data[0].github_handle ?? null,
-					discordHandle: data[0].discord_handle ?? null
+					displayName: data[0].display_name ?? "",
+					avatarUrl: data[0].avatar_url ?? "",
+					bio: data[0].bio ?? "",
+					githubHandle: data[0].github_handle ?? "",
+					discordHandle: data[0].discord_handle ?? ""
 				};
 			} else {
 				console.error("Did not find the user's profile details. Perhaps an RLS error?");

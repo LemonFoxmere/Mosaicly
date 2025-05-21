@@ -6,12 +6,12 @@ export class RealtimePixelManager {
 	private isDirty = false; // is the current pixel data stale?
 	private pixelBroadcastQueue: Record<string, PixelData> = {}; // pixels that are to be broadcasted
 	private pixelDatabaseQueue: Record<string, PixelData> = {}; // user's own pixels that are to be sent to the database (also used to hold "buffer" pixels)
-	private canvasChannel: RealtimeChannel | null;
+	private canvasChannel: RealtimeChannel;
 
 	private canvasID: string;
 	private databaseTimeout: NodeJS.Timeout | undefined;
 
-	constructor(canvasChannel: RealtimeChannel | null, canvasID: string) {
+	constructor(canvasChannel: RealtimeChannel, canvasID: string) {
 		this.canvasChannel = canvasChannel;
 		this.canvasID = canvasID;
 	}
@@ -65,7 +65,7 @@ export class RealtimePixelManager {
 			// TODO: error handling and possibly UI text for successful save?
 		});
 
-		// ignore pixels currently being sent to the database
+		// dequeue pixels that have been sent to the database
 		Object.keys(current).map((cellKey) => {
 			delete this.pixelDatabaseQueue[cellKey];
 		});
@@ -81,9 +81,8 @@ export class RealtimePixelManager {
 				delete this.pixelBroadcastQueue[cellKey];
 			});
 
-			// TODO: handle null canvasChannel?
 			this.canvasChannel
-				?.send({
+				.send({
 					type: "broadcast",
 					event: "sync",
 					payload: {

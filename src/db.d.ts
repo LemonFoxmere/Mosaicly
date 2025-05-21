@@ -3,7 +3,7 @@ declare global {
 		interface UserAccount {
 			id?: string;
 			username?: string;
-			provider?: string | null;
+			provider?: string;
 			createdAt?: Date;
 			lastLogin?: Date;
 			isDeactivated?: boolean;
