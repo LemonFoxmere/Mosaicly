@@ -64,7 +64,7 @@
 					onfocus={() => (isFocused = true)}
 					onblur={() => (isFocused = false)}
 				/>
-				<button id="locate" class="none" onclick={onLocate}>
+				<button id="locate" class="outline" onclick={onLocate}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
@@ -116,22 +116,23 @@
 				position: relative;
 				width: 100%;
 				display: flex;
-				justify-content: center;
+				flex-direction: row;
 				align-items: center;
+				gap: 10px;
 
 				input {
+					flex-grow: 1;
 					width: 100%;
-					padding-right: 48px;
 				}
 
 				#locate {
-					position: absolute;
-					right: 12px;
+					width: 60px;
+					height: 60px;
+					padding: 14px;
 
-					width: fit-content;
-					height: fit-content;
-
-					cursor: pointer;
+					&:active {
+						margin-top: 0;
+					}
 				}
 			}
 		}
