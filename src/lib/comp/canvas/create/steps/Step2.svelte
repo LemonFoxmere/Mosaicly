@@ -2,6 +2,7 @@
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
 	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
+	import { isDisplayableMapCoordinate } from "$lib/comp/canvas/utils/Geolocation";
 
 	interface Props {
 		canvasCoordinates: string;
@@ -13,6 +14,8 @@
 		zoom?: number;
 		forceZoomChange?: any;
 		onLocate: () => void;
+		showMapMarker: boolean;
+		onMapClickWithCoords?: (lat: number, lng: number) => void;
 	}
 	let {
 		canvasCoordinates = $bindable(),
@@ -22,7 +25,9 @@
 		isFocused = $bindable(false),
 		zoom = 18,
 		forceZoomChange = undefined,
-		onLocate
+		onLocate,
+		showMapMarker = $bindable(),
+		onMapClickWithCoords = undefined
 	}: Props = $props();
 
 	let mapboxLatitude = $state(parsedLat);
@@ -67,17 +72,17 @@
 	</div>
 
 	<section id="map-wrapper">
-		<p class="caption {!canvasCoordinates ? 'hidden' : ''}">
-			Parsed as {parsedLat.toFixed(7)}, {parsedLong.toFixed(7)}
-		</p>
+		<p class="caption">No marker yet? Click where you want it to show up.</p>
 		<div id="map">
-			{#if typeof parsedLat === "number" && typeof parsedLong === "number" && parsedLat !== 0 && parsedLong !== 0}
+			{#if isDisplayableMapCoordinate(parsedLat, parsedLong)}
 				<MapboxMap
 					bind:latitude={mapboxLatitude}
 					bind:longitude={mapboxLongitude}
 					zoom={mapboxZoom}
 					forceZoomChange={mapboxForceZoomChange}
 					allowClickToUpdateCoordinates={true}
+					showMarker={showMapMarker}
+					onClickWithCoords={onMapClickWithCoords}
 				/>
 			{:else}
 				<p id="bad-loc">That coordinate is so bad it doesn't even exist. Please fix it.</p>

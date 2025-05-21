@@ -81,3 +81,7 @@ export const roundCoordinate = (num: number, decimalPlaces: number = 7): number 
 	const factor = Math.pow(10, decimalPlaces);
 	return Math.round(num * factor) / factor;
 };
+
+export const isDisplayableMapCoordinate = (lat?: number, long?: number): boolean => {
+	return typeof lat === "number" && typeof long === "number" && lat !== 0 && long !== 0;
+};

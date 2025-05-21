@@ -14,6 +14,8 @@
 		zoom?: number;
 		allowClickToUpdateCoordinates?: boolean;
 		forceZoomChange?: any;
+		showMarker?: boolean;
+		onClickWithCoords?: (lat: number, lng: number) => void;
 	}
 
 	let {
@@ -21,7 +23,9 @@
 		longitude = $bindable(),
 		zoom = $bindable(18),
 		allowClickToUpdateCoordinates = false,
-		forceZoomChange = undefined
+		forceZoomChange = undefined,
+		showMarker = true,
+		onClickWithCoords = undefined
 	}: Props = $props();
 
 	let mapContainer: HTMLDivElement;
@@ -61,8 +65,12 @@
 						Math.abs(latitude - clickedLat) > clickTolerance ||
 						Math.abs(longitude - clickedLng) > clickTolerance
 					) {
-						latitude = clickedLat;
-						longitude = clickedLng;
+						if (onClickWithCoords) {
+							onClickWithCoords(clickedLat, clickedLng);
+						}
+						// Removed direct update of bind:latitude and bind:longitude
+						// latitude = clickedLat;
+						// longitude = clickedLng;
 						// $effect will call updateMapAndView, which will handle zoom preservation
 					}
 				}
@@ -86,7 +94,7 @@
 		if (marker) {
 			marker.remove();
 		}
-		if (map && typeof latitude === "number" && typeof longitude === "number") {
+		if (map && typeof latitude === "number" && typeof longitude === "number" && showMarker) {
 			const el = createCustomMarkerElement();
 			marker = new Marker({ element: el, color: markerColor })
 				.setLngLat([longitude, latitude])
@@ -96,7 +104,8 @@
 
 	// add a circle with a radius of 20 meters around the marker
 	const addRadiusCircle = () => {
-		if (!map || typeof latitude !== "number" || typeof longitude !== "number") return;
+		if (!map || typeof latitude !== "number" || typeof longitude !== "number" || !showMarker)
+			return;
 
 		// remove existing circle if it exists
 		if (map.getSource(radiusCircleId)) {
@@ -223,7 +232,7 @@
 		border-radius: 24px;
 		background-color: $background-primary;
 		border: 2px solid $background-accent;
-		box-shadow: 0 0 2px hsla(0, 0, 0, 25%);
+		box-shadow: 0 0 2px hsla(0deg, 0%, 0%, 25%);
 		cursor: pointer;
 	}
 

@@ -3,7 +3,8 @@
 	import { goto } from "$app/navigation";
 	import {
 		fetchCoordinatesForDisplay,
-		roundCoordinate
+		roundCoordinate,
+		isDisplayableMapCoordinate
 	} from "$lib/comp/canvas/utils/Geolocation";
 	import type { ActionResult } from "@sveltejs/kit";
 
@@ -18,18 +19,23 @@
 	let canvasName = $state("");
 	let locationDescription = $state("");
 
-	let canvasCoordinates = $state("36.9980995, -122.0555466");
-	let formLatitude = $state(36.9980995);
-	let formLongitude = $state(-122.0555466);
+	let canvasCoordinates = $state("36.9940814, -122.0612656");
+	let formLatitude = $state(36.9940814);
+	let formLongitude = $state(-122.0612656);
 	let formAccuracy = $state(0.0);
-	let formZoom = $state(18);
+	let formZoom = $state(14);
 	let forceZoomChange = $state(0);
 	let coordinateValid = $state(false);
 	let canvasInputFocused = $state(false);
+	let shouldShowMapMarker = $state(false);
 
 	// initialize to null so TS knows it's assigned
 	let hiddenFormElement: HTMLFormElement | null = null;
 	let errorState = $state({ flag: false, message: "" });
+
+	type DefaultCoords = { lat: number; lng: number };
+	const DEFAULT_COORDS: DefaultCoords = { lat: 36.9940814, lng: -122.0612656 };
+	const USER_ACTION_ZOOM_LEVEL = 18;
 
 	const nextStep = () => {
 		if (currentStep < 3) {
@@ -41,42 +47,61 @@
 		if (currentStep > 1) currentStep--;
 	};
 
-	const handleLocateMeClick = async () => {
-		const coords = await fetchCoordinatesForDisplay();
-		// error fetching coords. Do nothing
-		if (coords.status !== 0 || !coords.location) return;
-
-		// round here once
-		coords.location.latitude = roundCoordinate(coords.location.latitude);
-		coords.location.longitude = roundCoordinate(coords.location.longitude);
-
-		canvasCoordinates = `${coords.location.latitude}, ${coords.location.longitude}`;
-		formLatitude = coords.location.latitude;
-		formLongitude = coords.location.longitude;
-		formAccuracy = coords.location.accuracy;
-		formZoom = 18; // Reset zoom to default on locate
-		forceZoomChange += 1; // Increment to force zoom reset
+	const setUserActionLocation = (lat: number, lng: number, accuracy?: number) => {
+		formLatitude = roundCoordinate(lat);
+		formLongitude = roundCoordinate(lng);
+		if (typeof accuracy === "number") formAccuracy = accuracy;
+		formZoom = USER_ACTION_ZOOM_LEVEL;
+		forceZoomChange += 1;
+		shouldShowMapMarker = true;
 	};
 
-	// Parse and validate the coordinates input
+	const handleLocateMeClick = async () => {
+		const coords = await fetchCoordinatesForDisplay();
+		if (coords.status !== 0 || !coords.location) return;
+		setUserActionLocation(
+			coords.location.latitude,
+			coords.location.longitude,
+			coords.location.accuracy
+		);
+	};
+
+	const handleMapCoordinateChangeFromClick = (lat: number, lng: number) => {
+		setUserActionLocation(lat, lng);
+	};
+
+	// parse and validate the coordinates input
 	$effect(() => {
-		coordinateValid = false;
-		if (!canvasCoordinates) return;
+		coordinateValid = false; // Assume invalid until proven otherwise
+		let parsedLatIntermediate = NaN;
+		let parsedLngIntermediate = NaN;
 
-		const parts = canvasCoordinates.trim().split(",");
-		if (parts.length !== 2) return;
+		if (canvasCoordinates && canvasCoordinates.trim() !== "") {
+			const parts = canvasCoordinates.trim().split(",");
+			if (parts.length === 2) {
+				const [latStr, longStr] = parts.map((s) => s.trim());
+				const latNum = Number(latStr);
+				const longNum = Number(longStr);
 
-		const [latStr, longStr] = parts.map((s) => s.trim());
-		const lat = Number(latStr);
-		const long = Number(longStr);
-		const valid =
-			isFinite(lat) && isFinite(long) && Math.abs(lat) <= 90 && Math.abs(long) <= 180;
+				if (
+					isFinite(latNum) &&
+					isFinite(longNum) &&
+					Math.abs(latNum) <= 90 &&
+					Math.abs(longNum) <= 180
+				) {
+					// Parsed and within geo bounds. This is a structurally valid coordinate.
+					parsedLatIntermediate = latNum;
+					parsedLngIntermediate = longNum;
+					coordinateValid = true; // It's a parseable, geographically valid coordinate
+				}
+				// If not finite or out of bounds, lat/long remain NaN, coordinateValid remains false
+			}
+			// If not 2 parts, lat/long remain NaN, coordinateValid remains false
+		}
+		// If canvasCoordinates is empty, lat/long remain NaN, coordinateValid remains false
 
-		if (!valid) return;
-
-		coordinateValid = true;
-		formLatitude = lat;
-		formLongitude = long;
+		formLatitude = parsedLatIntermediate;
+		formLongitude = parsedLngIntermediate;
 	});
 
 	// update canvasCoordinates from formLatitude/formLongitude when input is not focused
@@ -93,6 +118,22 @@
 			if (canvasCoordinates.trim() !== expectedCanvasString) {
 				canvasCoordinates = expectedCanvasString;
 			}
+		}
+	});
+
+	// Effect to control marker visibility based on coordinates
+	$effect(() => {
+		const isDefault =
+			roundCoordinate(formLatitude) === DEFAULT_COORDS.lat &&
+			roundCoordinate(formLongitude) === DEFAULT_COORDS.lng;
+
+		// Show marker only if coordinates are valid, displayable, and not the default.
+		// Or if locate me was pressed (handled in handleLocateMeClick)
+		if (isDefault) {
+			shouldShowMapMarker = false;
+		} else {
+			// if not default, show marker only if the coordinates are actually displayable
+			shouldShowMapMarker = isDisplayableMapCoordinate(formLatitude, formLongitude);
 		}
 	});
 
@@ -137,44 +178,22 @@
 			case 1:
 				return !!canvasName;
 			case 2:
-				return isStepValid(1) && !!coordinateValid && !!canvasCoordinates;
+				const isDefault =
+					roundCoordinate(formLatitude) === DEFAULT_COORDS.lat &&
+					roundCoordinate(formLongitude) === DEFAULT_COORDS.lng;
+
+				return (
+					isStepValid(1) &&
+					!!canvasCoordinates && // Ensure the input string is not empty
+					coordinateValid && // Ensure it parsed to a valid geo-coordinate
+					isDisplayableMapCoordinate(formLatitude, formLongitude) && // Ensure it's not x,0 or 0,y or NaN
+					!isDefault // Ensure it's not the default location
+				);
 			default:
 				return false; // default to invalid
 		}
 	};
-
-	// const routeChange = () => {
-	// 	const hash = window.location.hash;
-
-	// 	// TODO: add more checks in to prevent bad submissions
-
-	// 	if (hash) {
-	// 		const step = parseInt(hash.replace("#s", ""));
-	// 		if (!isNaN(step) && step >= 1 && step <= 3) {
-	// 			if (isStepValid(step)) {
-	// 				currentStep = step;
-	// 			} else {
-	// 				// change the current s hash to 1
-	// 				const newUrl = new URL(window.location.href);
-	// 				newUrl.hash = "#s1";
-	// 				window.history.pushState({}, "", newUrl);
-	// 			}
-	// 		} else {
-	// 			// change the current s hash to 1
-	// 			const newUrl = new URL(window.location.href);
-	// 			newUrl.hash = "#s1";
-	// 			window.history.pushState({}, "", newUrl);
-	// 		}
-	// 	}
-	// };
-
-	// onMount(() => {
-	// 	// set current step based on URL hash if there is one
-	// 	routeChange();
-	// });
 </script>
-
-<!-- <svelte:window on:hashchange={routeChange} /> -->
 
 <main>
 	<section id="main-content">
@@ -196,6 +215,8 @@
 					onLocate={handleLocateMeClick}
 					zoom={formZoom}
 					{forceZoomChange}
+					showMapMarker={shouldShowMapMarker}
+					onMapClickWithCoords={handleMapCoordinateChangeFromClick}
 				/>
 			</GalleryItem>
 
