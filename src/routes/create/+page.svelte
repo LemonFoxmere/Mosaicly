@@ -13,7 +13,6 @@
 	import Step1 from "$lib/comp/canvas/create/steps/Step1.svelte";
 	import Step2 from "$lib/comp/canvas/create/steps/Step2.svelte";
 	import Step3 from "$lib/comp/canvas/create/steps/Step3.svelte";
-	import { onMount } from "svelte";
 
 	let currentStep = $state(1);
 	let canvasName = $state("");
@@ -35,39 +34,26 @@
 	const nextStep = () => {
 		if (currentStep < 3) {
 			currentStep++;
-			const newUrl = new URL(window.location.href);
-			newUrl.hash = `#s${currentStep}`;
-			window.history.pushState({}, "", newUrl);
 		}
 	};
 
 	const prevStep = () => {
 		if (currentStep > 1) currentStep--;
-		const newUrl = new URL(window.location.href);
-		newUrl.hash = `#s${currentStep}`;
-		window.history.pushState({}, "", newUrl);
 	};
 
 	const handleLocateMeClick = async () => {
-		errorState = { flag: false, message: "" };
-
 		const coords = await fetchCoordinatesForDisplay();
-		if (!coords) {
-			errorState = {
-				flag: true,
-				message: "Failed to fetch coordinates or permission denied."
-			};
-			return;
-		}
+		// error fetching coords. Do nothing
+		if (coords.status !== 0 || !coords.location) return;
 
 		// round here once
-		coords.latitude = roundCoordinate(coords.latitude);
-		coords.longitude = roundCoordinate(coords.longitude);
+		coords.location.latitude = roundCoordinate(coords.location.latitude);
+		coords.location.longitude = roundCoordinate(coords.location.longitude);
 
-		canvasCoordinates = `${coords.latitude}, ${coords.longitude}`;
-		formLatitude = coords.latitude;
-		formLongitude = coords.longitude;
-		formAccuracy = coords.accuracy;
+		canvasCoordinates = `${coords.location.latitude}, ${coords.location.longitude}`;
+		formLatitude = coords.location.latitude;
+		formLongitude = coords.location.longitude;
+		formAccuracy = coords.location.accuracy;
 		formZoom = 18; // Reset zoom to default on locate
 		forceZoomChange += 1; // Increment to force zoom reset
 	};
@@ -75,19 +61,10 @@
 	// Parse and validate the coordinates input
 	$effect(() => {
 		coordinateValid = false;
-		if (!canvasCoordinates) {
-			errorState = { flag: false, message: "" };
-			return;
-		}
+		if (!canvasCoordinates) return;
 
 		const parts = canvasCoordinates.trim().split(",");
-		if (parts.length !== 2) {
-			errorState = {
-				flag: true,
-				message: "Coordinates must be in 'lat,long' format."
-			};
-			return;
-		}
+		if (parts.length !== 2) return;
 
 		const [latStr, longStr] = parts.map((s) => s.trim());
 		const lat = Number(latStr);
@@ -95,18 +72,11 @@
 		const valid =
 			isFinite(lat) && isFinite(long) && Math.abs(lat) <= 90 && Math.abs(long) <= 180;
 
-		if (!valid) {
-			errorState = {
-				flag: true,
-				message: "Coordinates must be valid numbers within latitude/longitude bounds."
-			};
-			return;
-		}
+		if (!valid) return;
 
 		coordinateValid = true;
 		formLatitude = lat;
 		formLongitude = long;
-		errorState = { flag: false, message: "" };
 	});
 
 	// update canvasCoordinates from formLatitude/formLongitude when input is not focused
@@ -161,54 +131,78 @@
 		};
 	};
 
-	const routeChange = () => {
-		const hash = window.location.hash;
-		if (hash) {
-			const step = parseInt(hash.replace("#s", ""));
-			if (!isNaN(step) && step >= 1 && step <= 3) {
-				currentStep = step;
-			} else {
-				const newUrl = new URL(window.location.href);
-				newUrl.hash = "#s1";
-				window.history.pushState({}, "", newUrl);
-			}
-		} else {
-			const newUrl = new URL(window.location.href);
-			newUrl.hash = "#s1";
-			window.history.pushState({}, "", newUrl);
+	// checks if the current step is valid or not
+	const isStepValid = (step: number): boolean => {
+		switch (step) {
+			case 1:
+				return !!canvasName;
+			case 2:
+				return isStepValid(1) && !!coordinateValid && !!canvasCoordinates;
+			default:
+				return false; // default to invalid
 		}
 	};
 
-	onMount(routeChange);
+	// const routeChange = () => {
+	// 	const hash = window.location.hash;
+
+	// 	// TODO: add more checks in to prevent bad submissions
+
+	// 	if (hash) {
+	// 		const step = parseInt(hash.replace("#s", ""));
+	// 		if (!isNaN(step) && step >= 1 && step <= 3) {
+	// 			if (isStepValid(step)) {
+	// 				currentStep = step;
+	// 			} else {
+	// 				// change the current s hash to 1
+	// 				const newUrl = new URL(window.location.href);
+	// 				newUrl.hash = "#s1";
+	// 				window.history.pushState({}, "", newUrl);
+	// 			}
+	// 		} else {
+	// 			// change the current s hash to 1
+	// 			const newUrl = new URL(window.location.href);
+	// 			newUrl.hash = "#s1";
+	// 			window.history.pushState({}, "", newUrl);
+	// 		}
+	// 	}
+	// };
+
+	// onMount(() => {
+	// 	// set current step based on URL hash if there is one
+	// 	routeChange();
+	// });
 </script>
 
-<svelte:window on:hashchange={routeChange} />
+<!-- <svelte:window on:hashchange={routeChange} /> -->
 
 <main>
-	<StepHeader {currentStep} stepTitle="Some basic stuff." />
+	<section id="main-content">
+		<StepHeader {currentStep} stepTitle="Some basic stuff." />
 
-	<section id="page-content">
-		<GalleryItem galleryIndex={currentStep} startVisIdx={1} endVisIdx={2}>
-			<Step1 bind:canvasName bind:locationDescription />
-		</GalleryItem>
+		<section id="page-content">
+			<GalleryItem galleryIndex={currentStep} startVisIdx={1} endVisIdx={2}>
+				<Step1 bind:canvasName bind:locationDescription />
+			</GalleryItem>
 
-		<GalleryItem galleryIndex={currentStep} startVisIdx={2} endVisIdx={3}>
-			<Step2
-				bind:canvasCoordinates
-				bind:errorState
-				bind:parsedLong={formLongitude}
-				bind:parsedLat={formLatitude}
-				bind:isFocused={canvasInputFocused}
-				accuracy={formAccuracy}
-				onLocate={handleLocateMeClick}
-				zoom={formZoom}
-				{forceZoomChange}
-			/>
-		</GalleryItem>
+			<GalleryItem galleryIndex={currentStep} startVisIdx={2} endVisIdx={3}>
+				<Step2
+					bind:canvasCoordinates
+					bind:errorState
+					bind:parsedLong={formLongitude}
+					bind:parsedLat={formLatitude}
+					bind:isFocused={canvasInputFocused}
+					accuracy={formAccuracy}
+					onLocate={handleLocateMeClick}
+					zoom={formZoom}
+					{forceZoomChange}
+				/>
+			</GalleryItem>
 
-		<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
-			<Step3 {canvasName} {currentStep} onSave={saveCanvas} />
-		</GalleryItem>
+			<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
+				<Step3 {canvasName} {currentStep} onSave={saveCanvas} />
+			</GalleryItem>
+		</section>
 	</section>
 
 	<sect id="nav-container">
@@ -218,12 +212,9 @@
 					onNext={nextStep}
 					onBack={prevStep}
 					leftDisabled={currentStep === 1}
-					rightDisabled={(currentStep === 1 && !canvasName) ||
-						(currentStep === 2 && (!coordinateValid || !canvasCoordinates))}
+					rightDisabled={(currentStep === 1 && !isStepValid(1)) ||
+						(currentStep === 2 && !isStepValid(2))}
 				/>
-				<p id="error-msg" class="status">
-					{errorState.message}
-				</p>
 			</section>
 		</GalleryItem>
 
@@ -231,23 +222,21 @@
 			<button id="return" on:click={saveCanvas}> Return to Canvas List </button>
 		</GalleryItem>
 	</sect>
-
-	<section id="status"></section>
-
-	<form
-		id="hidden-form"
-		method="post"
-		action="/api/canvas?/createCanvas"
-		use:enhance={submitOptions}
-		bind:this={hiddenFormElement}
-	>
-		<input type="hidden" name="title" value={canvasName} />
-		<input type="hidden" name="loc_desc" value={locationDescription} />
-		<input type="hidden" name="latitude" bind:value={formLatitude} />
-		<input type="hidden" name="longitude" bind:value={formLongitude} />
-		<input type="hidden" name="accuracy" bind:value={formAccuracy} />
-	</form>
 </main>
+
+<form
+	id="hidden-form"
+	method="post"
+	action="/api/canvas?/createCanvas"
+	use:enhance={submitOptions}
+	bind:this={hiddenFormElement}
+>
+	<input type="hidden" name="title" value={canvasName} />
+	<input type="hidden" name="loc_desc" value={locationDescription} />
+	<input type="hidden" name="latitude" bind:value={formLatitude} />
+	<input type="hidden" name="longitude" bind:value={formLongitude} />
+	<input type="hidden" name="accuracy" bind:value={formAccuracy} />
+</form>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
@@ -255,13 +244,12 @@
 	main {
 		position: relative;
 		display: flex;
-		flex-grow: 1;
 		flex-direction: column;
-		row-gap: 30px;
-		align-items: center;
+		justify-content: center;
+		row-gap: 15px;
 		padding: 15px 30px;
 		width: 100%;
-		height: 100%;
+		flex-grow: 1;
 		margin: auto 0px;
 
 		@media screen and (min-width: $mobile-width) {
@@ -269,19 +257,32 @@
 			padding-bottom: $navbar-height;
 		}
 
-		#page-content {
-			position: relative;
-			width: 100%;
+		#main-content {
 			display: flex;
 			flex-direction: column;
-			flex: 1;
+			width: 100%;
+			height: 100%;
+			flex-grow: 1;
+
+			row-gap: 30px;
+
+			#page-content {
+				position: relative;
+				width: 100%;
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+				flex-grow: 1;
+			}
 		}
 
 		#nav-container {
-			width: 100%;
-			height: 50px;
-			position: relative;
 			display: flex;
+			width: 100%;
+			min-height: 48px;
+			flex: 0;
+
+			position: relative;
 			justify-content: center;
 			align-items: center;
 
@@ -305,10 +306,10 @@
 			text-align: center;
 			color: $accent-error;
 		}
+	}
 
-		#hidden-form {
-			display: none;
-			pointer-events: none;
-		}
+	#hidden-form {
+		display: none;
+		pointer-events: none;
 	}
 </style>

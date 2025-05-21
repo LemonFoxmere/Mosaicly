@@ -205,7 +205,7 @@
 	});
 </script>
 
-<div bind:this={mapContainer} class="map-container"></div>
+<div bind:this={mapContainer} class="map-container" />
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
@@ -220,10 +220,15 @@
 	:global(.custom-marker) {
 		width: 24px;
 		height: 24px;
-		border-radius: 50%;
-		background-color: #ec7846;
-		border: 2px solid white;
-		box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+		border-radius: 24px;
+		background-color: $background-primary;
+		border: 2px solid $background-accent;
+		box-shadow: 0 0 2px hsla(0, 0, 0, 25%);
 		cursor: pointer;
+	}
+
+	:global(.mapboxgl-ctrl) {
+		margin: 0 0 18px 20px !important;
+		opacity: 0.3 !important;
 	}
 </style>

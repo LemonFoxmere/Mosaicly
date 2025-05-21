@@ -1,59 +1,78 @@
 type Coordinates = { latitude: number; longitude: number; accuracy: number };
 
-const getCurrentPos = (): Promise<GeolocationPosition> =>
-	new Promise((resolve, reject) =>
-		navigator.geolocation.getCurrentPosition(resolve, reject, {
-			enableHighAccuracy: true,
-			timeout: 2000,
-			maximumAge: 0
-		})
-	);
+type GetCurrentPosResult = {
+	location: GeolocationPosition | null;
+	status: number;
+};
+const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
+	if (!("geolocation" in navigator)) {
+		return { location: null, status: 2 };
+	}
 
-const requestGeolocationPermission = async (): Promise<boolean> => {
-	if (!navigator.permissions) return true;
-	try {
-		const status = await navigator.permissions.query({ name: "geolocation" });
-		if (status.state === "denied") {
-			alert("Location access has been denied. Please enable it in your browser settings.");
-			return false;
+	if ("permissions" in navigator) {
+		try {
+			const { state } = await navigator.permissions.query({ name: "geolocation" });
+			if (state === "denied") {
+				return { location: null, status: 1 };
+			}
+		} catch {
+			// ignore and proceed
 		}
-		return true;
-	} catch {
-		return true;
 	}
+
+	return new Promise<GetCurrentPosResult>((resolve) => {
+		navigator.geolocation.getCurrentPosition(
+			(position) => resolve({ location: position, status: 0 }),
+			(error) => resolve({ location: null, status: error.code }),
+			{ enableHighAccuracy: true, timeout: 2000, maximumAge: 0 }
+		);
+	});
 };
 
-const ensureGeolocationReady = async (): Promise<boolean> => {
-	if (!navigator.geolocation) {
-		alert("Geolocation is not supported by your browser.");
-		return false;
-	}
-	return requestGeolocationPermission();
-};
+export const fetchCoordinatesForDisplay = async (): Promise<{
+	location: Coordinates | null;
+	status: number;
+}> => {
+	const { location, status } = await getCurrentPos();
 
-const isGeoError = (error: any): error is { code: number; message: string } =>
-	error && typeof error.code === "number" && typeof error.message === "string";
-
-const handleGeolocationError = (error: any): void => {
-	if (isGeoError(error) && error.code === 1) {
-		alert("Location access was denied. Please enable it in your browser settings.");
-	}
-};
-
-export const fetchCoordinatesForDisplay = async (): Promise<Coordinates | null> => {
-	if (!(await ensureGeolocationReady())) return null;
-
-	try {
-		const position = await getCurrentPos();
-		const coords = {
-			latitude: roundCoordinate(position.coords.latitude),
-			longitude: roundCoordinate(position.coords.longitude),
-			accuracy: position.coords.accuracy
+	if (status !== 0) {
+		// if not OK
+		switch (status) {
+			case GeolocationPositionError.PERMISSION_DENIED:
+				alert("Location access was denied. Enable it in your browser settings.");
+				break;
+			case GeolocationPositionError.POSITION_UNAVAILABLE:
+				alert(
+					"Location access unavailable. Are you on a device that supports geolocation?"
+				);
+				break;
+			case GeolocationPositionError.TIMEOUT:
+				alert("Location access timed out. Try again in a bit.");
+				break;
+			default:
+				alert("Idk what happened but something is very wrong. Please try again later.");
+		}
+		return {
+			location: null,
+			status: status
 		};
-		return coords;
-	} catch (error) {
-		handleGeolocationError(error);
-		return null;
+	}
+
+	if (location) {
+		return {
+			location: {
+				latitude: roundCoordinate(location.coords.latitude),
+				longitude: roundCoordinate(location.coords.longitude),
+				accuracy: location.coords.accuracy
+			},
+			status: 0
+		};
+	} else {
+		// this should never execute.
+		return {
+			location: null,
+			status: status
+		};
 	}
 };
 
@@ -61,12 +80,4 @@ export const roundCoordinate = (num: number, decimalPlaces: number = 7): number 
 	if (isNaN(num) || !isFinite(num)) return num;
 	const factor = Math.pow(10, decimalPlaces);
 	return Math.round(num * factor) / factor;
-};
-
-export const injectGeography = async ({ formData }: { formData: FormData }) => {
-	const coords = await fetchCoordinatesForDisplay();
-	if (!coords) return;
-	formData.set("longitude", String(coords.longitude));
-	formData.set("latitude", String(coords.latitude));
-	formData.set("accuracy", String(coords.accuracy));
 };

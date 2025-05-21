@@ -79,6 +79,8 @@
 					forceZoomChange={mapboxForceZoomChange}
 					allowClickToUpdateCoordinates={true}
 				/>
+			{:else}
+				<p id="bad-loc">That coordinate is so bad it doesn't even exist. Please fix it.</p>
 			{/if}
 		</div>
 	</section>
@@ -152,9 +154,11 @@
 
 				background-color: $background-secondary;
 
-				h1 {
-					font-size: 64px;
-					color: $text-tertiary;
+				#bad-loc {
+					width: 100%;
+					padding: 0px 30px;
+					white-space: wrap;
+					text-align: center;
 				}
 			}
 		}
