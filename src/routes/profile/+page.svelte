@@ -116,7 +116,7 @@
 		{:else}
 			<section id="canvas-form">
 				<!-- canvases list render -->
-				<div class="canvas_list">
+				<div id="canvas-list">
 					{#each canvases as canvas (canvas.id)}
 						<CanvasCard {canvas} {setCurrCanvas} />
 					{/each}
@@ -133,12 +133,6 @@
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
-
-	.canvas_list {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
 
 	main {
 		padding: 5px 30px;
@@ -218,6 +212,12 @@
 				display: flex;
 				flex-direction: column;
 				row-gap: 30px;
+
+				#canvas_list {
+					display: flex;
+					flex-direction: column;
+					gap: 10px;
+				}
 			}
 		}
 	}

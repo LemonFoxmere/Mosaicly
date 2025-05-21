@@ -1,70 +1,83 @@
-let cachedCoords: { latitude: number; longitude: number; accuracy: number } | null = null;
+type Coordinates = { latitude: number; longitude: number; accuracy: number };
 
-const getCurrentPos = (): Promise<GeolocationPosition> => {
-	return new Promise((resolve, reject) =>
-		navigator.geolocation.getCurrentPosition(resolve, reject)
-	);
+type GetCurrentPosResult = {
+	location: GeolocationPosition | null;
+	status: number;
 };
+const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
+	if (!("geolocation" in navigator)) {
+		return { location: null, status: 2 };
+	}
 
-const requestGeolocationPermission = async (): Promise<boolean> => {
-	if (!navigator.permissions) {
-		return true;
-	}
-	try {
-		const status = await navigator.permissions.query({ name: "geolocation" });
-		if (status.state === "denied") {
-			console.error("Geolocation permission denied");
-			alert("Location access has been denied. Please enable it in your browser settings.");
-			return false;
+	if ("permissions" in navigator) {
+		try {
+			const { state } = await navigator.permissions.query({ name: "geolocation" });
+			if (state === "denied") {
+				return { location: null, status: 1 };
+			}
+		} catch {
+			// ignore and proceed
 		}
-		return true;
-	} catch (err) {
-		console.warn("Permissions API error, proceeding to prompt for geolocation", err);
-		return true;
 	}
+
+	return new Promise<GetCurrentPosResult>((resolve) => {
+		navigator.geolocation.getCurrentPosition(
+			(position) => resolve({ location: position, status: 0 }),
+			(error) => resolve({ location: null, status: error.code }),
+			{ enableHighAccuracy: true, timeout: 2000, maximumAge: 0 }
+		);
+	});
 };
 
 export const fetchCoordinatesForDisplay = async (): Promise<{
-	latitude: number;
-	longitude: number;
-	accuracy: number;
-} | null> => {
-	if (cachedCoords) return cachedCoords; // i cache coords to avoid multiple permission prompts
+	location: Coordinates | null;
+	status: number;
+}> => {
+	const { location, status } = await getCurrentPos();
 
-	if (!navigator.geolocation) {
-		alert("Geolocation is not supported by your browser.");
-		return null;
+	if (status !== 0) {
+		// if not OK
+		switch (status) {
+			case GeolocationPositionError.PERMISSION_DENIED:
+				alert("Location access was denied. Enable it in your browser settings.");
+				break;
+			case GeolocationPositionError.POSITION_UNAVAILABLE:
+				alert(
+					"Location access unavailable. Are you on a device that supports geolocation?"
+				);
+				break;
+			case GeolocationPositionError.TIMEOUT:
+				alert("Location access timed out. Try again in a bit.");
+				break;
+			default:
+				alert("Idk what happened but something is very wrong. Please try again later.");
+		}
+		return {
+			location: null,
+			status: status
+		};
 	}
 
-	const canRequest = await requestGeolocationPermission();
-	if (!canRequest) return null;
-
-	try {
-		const gis = (await getCurrentPos()).coords;
-		const { latitude, longitude, accuracy } = gis;
-		cachedCoords = { latitude, longitude, accuracy };
-		console.log("Fetched GIS for display:", gis);
-		return cachedCoords;
-	} catch (error) {
-		console.error("Error fetching current position for display:", error);
-		alert(
-			"Could not retrieve your location. Please ensure location services are enabled and try again."
-		);
-		return null;
+	if (location) {
+		return {
+			location: {
+				latitude: roundCoordinate(location.coords.latitude),
+				longitude: roundCoordinate(location.coords.longitude),
+				accuracy: location.coords.accuracy
+			},
+			status: 0
+		};
+	} else {
+		// this should never execute.
+		return {
+			location: null,
+			status: status
+		};
 	}
 };
 
-// called before form submission to inject location state for db
-export const injectGeography = async ({ formData }: { formData: FormData }) => {
-	const coords = await fetchCoordinatesForDisplay();
-	if (!coords) {
-		console.warn(
-			"injectGeography: Coordinates not fetched, form data will not include new geo-location."
-		);
-		return;
-	}
-
-	formData.set("longitude", String(coords.longitude));
-	formData.set("latitude", String(coords.latitude));
-	formData.set("accuracy", String(coords.accuracy));
+export const roundCoordinate = (num: number, decimalPlaces: number = 7): number => {
+	if (isNaN(num) || !isFinite(num)) return num;
+	const factor = Math.pow(10, decimalPlaces);
+	return Math.round(num * factor) / factor;
 };
