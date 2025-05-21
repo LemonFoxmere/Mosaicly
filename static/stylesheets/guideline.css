@@ -56,16 +56,13 @@ button {
 	button:hover {
 		opacity: 0.7;
 	}
-	button:hover.none {
-		opacity: 1;
-	}
 }
 button:active {
 	opacity: 0.8;
 }
 button:disabled {
-	opacity: 0.3;
-	pointer-events: none;
+	opacity: 0.3 !important;
+	pointer-events: none !important;
 }
 button.solid {
 	background: #362121;
@@ -108,6 +105,15 @@ button.outline.small:active {
 }
 button.none {
 	all: unset;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+@media (hover: hover) {
+	button.none:hover {
+		opacity: 0.5;
+	}
+}
+button.none:active {
+	opacity: 0.75;
 }
 input,
 textarea {
@@ -150,4 +156,12 @@ a:active {
 }
 a.wrapper {
 	text-decoration: none;
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+.animate-spin {
+	animation: spin 1s linear infinite;
 }

@@ -126,9 +126,9 @@ button {
 		&:hover {
 			opacity: 0.7;
 
-			&.none {
-				opacity: 1; // don't apply hover effect
-			}
+			// &.none {
+			// 	opacity: 1; // don't apply hover effect
+			// }
 		}
 	}
 
@@ -137,8 +137,9 @@ button {
 	}
 
 	&:disabled {
-		opacity: 0.3;
-		pointer-events: none;
+		// override none if it's ever set
+		opacity: 0.3 !important;
+		pointer-events: none !important;
 	}
 
 	// variants
@@ -193,6 +194,17 @@ button {
 	&.none {
 		// no styling at all. Just a wrapper
 		all: unset;
+		-webkit-tap-highlight-color: transparent;
+
+		@media (hover: hover) {
+			&:hover {
+				opacity: 0.5;
+			}
+		}
+
+		&:active {
+			opacity: 0.75;
+		}
 	}
 }
 
@@ -242,4 +254,16 @@ a {
 		// no underline
 		text-decoration: none;
 	}
+}
+
+/* spin animation – because stillness is overrated */
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.animate-spin {
+	/* one full revolution every second, smooth as silk, forever */
+	animation: spin 1s linear infinite;
 }

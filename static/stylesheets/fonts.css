@@ -21,8 +21,17 @@
 	-webkit-user-select: none;
 	-ms-user-select: none;
 }
+.glass-heavy,
+.glass-light {
+	background-color: rgba(236, 120, 70, 0.7);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+}
+.glass-light {
+	background-color: rgba(236, 120, 70, 0.4);
+}
 button {
-	padding: 11px 30px;
+	padding: 11px 31.5px;
 	height: 50px;
 	border: none;
 	display: flex;
@@ -42,6 +51,7 @@ button {
 	user-select: none;
 	-webkit-user-select: none;
 	-ms-user-select: none;
+	transition: opacity 300ms cubic-bezier(0.3, 1, 0.22, 1);
 }
 @media (hover: hover) {
 	button:hover {
@@ -50,6 +60,10 @@ button {
 }
 button:active {
 	opacity: 0.8;
+}
+button:disabled {
+	opacity: 0.3 !important;
+	pointer-events: none !important;
 }
 button.solid {
 	background: #362121;
@@ -60,35 +74,46 @@ button.small {
 	font-size: 14px;
 }
 button.outline,
-button.outline-small {
+button.outline.small {
 	background: #ec7846;
 	color: #362121;
 	border: 1.5px solid #362121;
 	border-radius: 8px;
 	border-bottom-width: 4px;
+	margin: 0px;
+	padding: 11px 30px;
 }
 @media (hover: hover) {
-	button.outline:hover,
-	button.outline-small:hover {
+	button.outline:hover {
 		opacity: 0.5;
 	}
 }
-button.outline:active,
-button.outline-small:active {
+button.outline:active {
 	margin-top: 1.5px;
 	height: 48.5px;
 	border-bottom-width: 1.5px;
 	transform: translateY(1.5px);
 }
-button.outline-small {
+button.outline.small {
 	padding: 11px 20px;
 	height: 42px;
 	font-size: 14px;
 }
-button.outline-small:active {
+button.outline.small:active {
 	height: 40.5px;
 	border-bottom-width: 1.5px;
 	transform: translateY(1.5px);
+}
+button.none {
+	all: unset;
+}
+@media (hover: hover) {
+	button.none:hover {
+		opacity: 0.5;
+	}
+}
+button.none:active {
+	opacity: 0.75;
 }
 input,
 textarea {
@@ -122,6 +147,15 @@ textarea::placeholder {
 textarea {
 	padding: 20px;
 	height: auto;
+}
+a {
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+a:active {
+	opacity: 0.8;
+}
+a.wrapper {
+	text-decoration: none;
 }
 h1,
 h2,
@@ -186,4 +220,12 @@ li {
 	font-weight: 500;
 	line-height: auto;
 	color: #964b3c;
+	padding-left: 7px;
+}
+.title {
+	font-style: normal;
+	font-weight: 700;
+	font-size: 18px;
+	line-height: 26px;
+	color: #362121;
 }

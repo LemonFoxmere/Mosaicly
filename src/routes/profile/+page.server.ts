@@ -1,15 +1,17 @@
-import { redirect } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals: { supabase, user, safeGetSession } }) => {
+export const load: PageServerLoad = async ({ url, locals: { supabase, user, safeGetSession } }) => {
 	const { session } = await safeGetSession();
 	if (!session) redirect(403, "/login");
+
+	const tab = url.searchParams.get("tab") ?? "";
 
 	const { data, error } = await supabase.from("canvas").select().eq("user_id", user.id);
 	void error;
 	// TODO: preprocess the data first
 
-	return { canvas: data };
+	return { canvas: data, tab };
 };
 
 export const actions = {
@@ -24,7 +26,9 @@ export const actions = {
 			.update({ display_name: displayName, bio })
 			.eq("id", user.id);
 		if (error) {
-			return { success: false, message: `error: ${error}` };
+			return fail(400, {
+				message: `Error: ${error}`
+			});
 		}
 
 		return { success: true };

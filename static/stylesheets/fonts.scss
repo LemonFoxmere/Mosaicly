@@ -1,4 +1,4 @@
-@import "./guideline";
+@use "./guideline" as *;
 
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
 
@@ -33,6 +33,7 @@ h1 {
 	line-height: 46px;
 	font-weight: 800;
 }
+
 h2 {
 	font-size: 28px;
 	line-height: 36px;
@@ -51,12 +52,14 @@ pre {
 	color: $text-secondary;
 	font-weight: 400;
 }
+
 a {
 	// link color
 	color: $text-tertiary;
 	text-decoration-line: underline;
 	text-decoration-thickness: 10%; // thick ahh boi
 }
+
 ol,
 ul,
 li {
@@ -69,4 +72,13 @@ li {
 	font-weight: 500;
 	line-height: auto;
 	color: $text-tertiary;
+	padding-left: 7px; // for use in inputs
+}
+
+.title {
+	font-style: normal;
+	font-weight: 700;
+	font-size: 18px;
+	line-height: 26px;
+	color: $text-primary;
 }
