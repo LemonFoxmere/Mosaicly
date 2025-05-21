@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
-	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
 	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
+	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
 
 	interface Props {
 		canvasCoordinates: string;
@@ -9,16 +9,16 @@
 		parsedLat: number;
 		errorState: { flag: boolean; message: string };
 		accuracy: number;
-		onLocate: () => void;
 		isFocused: boolean;
+		onLocate: () => void;
 	}
 	let {
 		canvasCoordinates = $bindable(),
 		parsedLong = $bindable(),
 		parsedLat = $bindable(),
 		errorState = $bindable(),
-		onLocate,
-		isFocused = $bindable(false)
+		isFocused = $bindable(false),
+		onLocate
 	}: Props = $props();
 
 	let mapboxLatitude = $state(parsedLat);
@@ -48,10 +48,10 @@
 					bind:value={canvasCoordinates}
 					placeholder="36.99979, 122.06337"
 					class="coordinate-input flex-fill"
-					on:focus={() => (isFocused = true)}
-					on:blur={() => (isFocused = false)}
+					onfocus={() => (isFocused = true)}
+					onblur={() => (isFocused = false)}
 				/>
-				<button id="locate" class="none" on:click={onLocate}>
+				<button id="locate" class="none" onclick={onLocate}>
 					<GeoLocate s={32} />
 				</button>
 			</div>

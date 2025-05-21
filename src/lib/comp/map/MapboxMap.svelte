@@ -1,11 +1,12 @@
 <script lang="ts">
-	import mapboxgl from "mapbox-gl";
-	const { Marker } = mapboxgl;
-	import type { Map as MapboxMapType, Marker as MapboxMarkerType, LngLatLike } from "mapbox-gl";
-	import "mapbox-gl/dist/mapbox-gl.css";
-	import { onMount } from "svelte";
 	import { PUBLIC_MAPBOX_ACCESS_TOKEN } from "$env/static/public";
 	import { roundCoordinate } from "$lib/comp/canvas/utils/Geolocation";
+	import type { Map as MapboxMapType, Marker as MapboxMarkerType } from "mapbox-gl";
+	import mapboxgl from "mapbox-gl";
+	import "mapbox-gl/dist/mapbox-gl.css";
+	import { onMount } from "svelte";
+
+	const { Marker } = mapboxgl;
 
 	interface Props {
 		latitude: number;
@@ -17,7 +18,7 @@
 	let {
 		latitude = $bindable(),
 		longitude = $bindable(),
-		zoom = $bindable(15),
+		zoom = $bindable(18),
 		allowClickToUpdateCoordinates = false
 	}: Props = $props();
 
