@@ -68,6 +68,7 @@
 
 					textarea {
 						height: 100%;
+						resize: none;
 					}
 				}
 			}
