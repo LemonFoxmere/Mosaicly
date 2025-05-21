@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { RealtimePixelManager } from "$lib/comp/canvas/objects/RealtimePixelManager";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
-	import { realtimePixelManager } from "$lib/comp/canvas/objects/realtimePixelManager";
 	import { supabase } from "../../lib/supabaseClient";
 	import type { PageProps } from "./$types";
 
@@ -10,17 +10,19 @@
 
 	let { data }: PageProps = $props();
 
+	// const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+
 	// props
 	let canvasInfo = $derived(<DB.Canvas>(data.canvas || {}));
 
 	let channelName = $derived(data.channelName);
-	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
+	let canvasChannel = $derived(supabase.channel(channelName));
 	let canvasID = $derived(canvasInfo.id);
 	let canvasDrawing = $derived(canvasInfo.drawing); // will be used for initial canvas state
 	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");
 	let userID = $derived(data.user?.account.id ?? "0");
 
-	let realtimeManager = $derived(new realtimePixelManager(canvasChannel, canvasID));
+	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
 
 	let editable = $state(true);
 
@@ -69,7 +71,7 @@
 			color={selectedColor}
 			mode={editState === "edit" ? "edit" : "view"}
 			load={() => {}}
-			info={{
+			backend={{
 				supabase,
 				realtimeManager,
 				canvasChannel,

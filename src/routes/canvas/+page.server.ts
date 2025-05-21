@@ -1,8 +1,8 @@
-import { redirect } from "@sveltejs/kit";
-import type { Actions, PageServerLoad } from "./$types";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
 	const { session } = await safeGetSession();
+	void session;
 
 	// TODO: Anonymous users can actually view the canvas too (as long as they are within the range)
 

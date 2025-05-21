@@ -2,7 +2,7 @@ import type { SceneContext } from "../PixelCanvas.svelte";
 import { CanvasUtils } from "../utils/CanvasUtils";
 import { CursorUtils } from "../utils/CursorUtils";
 import { CanvasObject } from "./CanvasObject";
-import { realtimePixelManager } from "./realtimePixelManager";
+import { RealtimePixelManager } from "./RealtimePixelManager";
 
 // Structure for storing pixel information
 export type PixelData = {
@@ -29,34 +29,38 @@ export class PixelGrid extends CanvasObject {
 	userID: string = "";
 
 	// realtime for the pixelgrid (for broadcasting and saving to Supabase)
-	realtimeManager: realtimePixelManager;
+	realtimeManager: RealtimePixelManager;
 
 	private buffer = document.createElement("canvas"); // for buffered rendering
 	private bufferCtx: CanvasRenderingContext2D;
 
 	constructor(
-		x: number,
-		y: number,
-		gridSize: number,
-		pixelWorldSize: number,
-		scale: number,
 		id: string | null = null,
-		userDisplayName: string,
-		userID: string,
-		realtimeManager: realtimePixelManager
+		canvasCfg: {
+			x: number;
+			y: number;
+			gridSize: number;
+			pixelWorldSize: number;
+			scale: number;
+		},
+		backendCfg: {
+			userDisplayName: string;
+			userID: string;
+			realtimeManager: RealtimePixelManager;
+		}
 	) {
-		super(x, y, scale, id);
-		this.gridSize = gridSize;
-		this.pixelWorldSize = pixelWorldSize;
+		super(canvasCfg.x, canvasCfg.y, canvasCfg.scale, id);
+		this.gridSize = canvasCfg.gridSize;
+		this.pixelWorldSize = canvasCfg.pixelWorldSize;
 		this.pixels = {};
 
 		this.buffer.width = this.gridSize;
 		this.buffer.height = this.gridSize;
 		this.bufferCtx = this.buffer.getContext("2d")!;
 
-		this.userDisplayName = userDisplayName;
-		this.userID = userID;
-		this.realtimeManager = realtimeManager;
+		this.userDisplayName = backendCfg.userDisplayName;
+		this.userID = backendCfg.userID;
+		this.realtimeManager = backendCfg.realtimeManager;
 	}
 
 	// Merge or create pixel at given cell coordinates

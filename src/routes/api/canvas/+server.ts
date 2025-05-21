@@ -1,10 +1,12 @@
+import { error, json } from "@sveltejs/kit";
+
 // database drawing post request
 export async function POST({ request, locals: { supabase, safeGetSession } }) {
 	const { session } = await safeGetSession();
 	if (session) {
 		const { canvasID, drawing } = await request.json();
 
-		const error = await supabase.from("canvas").update({ drawing: drawing }).eq("id", canvasID);
+		const err = await supabase.from("canvas").update({ drawing: drawing }).eq("id", canvasID);
 
 		// TODO: error handling
 		// if (error) {
@@ -13,10 +15,13 @@ export async function POST({ request, locals: { supabase, safeGetSession } }) {
 		// 	console.log("Canvas saved to database");
 		// }
 
-		const response = new Response(JSON.stringify(error));
-		return response;
+		if (err) {
+			// throw error if something went wrong
+			error(err.status, err.statusText);
+		}
+	} else {
+		error(403); // forbidden
 	}
 
-	const response = new Response(null, {status: 403});
-	return response
+	return json(null, { status: 200 });
 }

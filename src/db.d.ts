@@ -1,7 +1,6 @@
 declare global {
 	namespace DB {
 		interface UserAccount {
-			// EXAMPLE. CHANGE LATER
 			id?: string;
 			username?: string;
 			provider?: string | null;

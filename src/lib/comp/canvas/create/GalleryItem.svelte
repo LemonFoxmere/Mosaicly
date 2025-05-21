@@ -40,11 +40,11 @@
 		// transition-property: transform opacity;
 
 		&.hidden {
+			pointer-events: none;
+
 			@media screen and (min-width: $mobile-width) {
 				opacity: 0;
 			}
-
-			pointer-events: none;
 
 			&.left {
 				transform: translate(calc(-100% - 50px), 0px);

@@ -2,7 +2,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { PixelData } from "./PixelGrid.js";
 
 // class for managing realtime broadcast and database saving
-export class realtimePixelManager {
+export class RealtimePixelManager {
 	private isDirty = false; // is the current pixel data stale?
 	private pixelBroadcastQueue: Record<string, PixelData> = {}; // pixels that are to be broadcasted
 	private pixelDatabaseQueue: Record<string, PixelData> = {}; // user's own pixels that are to be sent to the database (also used to hold "buffer" pixels)
@@ -49,7 +49,6 @@ export class realtimePixelManager {
 
 	// fetch request to send pixels to database
 	saveToDatabase(pixels: Record<string, PixelData>): void {
-
 		const current: Record<string, PixelData> = Object.assign({}, this.pixelDatabaseQueue);
 		fetch("/api/canvas", {
 			method: "POST",
@@ -62,6 +61,7 @@ export class realtimePixelManager {
 				drawing: pixels
 			})
 		}).then((response) => {
+			void response;
 			// TODO: error handling and possibly UI text for successful save?
 		});
 
@@ -91,14 +91,16 @@ export class realtimePixelManager {
 					}
 				})
 				.then(() => {
-
 					// check if there are any pixels to update before beginning database sending
 					if (Object.keys(this.pixelBroadcastQueue).length == 0) {
 						this.isDirty = false;
 
 						// if nothing waiting, start batching for the canvas sending (1 second)
 						this.clearDatabaseTimer();
-						this.databaseTimeout = setTimeout(async () => this.saveToDatabase(pixels), 1000);
+						this.databaseTimeout = setTimeout(
+							async () => this.saveToDatabase(pixels),
+							1000
+						);
 					}
 				});
 		}
