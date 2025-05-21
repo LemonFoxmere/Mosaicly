@@ -6,22 +6,17 @@ export async function POST({ request, locals: { supabase, safeGetSession } }) {
 	if (session) {
 		const { canvasID, drawing } = await request.json();
 
-		const err = await supabase.from("canvas").update({ drawing: drawing }).eq("id", canvasID);
+		const resp = await supabase.from("canvas").update({ drawing: drawing }).eq("id", canvasID);
 
-		// TODO: error handling
-		// if (error) {
-		// 	console.error("Could not save current canvas. Error: ", error);
-		// } else {
-		// 	console.log("Canvas saved to database");
-		// }
-
-		if (err) {
+		if (resp && resp.status >= 200 && resp.status < 300) {
+			return json(null, { status: 200 });
+		} else if (resp) {
 			// throw error if something went wrong
-			error(err.status, err.statusText);
+			error(resp.status, resp.statusText);
+		} else {
+			error(400); // bad req
 		}
 	} else {
 		error(403); // forbidden
 	}
-
-	return json(null, { status: 200 });
 }

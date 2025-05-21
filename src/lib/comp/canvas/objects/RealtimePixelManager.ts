@@ -75,6 +75,8 @@ export class RealtimePixelManager {
 	// broadcasts pixel changes and eventually saves the whole canvas
 	broadcastThenSave(pixels: Record<string, PixelData>): void {
 		if (this.isDirty && Object.keys(this.pixelBroadcastQueue).length > 0) {
+			// console.log("cunt");
+
 			const current: Record<string, PixelData> = Object.assign({}, this.pixelBroadcastQueue);
 
 			// delete the soon-to-be-broadcasted pixels from the queue
