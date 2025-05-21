@@ -1,6 +1,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { PixelData } from "./PixelGrid.js";
 
+// bruh
 // class for managing realtime broadcast and database saving
 export class RealtimePixelManager {
 	private isDirty = false; // is the current pixel data stale?
