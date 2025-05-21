@@ -12,32 +12,33 @@
 		longitude: number;
 		zoom?: number;
 		allowClickToUpdateCoordinates?: boolean;
+		forceZoomChange?: any;
 	}
 
 	let {
 		latitude = $bindable(),
 		longitude = $bindable(),
-		zoom = $bindable(15),
-		allowClickToUpdateCoordinates = false
+		zoom = $bindable(18),
+		allowClickToUpdateCoordinates = false,
+		forceZoomChange = undefined
 	}: Props = $props();
 
 	let mapContainer: HTMLDivElement;
 	let map: MapboxMapType | null = null;
 	let marker: MapboxMarkerType | null = null;
+	let radiusCircleId = "marker-radius-circle";
 
-	const accessToken = PUBLIC_MAPBOX_ACCESS_TOKEN;
+	const markerColor = "#ec7846";
+	const circleColor = "rgba(236, 120, 70, 0.5)"; //at 50% transparency
+	const radiusMeters = 20;
 
 	onMount(() => {
-		if (!accessToken) {
-			console.error("Set PUBLIC_MAPBOX_ACCESS_TOKEN in your .env file.");
-			return;
-		}
 		if (!mapContainer) return;
 
-		mapboxgl.accessToken = accessToken;
+		mapboxgl.accessToken = PUBLIC_MAPBOX_ACCESS_TOKEN;
 		map = new mapboxgl.Map({
 			container: mapContainer,
-			style: "mapbox://styles/mapbox/streets-v12",
+			style: "mapbox://styles/mapbox/dark-v11", // changed to DARK mode style :)
 			center: [longitude, latitude],
 			zoom: zoom,
 			attributionControl: false
@@ -45,6 +46,7 @@
 
 		map.on("load", () => {
 			setMarker();
+			addRadiusCircle();
 		});
 
 		if (allowClickToUpdateCoordinates) {
@@ -60,7 +62,7 @@
 					) {
 						latitude = clickedLat;
 						longitude = clickedLng;
-						updateMapAndView();
+						// $effect will call updateMapAndView, which will handle zoom preservation
 					}
 				}
 			});
@@ -72,53 +74,132 @@
 		};
 	});
 
+	// create a custom marker element with ORANGE color
+	const createCustomMarkerElement = () => {
+		const el = document.createElement("div");
+		el.className = "custom-marker";
+		return el;
+	};
+
 	const setMarker = () => {
 		if (marker) {
 			marker.remove();
 		}
 		if (map && typeof latitude === "number" && typeof longitude === "number") {
-			marker = new Marker().setLngLat([longitude, latitude]).addTo(map);
+			const el = createCustomMarkerElement();
+			marker = new Marker({ element: el, color: markerColor })
+				.setLngLat([longitude, latitude])
+				.addTo(map);
 		}
+	};
+
+	// add a circle with a radius of 20 meters around the marker
+	const addRadiusCircle = () => {
+		if (!map || typeof latitude !== "number" || typeof longitude !== "number") return;
+
+		// remove existing circle if it exists
+		if (map.getSource(radiusCircleId)) {
+			map.removeLayer(radiusCircleId);
+			map.removeSource(radiusCircleId);
+		}
+
+		// add the circle source
+		map.addSource(radiusCircleId, {
+			type: "geojson",
+			data: {
+				type: "Feature",
+				geometry: {
+					type: "Point",
+					coordinates: [longitude, latitude]
+				},
+				properties: {}
+			}
+		});
+
+		// add the circle layer
+		map.addLayer({
+			id: radiusCircleId,
+			type: "circle",
+			source: radiusCircleId,
+			paint: {
+				"circle-radius": {
+					stops: [
+						[0, 0],
+						[20, radiusMeters * 10] // adjust scale factor for better visibility
+					],
+					base: 2
+				},
+				"circle-color": circleColor,
+				"circle-opacity": 0.5,
+				"circle-stroke-width": 0
+			}
+		});
 	};
 
 	const updateMapAndView = () => {
 		if (map && typeof latitude === "number" && typeof longitude === "number") {
+			let targetZoomForFlyTo = zoom; // Default to the component's zoom prop
+
+			// if the zoom prop hasn't changed since the last $effect cycle (based on prevZoom),
+			// and lat/lng have (implying a click or programmatic lat/lng update without zoom change),
+			// then use the maps current actual zoom level to preserve user's manual zoom.
+			if (zoom === prevZoom && (latitude !== prevLatitude || longitude !== prevLongitude)) {
+				targetZoomForFlyTo = map.getZoom();
+			}
+			// If the zoom prop DID change, targetZoomForFlyTo will correctly be the new 'zoom' prop value.
+
 			map.flyTo({
 				center: [longitude, latitude],
-				zoom: zoom,
+				zoom: targetZoomForFlyTo,
 				essential: true
 			});
 			setMarker();
+			addRadiusCircle();
 		}
 	};
 
 	let prevLatitude = latitude;
 	let prevLongitude = longitude;
 	let prevZoom = zoom;
+	let prevForceZoomChange = forceZoomChange;
 
 	$effect(() => {
 		const latChanged = latitude !== prevLatitude;
 		const lngChanged = longitude !== prevLongitude;
 		const zoomChanged = zoom !== prevZoom;
+		const forceZoomChanged = forceZoomChange !== prevForceZoomChange;
 
-		if (latChanged || lngChanged || zoomChanged) {
-			prevLatitude = latitude;
-			prevLongitude = longitude;
-			prevZoom = zoom;
-
+		if (latChanged || lngChanged || zoomChanged || forceZoomChanged) {
 			if (map) {
 				if (map.isStyleLoaded()) {
-					updateMapAndView();
+					// if forceZoomChange changed, always use zoom prop
+					if (forceZoomChanged) {
+						map.flyTo({
+							center: [longitude, latitude],
+							zoom: zoom,
+							essential: true
+						});
+						setMarker();
+						addRadiusCircle();
+					} else {
+						updateMapAndView();
+					}
 				} else {
 					map.setCenter([longitude, latitude]);
-					map.setZoom(zoom);
+					map.setZoom(zoom); // initial zoom setting
 					setMarker();
+					addRadiusCircle();
 
 					map.once("style.load", () => {
 						setMarker();
+						addRadiusCircle();
 					});
 				}
 			}
+			prevLatitude = latitude;
+			prevLongitude = longitude;
+			prevZoom = zoom;
+			prevForceZoomChange = forceZoomChange;
 		}
 	});
 </script>
@@ -131,5 +212,15 @@
 		height: 100%;
 		border-radius: 8px;
 		overflow: hidden;
+	}
+
+	:global(.custom-marker) {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		background-color: #ec7846;
+		border: 2px solid white;
+		box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+		cursor: pointer;
 	}
 </style>

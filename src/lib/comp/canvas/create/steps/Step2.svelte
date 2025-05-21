@@ -11,6 +11,8 @@
 		accuracy: number;
 		onLocate: () => void;
 		isFocused: boolean;
+		zoom?: number;
+		forceZoomChange?: any;
 	}
 	let {
 		canvasCoordinates = $bindable(),
@@ -18,15 +20,21 @@
 		parsedLat = $bindable(),
 		errorState = $bindable(),
 		onLocate,
-		isFocused = $bindable(false)
+		isFocused = $bindable(false),
+		zoom = 18,
+		forceZoomChange = undefined
 	}: Props = $props();
 
 	let mapboxLatitude = $state(parsedLat);
 	let mapboxLongitude = $state(parsedLong);
+	let mapboxZoom = $state(zoom);
+	let mapboxForceZoomChange = $state(forceZoomChange);
 
 	$effect(() => {
 		mapboxLatitude = parsedLat;
 		mapboxLongitude = parsedLong;
+		mapboxZoom = zoom;
+		mapboxForceZoomChange = forceZoomChange;
 	});
 
 	$effect(() => {
@@ -48,10 +56,10 @@
 					bind:value={canvasCoordinates}
 					placeholder="36.99979, 122.06337"
 					class="coordinate-input flex-fill"
-					on:focus={() => (isFocused = true)}
-					on:blur={() => (isFocused = false)}
+					onfocus={() => (isFocused = true)}
+					onblur={() => (isFocused = false)}
 				/>
-				<button id="locate" class="none" on:click={onLocate}>
+				<button id="locate" class="none" onclick={onLocate}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
@@ -67,10 +75,10 @@
 				<MapboxMap
 					bind:latitude={mapboxLatitude}
 					bind:longitude={mapboxLongitude}
+					zoom={mapboxZoom}
+					forceZoomChange={mapboxForceZoomChange}
 					allowClickToUpdateCoordinates={true}
 				/>
-			{:else}
-				<h1>𓀐𓂸</h1>
 			{/if}
 		</div>
 	</section>
