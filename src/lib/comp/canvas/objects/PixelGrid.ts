@@ -2,6 +2,7 @@ import type { SceneContext } from "../PixelCanvas.svelte";
 import { CanvasUtils } from "../utils/CanvasUtils";
 import { CursorUtils } from "../utils/CursorUtils";
 import { CanvasObject } from "./CanvasObject";
+import { RealtimePixelManager } from "./RealtimePixelManager";
 
 // Structure for storing pixel information
 export type PixelData = {
@@ -23,25 +24,43 @@ export class PixelGrid extends CanvasObject {
 	gridSize = 256; // number of cells in one dimension
 	pixelWorldSize = 1; // how big a virtual pixel should be in real pixel-space units at zoom = 1
 
+	// used for when updating a pixel
+	userDisplayName: string = "";
+	userID: string = "";
+
+	// realtime for the pixelgrid (for broadcasting and saving to Supabase)
+	realtimeManager: RealtimePixelManager;
+
 	private buffer = document.createElement("canvas"); // for buffered rendering
 	private bufferCtx: CanvasRenderingContext2D;
 
 	constructor(
-		x: number,
-		y: number,
-		gridSize: number,
-		pixelWorldSize: number,
-		scale: number,
-		id: string | null = null
+		id: string | null = null,
+		canvasCfg: {
+			x: number;
+			y: number;
+			gridSize: number;
+			pixelWorldSize: number;
+			scale: number;
+		},
+		backendCfg: {
+			userDisplayName: string;
+			userID: string;
+			realtimeManager: RealtimePixelManager;
+		}
 	) {
-		super(x, y, scale, id);
-		this.gridSize = gridSize;
-		this.pixelWorldSize = pixelWorldSize;
+		super(canvasCfg.x, canvasCfg.y, canvasCfg.scale, id);
+		this.gridSize = canvasCfg.gridSize;
+		this.pixelWorldSize = canvasCfg.pixelWorldSize;
 		this.pixels = {};
 
 		this.buffer.width = this.gridSize;
 		this.buffer.height = this.gridSize;
 		this.bufferCtx = this.buffer.getContext("2d")!;
+
+		this.userDisplayName = backendCfg.userDisplayName;
+		this.userID = backendCfg.userID;
+		this.realtimeManager = backendCfg.realtimeManager;
 	}
 
 	// Merge or create pixel at given cell coordinates
@@ -56,6 +75,8 @@ export class PixelGrid extends CanvasObject {
 			lastedEditedUserID: data.lastedEditedUserID ?? existing.lastedEditedUserID ?? null,
 			lastedEditedName: data.lastedEditedName ?? existing.lastedEditedName ?? null
 		};
+		this.realtimeManager.pushPixelBroadcastQueue(cellKey, this.pixels);
+		this.realtimeManager.pushPixelDatabaseQueue(cellKey, this.pixels);
 	}
 
 	placePixel(cursorX: number, cursorY: number, color: string, sctx: SceneContext): void {
@@ -84,10 +105,11 @@ export class PixelGrid extends CanvasObject {
 			const needsUpdate = isNewPixel || existingPixel.color !== color;
 
 			if (needsUpdate) {
+				this.realtimeManager.setDirty(true);
 				this.addOrUpdatePixel(cellX, cellY, {
 					color,
-					lastedEditedUserID: null,
-					lastedEditedName: null
+					lastedEditedUserID: this.userID,
+					lastedEditedName: this.userDisplayName
 				});
 			}
 		}
@@ -207,6 +229,7 @@ export class PixelGrid extends CanvasObject {
 
 	update(sctx: SceneContext): void {
 		void sctx;
+		this.realtimeManager.broadcastThenSave(this.pixels);
 	}
 
 	onCursorDown(sctx: SceneContext): void {

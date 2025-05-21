@@ -1,21 +1,20 @@
 declare global {
 	namespace DB {
 		interface UserAccount {
-			// EXAMPLE. CHANGE LATER
 			id?: string;
 			username?: string;
-			provider?: string | null;
+			provider?: string;
 			createdAt?: Date;
 			lastLogin?: Date;
 			isDeactivated?: boolean;
 			isDeleted?: boolean;
 		}
 		interface UserProfile {
-			displayName?: string | null;
-			avatarUrl?: string | null;
-			bio?: string | null;
-			githubHandle?: string | null;
-			discordHandle?: string | null;
+			displayName: string;
+			avatarUrl: string;
+			bio: string;
+			githubHandle: string;
+			discordHandle: string;
 		}
 		interface AppUser {
 			account: UserAccount;
@@ -26,9 +25,9 @@ declare global {
 			userId: string;
 			createdOn: string;
 
-			title: string | null;
+			title: string;
 			locDesc: string;
-			drawing?: Json | null;
+			drawing: Json;
 			isArchived: bool;
 
 			longitude: number;

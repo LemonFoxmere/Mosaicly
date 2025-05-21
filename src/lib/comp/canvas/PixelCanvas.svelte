@@ -65,18 +65,37 @@
 </script>
 
 <script lang="ts">
+	import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 	import { onDestroy, onMount } from "svelte";
 	import { CanvasObject } from "./objects/CanvasObject";
 	import { PixelGrid } from "./objects/PixelGrid";
+	import { RealtimePixelManager } from "./objects/RealtimePixelManager";
 	import { CanvasUtils } from "./utils/CanvasUtils";
 	import { CursorUtils } from "./utils/CursorUtils";
 
 	// external bindings
 	let {
 		color = "#000000",
-		mode = "view" as "view" | "edit",
-		load // dispatcher
+		mode = "view",
+		load, // dispatcher
+		backend
+	}: {
+		color: string;
+		mode: "view" | "edit";
+		load: () => void;
+		backend: {
+			supabase: SupabaseClient;
+			realtimeManager: RealtimePixelManager;
+			canvasChannel: RealtimeChannel;
+			userDisplayName: string;
+			userID: string;
+			canvasDrawing: JSON;
+		};
 	} = $props();
+
+	const supabase = backend.supabase;
+	let { realtimeManager, canvasChannel, userDisplayName, userID, canvasDrawing } =
+		$derived(backend);
 
 	let loadErr: string | null = null;
 	let canvasContainer: HTMLElement;
@@ -94,7 +113,8 @@
 		}
 	});
 
-	let objects: Record<string, CanvasObject> = $state({});
+	// Definition of all objects (including PixelGrid) that will be rendered on the canvas
+	let objects: Record<string, CanvasObject> = $state({}); // TODO: generalize this to CanvasObject
 
 	// initialization routine
 	const init = (): Error | null => {
@@ -102,6 +122,9 @@
 
 		err = initCanvas(); // initialize canvas
 		if (err !== null) return err;
+
+		initRTChannel(); // initialize realtime channel
+
 		err = initObjects(); // initialize objects
 		// if (err !== null) return err;
 		initListeners(); // start listeners
@@ -125,15 +148,64 @@
 		return null;
 	};
 
+	// inits canvas channel
+	const initRTChannel = (): Error | null => {
+		canvasChannel
+			.on(
+				"broadcast",
+				{ event: "sync" },
+
+				async (payload) => {
+					// make sure broadcasted pixels do not get overwritten by incoming postgres changes
+					Object.keys(payload.payload.pixels).map((cellKey) =>
+						realtimeManager.pushPixelDatabaseQueue(cellKey, payload.payload.pixels)
+					);
+					Object.assign(
+						(objects["pixelGrid"] as PixelGrid).pixels,
+						payload.payload.pixels
+					);
+				}
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "UPDATE",
+					schema: "public",
+					table: "canvas"
+				},
+				(payload) => {
+					// postgres changes do not overwrite pixels that have yet to be sent to the database
+					Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.new.drawing);
+					Object.assign(
+						(objects["pixelGrid"] as PixelGrid).pixels,
+						realtimeManager.getPixelDatabaseQueue()
+					);
+				}
+			)
+			.subscribe();
+
+		return null;
+	};
+
 	const initObjects = (): Error | null => {
 		const pixelGrid = new PixelGrid(
-			0,
-			0,
-			sctx.pixelGrid.gridSize,
-			sctx.pixelGrid.pixelWorldSize,
-			sctx.s,
-			"pixelGrid"
+			"pixelGrid",
+			{
+				// canvasCfg
+				x: 0,
+				y: 0,
+				gridSize: sctx.pixelGrid.gridSize,
+				pixelWorldSize: sctx.pixelGrid.pixelWorldSize,
+				scale: sctx.s
+			},
+			{
+				// backendCfg
+				userDisplayName,
+				userID,
+				realtimeManager
+			}
 		);
+		Object.assign(pixelGrid.pixels, canvasDrawing);
 		objects["pixelGrid"] = pixelGrid;
 		return null;
 	};
@@ -492,6 +564,8 @@
 
 		onDestroy(() => {
 			cleanUpListeners();
+			realtimeManager.saveToDatabase((objects["pixelGrid"] as PixelGrid).pixels);
+			supabase.removeChannel(canvasChannel);
 		});
 	});
 </script>

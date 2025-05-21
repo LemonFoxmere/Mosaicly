@@ -41,7 +41,7 @@
 		</p>
 		<div id="map">
 			<!-- TODO: replace with the actual map in the future -->
-			<h1>𓀐𓂸</h1>
+			<!-- <h1>𓀐𓂸</h1> -->
 		</div>
 	</section>
 </main>
