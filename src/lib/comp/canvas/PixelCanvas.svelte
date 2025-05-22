@@ -155,30 +155,13 @@
 				"broadcast",
 				{ event: "sync" },
 
-				async (payload) => {
-					// make sure broadcasted pixels do not get overwritten by incoming postgres changes
+				(payload) => {
 					Object.keys(payload.payload.pixels).map((cellKey) =>
 						realtimeManager.pushPixelDatabaseQueue(cellKey, payload.payload.pixels)
 					);
 					Object.assign(
 						(objects["pixelGrid"] as PixelGrid).pixels,
 						payload.payload.pixels
-					);
-				}
-			)
-			.on(
-				"postgres_changes",
-				{
-					event: "UPDATE",
-					schema: "public",
-					table: "canvas"
-				},
-				(payload) => {
-					// postgres changes do not overwrite pixels that have yet to be sent to the database
-					Object.assign((objects["pixelGrid"] as PixelGrid).pixels, payload.new.drawing);
-					Object.assign(
-						(objects["pixelGrid"] as PixelGrid).pixels,
-						realtimeManager.getPixelDatabaseQueue()
 					);
 				}
 			)
@@ -564,6 +547,7 @@
 
 		onDestroy(() => {
 			cleanUpListeners();
+			realtimeManager.clearDatabaseTimer();
 			realtimeManager.saveToDatabase((objects["pixelGrid"] as PixelGrid).pixels);
 			supabase.removeChannel(canvasChannel);
 		});
