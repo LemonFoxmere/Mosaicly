@@ -36,6 +36,8 @@
 		"@lucide/svelte": "^0.510.0",
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.4",
+		"@types/qrcode": "^1.5.5",
+		"qrcode": "^1.5.4",
 		"sass": "^1.86.3",
 		"scss": "^0.2.4"
 	},

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import QrGenerator from "$lib/comp/qr-code/QRGenerator.svelte";
+	import QrGenerator from "$lib/comp/qrcode/QrGenerator.svelte";
 
-	let inputText = $state("random");
+	let inputText = $state("");
 	let finalText = $state(inputText);
 </script>
 
@@ -16,7 +16,6 @@
 		>
 	</div>
 	<div id="QR-holder">
-		<p>Where the QR code should be:</p>
 		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
 </main>
