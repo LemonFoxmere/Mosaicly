@@ -223,7 +223,7 @@
 		border-radius: 24px;
 		background-color: $background-primary;
 		border: 2px solid $background-accent;
-		box-shadow: 0 0 2px hsla(0, 0, 0, 25%);
+		box-shadow: 0 0 2px hsla(0, 0%, 0%, 25%);
 		cursor: pointer;
 	}
 

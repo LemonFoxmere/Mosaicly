@@ -584,8 +584,8 @@
 		padding: 0;
 
 		@media screen and (min-width: $mobile-width) {
-			height: auto;
-			aspect-ratio: 1/1;
+			height: 100%;
+			// aspect-ratio: 1/1;
 		}
 
 		#main-canvas {
