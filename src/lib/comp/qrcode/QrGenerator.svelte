@@ -19,4 +19,15 @@
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
+
+	#QR-Code {
+		width: 60%;
+		margin: auto;
+		img {
+			width: 100%;
+			padding: 10px;
+			display: block;
+			margin: auto;
+		}
+	}
 </style>
