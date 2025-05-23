@@ -53,7 +53,7 @@ export class RealtimePixelManager {
 		// takes a "snapshot" of what pixels will be sent to the database
 		const current: Record<string, PixelData> = Object.assign({}, this.pixelDatabaseQueue);
 		fetch("/api/canvas", {
-			method: "POST",
+			method: "PATCH",
 			headers: {
 				Accept: "application/json",
 				"Content-Type": "application/json"
@@ -99,7 +99,7 @@ export class RealtimePixelManager {
 					if (Object.keys(this.pixelBroadcastQueue).length == 0) {
 						this.isDirty = false;
 
-						// if nothing waiting, start batching for the canvas sending (1 second)
+						// if nothing waiting, start readying for the canvas sending (1 second debounce)
 						this.clearDatabaseTimer();
 						this.databaseTimeout = setTimeout(() => this.saveToDatabase(pixels), 1000);
 					}
