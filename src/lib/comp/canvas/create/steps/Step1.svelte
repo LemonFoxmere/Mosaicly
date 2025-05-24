@@ -1,5 +1,5 @@
 <script lang="ts">
-	import FormField from "$lib/comp/canvas/create/FormField.svelte";
+	import FormField from "$lib/comp/ui/general/FormField.svelte";
 
 	interface Props {
 		canvasName: string;
@@ -68,6 +68,7 @@
 
 					textarea {
 						height: 100%;
+						resize: none;
 					}
 				}
 			}

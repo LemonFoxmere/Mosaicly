@@ -1,33 +1,21 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
-	import {
-		fetchCoordinatesForDisplay,
-		roundCoordinate
-	} from "$lib/comp/canvas/utils/Geolocation";
 	import type { ActionResult } from "@sveltejs/kit";
 
 	import ArrowNavCluster from "$lib/comp/canvas/create/ArrowNavCluster.svelte";
 	import GalleryItem from "$lib/comp/canvas/create/GalleryItem.svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
 	import Step1 from "$lib/comp/canvas/create/steps/Step1.svelte";
-	import Step2 from "$lib/comp/canvas/create/steps/Step2.svelte";
+	import Step2, { type Step2Data } from "$lib/comp/canvas/create/steps/Step2.svelte";
 	import Step3 from "$lib/comp/canvas/create/steps/Step3.svelte";
 
 	let currentStep = $state(1);
 	let canvasName = $state("");
 	let locationDescription = $state("");
 
-	let canvasCoordinates = $state("36.9980995, -122.0555466");
-	let formLatitude = $state(36.9980995);
-	let formLongitude = $state(-122.0555466);
-	let formAccuracy = $state(0.0);
-	let formZoom = $state(18);
-	let forceZoomChange = $state(0);
-	let coordinateValid = $state(false);
-	let canvasInputFocused = $state(false);
+	let step2Data = $state<Step2Data | null>(null);
 
-	// initialize to null so TS knows it's assigned
 	let hiddenFormElement: HTMLFormElement | null = null;
 	let errorState = $state({ flag: false, message: "" });
 
@@ -41,60 +29,9 @@
 		if (currentStep > 1) currentStep--;
 	};
 
-	const handleLocateMeClick = async () => {
-		const coords = await fetchCoordinatesForDisplay();
-		// error fetching coords. Do nothing
-		if (coords.status !== 0 || !coords.location) return;
-
-		// round here once
-		coords.location.latitude = roundCoordinate(coords.location.latitude);
-		coords.location.longitude = roundCoordinate(coords.location.longitude);
-
-		canvasCoordinates = `${coords.location.latitude}, ${coords.location.longitude}`;
-		formLatitude = coords.location.latitude;
-		formLongitude = coords.location.longitude;
-		formAccuracy = coords.location.accuracy;
-		formZoom = 18; // Reset zoom to default on locate
-		forceZoomChange += 1; // Increment to force zoom reset
+	const handleStep2DataChange = (data: Step2Data) => {
+		step2Data = data;
 	};
-
-	// Parse and validate the coordinates input
-	$effect(() => {
-		coordinateValid = false;
-		if (!canvasCoordinates) return;
-
-		const parts = canvasCoordinates.trim().split(",");
-		if (parts.length !== 2) return;
-
-		const [latStr, longStr] = parts.map((s) => s.trim());
-		const lat = Number(latStr);
-		const long = Number(longStr);
-		const valid =
-			isFinite(lat) && isFinite(long) && Math.abs(lat) <= 90 && Math.abs(long) <= 180;
-
-		if (!valid) return;
-
-		coordinateValid = true;
-		formLatitude = lat;
-		formLongitude = long;
-	});
-
-	// update canvasCoordinates from formLatitude/formLongitude when input is not focused
-	$effect(() => {
-		if (!canvasInputFocused) {
-			const targetLat = roundCoordinate(formLatitude);
-			const targetLong = roundCoordinate(formLongitude);
-			const expectedCanvasString = `${targetLat}, ${targetLong}`;
-
-			if (targetLat === 0 && targetLong === 0 && canvasCoordinates.trim() === "") {
-				return;
-			}
-
-			if (canvasCoordinates.trim() !== expectedCanvasString) {
-				canvasCoordinates = expectedCanvasString;
-			}
-		}
-	});
 
 	const saveCanvas = async () => {
 		if (hiddenFormElement) {
@@ -131,50 +68,17 @@
 		};
 	};
 
-	// checks if the current step is valid or not
 	const isStepValid = (step: number): boolean => {
 		switch (step) {
 			case 1:
 				return !!canvasName;
 			case 2:
-				return isStepValid(1) && !!coordinateValid && !!canvasCoordinates;
+				return isStepValid(1) && (step2Data?.isValid ?? false);
 			default:
-				return false; // default to invalid
+				return false;
 		}
 	};
-
-	// const routeChange = () => {
-	// 	const hash = window.location.hash;
-
-	// 	// TODO: add more checks in to prevent bad submissions
-
-	// 	if (hash) {
-	// 		const step = parseInt(hash.replace("#s", ""));
-	// 		if (!isNaN(step) && step >= 1 && step <= 3) {
-	// 			if (isStepValid(step)) {
-	// 				currentStep = step;
-	// 			} else {
-	// 				// change the current s hash to 1
-	// 				const newUrl = new URL(window.location.href);
-	// 				newUrl.hash = "#s1";
-	// 				window.history.pushState({}, "", newUrl);
-	// 			}
-	// 		} else {
-	// 			// change the current s hash to 1
-	// 			const newUrl = new URL(window.location.href);
-	// 			newUrl.hash = "#s1";
-	// 			window.history.pushState({}, "", newUrl);
-	// 		}
-	// 	}
-	// };
-
-	// onMount(() => {
-	// 	// set current step based on URL hash if there is one
-	// 	routeChange();
-	// });
 </script>
-
-<!-- <svelte:window on:hashchange={routeChange} /> -->
 
 <main>
 	<section id="main-content">
@@ -186,17 +90,7 @@
 			</GalleryItem>
 
 			<GalleryItem galleryIndex={currentStep} startVisIdx={2} endVisIdx={3}>
-				<Step2
-					bind:canvasCoordinates
-					bind:errorState
-					bind:parsedLong={formLongitude}
-					bind:parsedLat={formLatitude}
-					bind:isFocused={canvasInputFocused}
-					accuracy={formAccuracy}
-					onLocate={handleLocateMeClick}
-					zoom={formZoom}
-					{forceZoomChange}
-				/>
+				<Step2 onDataChange={handleStep2DataChange} />
 			</GalleryItem>
 
 			<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
@@ -233,9 +127,9 @@
 >
 	<input type="hidden" name="title" value={canvasName} />
 	<input type="hidden" name="loc_desc" value={locationDescription} />
-	<input type="hidden" name="latitude" bind:value={formLatitude} />
-	<input type="hidden" name="longitude" bind:value={formLongitude} />
-	<input type="hidden" name="accuracy" bind:value={formAccuracy} />
+	<input type="hidden" name="latitude" value={step2Data?.coordinates.latitude ?? 0} />
+	<input type="hidden" name="longitude" value={step2Data?.coordinates.longitude ?? 0} />
+	<input type="hidden" name="accuracy" value={step2Data?.coordinates.accuracy ?? 0} />
 </form>
 
 <style lang="scss">
