@@ -26,36 +26,39 @@
 	let marker: MapboxMarkerType | null = null;
 	let radiusCircleId: string = "marker-radius-circle";
 
-	const DEFAULT_ZOOM: number = 14;
-	const USER_ACTION_ZOOM: number = 18;
+	const DEFAULT_COORDS = { lat: 36.9975733, lng: -122.0572861 }; // the default coords
+	const DEFAULT_ZOOM: number = 14; // default zoom level on init
+	const USER_ACTION_ZOOM: number = 18; // zoom when user performs an action
 	let currentZoom: number = DEFAULT_ZOOM;
 
 	const circleColor: string = "rgba(236, 120, 70, 0.5)";
 	const radiusMeters: number = 20;
 
 	onMount(() => {
-		if (!mapContainer) return;
+		if (!mapContainer) return; // safety check
 
+		// Initialize Mapbox GL JS
 		mapboxgl.accessToken = PUBLIC_MAPBOX_ACCESS_TOKEN;
 		map = new mapboxgl.Map({
 			container: mapContainer,
 			style: "mapbox://styles/mapbox/dark-v11",
-			center: [longitude, latitude],
+			center: [DEFAULT_COORDS.lng, DEFAULT_COORDS.lat],
 			zoom: currentZoom,
 			attributionControl: false
 		});
 
+		// Add navigation controls
 		map.on("load", () => {
 			setMarker();
 			addRadiusCircle();
 		});
-
 		map.on("zoomend", () => {
 			if (map) {
 				currentZoom = map.getZoom();
 			}
 		});
 
+		// Add click control to add markers
 		if (allowClickToUpdateCoordinates) {
 			map.on("click", (e) => {
 				if (onClickWithCoords) {
@@ -67,6 +70,7 @@
 			});
 		}
 
+		// Cleanup function to remove the map instance when the component is destroyed
 		return () => {
 			map?.remove();
 			map = null;
@@ -80,7 +84,14 @@
 	};
 
 	const setMarker = () => {
-		if (map && typeof latitude === "number" && typeof longitude === "number" && showMarker) {
+		if (
+			map &&
+			typeof latitude === "number" &&
+			typeof longitude === "number" &&
+			!isNaN(latitude) &&
+			!isNaN(longitude) &&
+			showMarker
+		) {
 			if (marker) {
 				marker.setLngLat([longitude, latitude]);
 			} else {
@@ -96,10 +107,17 @@
 	};
 
 	const addRadiusCircle = () => {
-		if (!map || typeof latitude !== "number" || typeof longitude !== "number" || !showMarker)
+		if (
+			!map ||
+			typeof latitude !== "number" ||
+			typeof longitude !== "number" ||
+			isNaN(latitude) ||
+			isNaN(longitude) ||
+			!showMarker
+		)
 			return;
 
-		const circleData = {
+		const circleData: GeoJSON.Feature<GeoJSON.Geometry> = {
 			type: "Feature",
 			geometry: {
 				type: "Point",
@@ -139,10 +157,17 @@
 	};
 
 	const updateMapAndView = () => {
-		if (map && typeof latitude === "number" && typeof longitude === "number") {
+		if (
+			map &&
+			typeof latitude === "number" &&
+			typeof longitude === "number" &&
+			!isNaN(latitude) &&
+			!isNaN(longitude)
+		) {
+			// Ensure the map is centered on the new coordinates with the current zoom level
 			map.flyTo({
 				center: [longitude, latitude],
-				zoom: currentZoom,
+				zoom: USER_ACTION_ZOOM,
 				essential: true
 			});
 			setMarker();
@@ -151,11 +176,21 @@
 	};
 
 	$effect(() => {
-		if (!map || typeof latitude !== "number" || typeof longitude !== "number") return;
+		// This effect runs whenever latitude or longitude changes
+		if (
+			!map ||
+			typeof latitude !== "number" ||
+			typeof longitude !== "number" ||
+			isNaN(latitude) ||
+			isNaN(longitude)
+		)
+			return;
 
 		if (map.isStyleLoaded()) {
+			// update map and view if the style is already loaded
 			updateMapAndView();
 		} else {
+			// if the style is not loaded yet, wait for it to load
 			map.once("style.load", () => {
 				updateMapAndView();
 			});

@@ -1,15 +1,13 @@
 <script lang="ts">
-	import FormField from "$lib/comp/canvas/create/FormField.svelte";
-	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
-	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
 	import {
 		fetchCoordinatesForDisplay,
-		parseCoordinateString,
 		formatCoordinateString,
 		isDisplayableMapCoordinate,
-		areCoordinatesEqual,
+		parseCoordinateString,
 		validateCoordinates
 	} from "$lib/comp/canvas/utils/Geolocation";
+	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
+	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
 
 	export interface Step2Data {
 		coordinates: { latitude: number; longitude: number; accuracy: number };
@@ -22,36 +20,32 @@
 
 	let { onDataChange }: Props = $props();
 
-	const DEFAULT_COORDS = { lat: 36.9940814, lng: -122.0612656 };
+	// map configs & coordinate states
+	// const DEFAULT_COORDS = { lat: 36.9940814, lng: -122.0612656 }; // the default coords
+	const DEFAULT_COORDS = { lat: NaN, lng: NaN }; // the default coords
 	const MAP_CONFIG = {
+		// map cfg
 		allowClickToUpdateCoordinates: true,
 		showMarkerWhenDefault: false
 	};
-
 	let coords = $state({
+		// current coordinate obj
 		latitude: DEFAULT_COORDS.lat,
 		longitude: DEFAULT_COORDS.lng,
 		accuracy: 0
 	});
-	let canvasCoordinates = $state("");
-	let isFocused = $state(false);
-
-	let hasInputText = $derived(canvasCoordinates.trim() !== "");
 	let isAtDefaultLocation = $derived(
-		areCoordinatesEqual(
-			coords.latitude,
-			coords.longitude,
-			DEFAULT_COORDS.lat,
-			DEFAULT_COORDS.lng
-		)
+		// flag for detecting default position
+		isNaN(coords.latitude) || isNaN(coords.longitude)
 	);
-	let isDisplayable = $derived(isDisplayableMapCoordinate(coords.latitude, coords.longitude));
+	let isDisplayable = $derived(isDisplayableMapCoordinate(coords.latitude, coords.longitude)); // sanity check
 	let showMapMarker = $derived(
 		MAP_CONFIG.showMarkerWhenDefault || (!isAtDefaultLocation && isDisplayable)
 	);
-
+	let canvasCoordinateStr = $state(""); // raw input
 	let coordParseAndValidation = $derived.by(() => {
-		const parsed = parseCoordinateString(canvasCoordinates);
+		// parsed coordinate obj from raw string
+		const parsed = parseCoordinateString(canvasCoordinateStr);
 		const valid =
 			parsed.isValid &&
 			validateCoordinates(parsed.latitude, parsed.longitude, {
@@ -61,9 +55,15 @@
 		return { parsed, valid };
 	});
 
-	let isValidOverall = $derived(coordParseAndValidation.valid && hasInputText);
+	// input configs & states
+	let isInputFocused = $state(false);
+	let hasInputText = $derived(canvasCoordinateStr.trim() !== "");
+	let isValidOverall = $derived(
+		coordParseAndValidation.valid && hasInputText && !isAtDefaultLocation
+	);
 
 	$effect(() => {
+		// broadcast dispatch signal on data change
 		if (onDataChange) {
 			onDataChange({
 				coordinates: { ...coords },
@@ -73,7 +73,7 @@
 	});
 
 	$effect(() => {
-		if (isFocused) {
+		if (isInputFocused) {
 			const { parsed } = coordParseAndValidation;
 			if (
 				parsed.isValid &&
@@ -83,8 +83,8 @@
 			}
 		} else {
 			const formattedCoords = formatCoordinateString(coords.latitude, coords.longitude);
-			if (canvasCoordinates !== formattedCoords) {
-				canvasCoordinates = formattedCoords;
+			if (canvasCoordinateStr !== formattedCoords) {
+				canvasCoordinateStr = formattedCoords;
 			}
 		}
 	});
@@ -106,39 +106,42 @@
 
 <main>
 	<div id="coordinate-input-wrapper">
-		<FormField label="Canvas Coordinates">
+		<label class:invalid={isValidOverall || isAtDefaultLocation}>
+			<p class="caption">
+				{#if isValidOverall || isAtDefaultLocation}
+					<!-- cancel out the effect by default location -->
+					Canvas Coordinates
+				{:else}
+					Please enter valid coordinates or use the locate button.
+				{/if}
+			</p>
+
 			<div id="input-wrapper">
 				<input
 					type="text"
-					bind:value={canvasCoordinates}
-					placeholder="36.99979, 122.06337"
+					bind:value={canvasCoordinateStr}
+					placeholder="36.9940814, -122.0612656"
 					class="coordinate-input"
-					onfocus={() => (isFocused = true)}
-					onblur={() => (isFocused = false)}
-					class:invalid={!isValidOverall && hasInputText}
+					onfocus={() => (isInputFocused = true)}
+					onblur={() => (isInputFocused = false)}
 				/>
 				<button id="locate" class="outline" onclick={handleLocateMeClick}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
-			{#if !isValidOverall && hasInputText && !isAtDefaultLocation}
-				<p class="error-message">
-					Please enter valid coordinates or use the locate button.
-				</p>
-			{/if}
-		</FormField>
+		</label>
 	</div>
 
 	<section id="map-wrapper">
 		<p class="caption">
 			{#if !showMapMarker}
-				No marker yet? Click where you want it to show up.
+				Where is this thing? Tap on the map or use the locate button to tell us.
 			{:else}
-				Click on the map to update the location, or use the locate button.
+				Screwed up? Tap on the map or use the locate button to fix it.
 			{/if}
 		</p>
 		<div id="map">
-			{#if isDisplayable}
+			{#if isDisplayable || isAtDefaultLocation}
 				<MapboxMap
 					latitude={coords.latitude}
 					longitude={coords.longitude}
