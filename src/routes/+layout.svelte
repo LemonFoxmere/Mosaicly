@@ -47,7 +47,6 @@
 				</a>
 			{:else}
 				<a class="wrapper item large" href="" on:click={toggleMobileMenu}>
-					<!-- TODO: replace with profile pic -->
 					{#if user?.profile?.avatarUrl}
 						<img src={user.profile.avatarUrl} alt="Profile Picture" id="pfp" />
 					{:else}
@@ -60,13 +59,13 @@
 
 	<MobileMenu {mobileMenuOpened} {closeMobileMenu}>
 		<form class={mobileMenuOpened ? "" : "disabled"} id="mobile-cta" method="post">
-			<a class="menu-items" href="/profile" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/settings#profile" on:click={closeMobileMenu}>
 				<p>Account & Profile</p>
 			</a>
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/profile?tab=canvases" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/settings#canvas" on:click={closeMobileMenu}>
 				<p>My Canvases</p>
 			</a>
 

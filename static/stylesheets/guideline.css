@@ -147,6 +147,12 @@ textarea::placeholder {
 textarea {
 	padding: 20px;
 	height: auto;
+	resize: none;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+textarea::-webkit-scrollbar {
+	display: none;
 }
 a {
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);

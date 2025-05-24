@@ -89,7 +89,6 @@ export const load: LayoutServerLoad = async ({
 					};
 					payload.canvases.push(mappedCanvas);
 				}
-				console.log(payload.canvases[0].createdOn);
 			} else {
 				console.error("Did not find the user's canvas. Perhaps no canvas found?");
 			}
@@ -105,7 +104,7 @@ export const load: LayoutServerLoad = async ({
 		showCta: true
 	};
 
-	if (["/login", "/profile", "/profile"].includes(url.pathname)) {
+	if (["/login", "/settings", "/profile"].includes(url.pathname)) {
 		appearanceConfig.showLogo = true;
 		appearanceConfig.showCta = false;
 	}
