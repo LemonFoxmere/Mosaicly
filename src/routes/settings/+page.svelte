@@ -135,6 +135,7 @@
 					top: 0px !important;
 
 					#gradient-bg {
+						// have to use a bunch of importants here because of ordering
 						top: 0px !important;
 						height: calc(100% + 20px) !important;
 						background: linear-gradient($background-primary, transparent) !important;
@@ -209,6 +210,13 @@
 				width: 100%;
 				display: flex;
 				flex-grow: 1;
+			}
+
+			#loader-container {
+				display: flex;
+				flex: 1;
+				justify-content: center;
+				align-items: center;
 			}
 		}
 	}

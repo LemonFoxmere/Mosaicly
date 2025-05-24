@@ -10,12 +10,13 @@
 	let { displayName, bio } = $derived(profile);
 
 	// consts
+	const nameMaxLen = 32;
 	const bioMaxLen = 200;
 
 	// state effects
 	let dirty = $derived(displayName !== profile.displayName || bio !== profile.bio); // do we have new data
 	// input checks
-	let nameValid = $derived(!!displayName && displayName.length <= 50);
+	let nameValid = $derived(!!displayName && displayName.length <= nameMaxLen);
 	let bioValid = $derived(bio.length <= bioMaxLen);
 	let inputValid = $derived(nameValid && bioValid);
 </script>
