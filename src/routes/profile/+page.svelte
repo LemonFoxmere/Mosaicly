@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import CanvasCard from "$lib/comp/profile/CanvasCard.svelte";
-	import CreateCanvasMenu from "$lib/comp/profile/CreateCanvasMenu.svelte";
 	import Modal from "$lib/comp/profile/EditCanvasModal.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
 	import type { PageProps } from "./$types";
@@ -124,8 +123,9 @@
 
 				<Modal bind:open={isOpen} bind:isSaving canvas={focusedCanvas} />
 
-				<!-- add new canvas, popup like modal -->
-				<CreateCanvasMenu />
+				<a href="/create">
+					<button>New Canvas</button>
+				</a>
 			</section>
 		{/if}
 	</section>
@@ -148,6 +148,15 @@
 			height: fit-content;
 			margin: auto 0px;
 			padding-bottom: calc(5px + $urlbar-height);
+		}
+
+		a {
+			text-decoration: none;
+			width: 100%;
+
+			button {
+				width: 100%;
+			}
 		}
 
 		#intro {
