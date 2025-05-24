@@ -1,17 +1,9 @@
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ url, locals: { supabase, user, safeGetSession } }) => {
+export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
 	const { session } = await safeGetSession();
 	if (!session) redirect(403, "/login");
-
-	const tab = url.searchParams.get("tab") ?? "";
-
-	const { data, error } = await supabase.from("canvas").select().eq("user_id", user.id);
-	void error;
-	// TODO: preprocess the data first
-
-	return { canvas: data, tab };
 };
 
 export const actions = {
