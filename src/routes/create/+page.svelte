@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
-	import { fetchCoordinatesForDisplay } from "$lib/comp/canvas/utils/Geolocation";
+	import {
+		fetchCoordinatesForDisplay,
+		roundCoordinate
+	} from "$lib/comp/canvas/utils/Geolocation";
 	import type { ActionResult } from "@sveltejs/kit";
 
 	import ArrowNavCluster from "$lib/comp/canvas/create/ArrowNavCluster.svelte";
@@ -15,93 +18,93 @@
 	let canvasName = $state("");
 	let locationDescription = $state("");
 
-	let canvasCoordinates = $state("");
-	let formLatitude = $state(0.0);
-	let formLongitude = $state(0.0);
+	let canvasCoordinates = $state("36.9980995, -122.0555466");
+	let formLatitude = $state(36.9980995);
+	let formLongitude = $state(-122.0555466);
 	let formAccuracy = $state(0.0);
+	let formZoom = $state(18);
+	let forceZoomChange = $state(0);
 	let coordinateValid = $state(false);
+	let canvasInputFocused = $state(false);
 
-	let hiddenFormElement: HTMLFormElement;
-
+	// initialize to null so TS knows it's assigned
+	let hiddenFormElement: HTMLFormElement | null = null;
 	let errorState = $state({ flag: false, message: "" });
 
 	const nextStep = () => {
 		if (currentStep < 3) {
 			currentStep++;
-			// change URL anchor param
-			const newUrl = new URL(window.location.href);
-			newUrl.hash = `#s${currentStep}`;
-			window.history.pushState({}, "", newUrl);
 		}
 	};
+
 	const prevStep = () => {
 		if (currentStep > 1) currentStep--;
-		// change URL anchor param
-		const newUrl = new URL(window.location.href);
-		newUrl.hash = `#s${currentStep}`;
-		window.history.pushState({}, "", newUrl);
 	};
 
 	const handleLocateMeClick = async () => {
-		errorState = { flag: false, message: "" };
 		const coords = await fetchCoordinatesForDisplay();
-		if (coords) {
-			// round to max 7 digits
-			coords.latitude = Math.round(coords.latitude * 1e7) / 1e7;
-			coords.longitude = Math.round(coords.longitude * 1e7) / 1e7;
+		// error fetching coords. Do nothing
+		if (coords.status !== 0 || !coords.location) return;
 
-			canvasCoordinates = `${coords.latitude}, ${coords.longitude}`;
-			formLatitude = coords.latitude;
-			formLongitude = coords.longitude;
-			formAccuracy = coords.accuracy;
-		}
+		// round here once
+		coords.location.latitude = roundCoordinate(coords.location.latitude);
+		coords.location.longitude = roundCoordinate(coords.location.longitude);
+
+		canvasCoordinates = `${coords.location.latitude}, ${coords.location.longitude}`;
+		formLatitude = coords.location.latitude;
+		formLongitude = coords.location.longitude;
+		formAccuracy = coords.location.accuracy;
+		formZoom = 18; // Reset zoom to default on locate
+		forceZoomChange += 1; // Increment to force zoom reset
 	};
 
 	// Parse and validate the coordinates input
 	$effect(() => {
 		coordinateValid = false;
-		if (!canvasCoordinates) {
-			errorState = { flag: false, message: "" };
-			return;
-		}
+		if (!canvasCoordinates) return;
 
 		const parts = canvasCoordinates.trim().split(",");
-		if (parts.length !== 2) {
-			errorState = {
-				flag: true,
-				message: "Coordinates must be in 'lat,long' format."
-			};
-			return;
-		}
+		if (parts.length !== 2) return;
 
 		const [latStr, longStr] = parts.map((s) => s.trim());
 		const lat = Number(latStr);
 		const long = Number(longStr);
-
 		const valid =
 			isFinite(lat) && isFinite(long) && Math.abs(lat) <= 90 && Math.abs(long) <= 180;
 
-		if (!valid) {
-			errorState = {
-				flag: true,
-				message: "Coordinates must be valid numbers within latitude/longitude bounds."
-			};
-			return;
-		}
+		if (!valid) return;
 
 		coordinateValid = true;
 		formLatitude = lat;
 		formLongitude = long;
-		errorState = { flag: false, message: "" };
+	});
+
+	// update canvasCoordinates from formLatitude/formLongitude when input is not focused
+	$effect(() => {
+		if (!canvasInputFocused) {
+			const targetLat = roundCoordinate(formLatitude);
+			const targetLong = roundCoordinate(formLongitude);
+			const expectedCanvasString = `${targetLat}, ${targetLong}`;
+
+			if (targetLat === 0 && targetLong === 0 && canvasCoordinates.trim() === "") {
+				return;
+			}
+
+			if (canvasCoordinates.trim() !== expectedCanvasString) {
+				canvasCoordinates = expectedCanvasString;
+			}
+		}
 	});
 
 	const saveCanvas = async () => {
-		if (hiddenFormElement) hiddenFormElement.requestSubmit();
-		else
+		if (hiddenFormElement) {
+			hiddenFormElement.requestSubmit();
+		} else {
 			errorState = {
 				flag: true,
 				message: "Error: Could not initiate save. Please try again."
 			};
+		}
 	};
 
 	const submitOptions = () => {
@@ -174,26 +177,32 @@
 <!-- <svelte:window on:hashchange={routeChange} /> -->
 
 <main>
-	<StepHeader {currentStep} stepTitle="Some basic stuff." />
+	<section id="main-content">
+		<StepHeader {currentStep} stepTitle="Some basic stuff." />
 
-	<section id="page-content">
-		<GalleryItem galleryIndex={currentStep} startVisIdx={1} endVisIdx={2}>
-			<Step1 bind:canvasName bind:locationDescription />
-		</GalleryItem>
+		<section id="page-content">
+			<GalleryItem galleryIndex={currentStep} startVisIdx={1} endVisIdx={2}>
+				<Step1 bind:canvasName bind:locationDescription />
+			</GalleryItem>
 
-		<GalleryItem galleryIndex={currentStep} startVisIdx={2} endVisIdx={3}>
-			<Step2
-				bind:canvasCoordinates
-				bind:errorState
-				bind:parsedLong={formLongitude}
-				bind:parsedLat={formLatitude}
-				onLocate={handleLocateMeClick}
-			/>
-		</GalleryItem>
+			<GalleryItem galleryIndex={currentStep} startVisIdx={2} endVisIdx={3}>
+				<Step2
+					bind:canvasCoordinates
+					bind:errorState
+					bind:parsedLong={formLongitude}
+					bind:parsedLat={formLatitude}
+					bind:isFocused={canvasInputFocused}
+					accuracy={formAccuracy}
+					onLocate={handleLocateMeClick}
+					zoom={formZoom}
+					{forceZoomChange}
+				/>
+			</GalleryItem>
 
-		<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
-			<Step3 {canvasName} {currentStep} onSave={saveCanvas} />
-		</GalleryItem>
+			<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
+				<Step3 {canvasName} {currentStep} onSave={saveCanvas} />
+			</GalleryItem>
+		</section>
 	</section>
 
 	<sect id="nav-container">
@@ -206,9 +215,6 @@
 					rightDisabled={(currentStep === 1 && !isStepValid(1)) ||
 						(currentStep === 2 && !isStepValid(2))}
 				/>
-				<p id="error-msg" class="status">
-					{errorState.message}
-				</p>
 			</section>
 		</GalleryItem>
 
@@ -216,61 +222,67 @@
 			<button id="return" on:click={saveCanvas}> Return to Canvas List </button>
 		</GalleryItem>
 	</sect>
-
-	<section id="status"></section>
-
-	<form
-		id="hidden-form"
-		method="post"
-		action="/api/canvas?/createCanvas"
-		use:enhance={submitOptions}
-		bind:this={hiddenFormElement}
-	>
-		<input type="hidden" name="title" value={canvasName} />
-		<input type="hidden" name="loc_desc" value={locationDescription} />
-		<input type="hidden" name="latitude" bind:value={formLatitude} />
-		<input type="hidden" name="longitude" bind:value={formLongitude} />
-		<input type="hidden" name="accuracy" bind:value={formAccuracy} />
-	</form>
 </main>
+
+<form
+	id="hidden-form"
+	method="post"
+	action="/api/canvas?/createCanvas"
+	use:enhance={submitOptions}
+	bind:this={hiddenFormElement}
+>
+	<input type="hidden" name="title" value={canvasName} />
+	<input type="hidden" name="loc_desc" value={locationDescription} />
+	<input type="hidden" name="latitude" bind:value={formLatitude} />
+	<input type="hidden" name="longitude" bind:value={formLongitude} />
+	<input type="hidden" name="accuracy" bind:value={formAccuracy} />
+</form>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
 	main {
 		position: relative;
-
 		display: flex;
-		flex-grow: 1;
 		flex-direction: column;
-		row-gap: 30px;
-		align-items: center;
-
+		justify-content: center;
+		row-gap: 15px;
 		padding: 15px 30px;
-
 		width: 100%;
-		height: 100%;
+		flex-grow: 1;
 		margin: auto 0px;
 
 		@media screen and (min-width: $mobile-width) {
 			max-height: 700px;
-			padding-bottom: $navbar-height; // account for navbar
+			padding-bottom: $navbar-height;
 		}
 
-		#page-content {
-			position: relative;
-			width: 100%;
+		#main-content {
 			display: flex;
 			flex-direction: column;
-			flex: 1;
+			width: 100%;
+			height: 100%;
+			flex-grow: 1;
+
+			row-gap: 30px;
+
+			#page-content {
+				position: relative;
+				width: 100%;
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+				flex-grow: 1;
+			}
 		}
 
 		#nav-container {
-			width: 100%;
-			height: 50px;
-			position: relative;
-
 			display: flex;
+			width: 100%;
+			min-height: 48px;
+			flex: 0;
+
+			position: relative;
 			justify-content: center;
 			align-items: center;
 
@@ -284,7 +296,6 @@
 
 			#return {
 				width: 100%;
-
 				@media screen and (min-width: $mobile-width) {
 					width: fit-content;
 				}
@@ -295,10 +306,10 @@
 			text-align: center;
 			color: $accent-error;
 		}
+	}
 
-		#hidden-form {
-			display: none;
-			pointer-events: none;
-		}
+	#hidden-form {
+		display: none;
+		pointer-events: none;
 	}
 </style>

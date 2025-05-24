@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
+	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
 
 	interface Props {
@@ -7,6 +8,10 @@
 		parsedLong: number;
 		parsedLat: number;
 		errorState: { flag: boolean; message: string };
+		accuracy: number;
+		isFocused: boolean;
+		zoom?: number;
+		forceZoomChange?: any;
 		onLocate: () => void;
 	}
 	let {
@@ -14,8 +19,32 @@
 		parsedLong = $bindable(),
 		parsedLat = $bindable(),
 		errorState = $bindable(),
+		isFocused = $bindable(false),
+		zoom = 18,
+		forceZoomChange = undefined,
 		onLocate
 	}: Props = $props();
+
+	let mapboxLatitude = $state(parsedLat);
+	let mapboxLongitude = $state(parsedLong);
+	let mapboxZoom = $state(zoom);
+	let mapboxForceZoomChange = $state(forceZoomChange);
+
+	$effect(() => {
+		mapboxLatitude = parsedLat;
+		mapboxLongitude = parsedLong;
+		mapboxZoom = zoom;
+		mapboxForceZoomChange = forceZoomChange;
+	});
+
+	$effect(() => {
+		if (mapboxLatitude !== parsedLat) {
+			parsedLat = mapboxLatitude;
+		}
+		if (mapboxLongitude !== parsedLong) {
+			parsedLong = mapboxLongitude;
+		}
+	});
 </script>
 
 <main>
@@ -27,8 +56,10 @@
 					bind:value={canvasCoordinates}
 					placeholder="36.99979, 122.06337"
 					class="coordinate-input flex-fill"
+					onfocus={() => (isFocused = true)}
+					onblur={() => (isFocused = false)}
 				/>
-				<button id="locate" class="none" on:click={onLocate}>
+				<button id="locate" class="none" onclick={onLocate}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
@@ -37,11 +68,20 @@
 
 	<section id="map-wrapper">
 		<p class="caption {!canvasCoordinates ? 'hidden' : ''}">
-			Parsed as {parsedLat}, {parsedLong}
+			Parsed as {parsedLat.toFixed(7)}, {parsedLong.toFixed(7)}
 		</p>
 		<div id="map">
-			<!-- TODO: replace with the actual map in the future -->
-			<!-- <h1>𓀐𓂸</h1> -->
+			{#if typeof parsedLat === "number" && typeof parsedLong === "number" && parsedLat !== 0 && parsedLong !== 0}
+				<MapboxMap
+					bind:latitude={mapboxLatitude}
+					bind:longitude={mapboxLongitude}
+					zoom={mapboxZoom}
+					forceZoomChange={mapboxForceZoomChange}
+					allowClickToUpdateCoordinates={true}
+				/>
+			{:else}
+				<p id="bad-loc">That coordinate is so bad it doesn't even exist. Please fix it.</p>
+			{/if}
 		</div>
 	</section>
 </main>
@@ -99,7 +139,7 @@
 			align-items: center;
 
 			.caption {
-				color: $text-secondary; // override
+				color: $text-secondary;
 			}
 
 			#map {
@@ -114,9 +154,11 @@
 
 				background-color: $background-secondary;
 
-				h1 {
-					font-size: 64px;
-					color: $text-tertiary;
+				#bad-loc {
+					width: 100%;
+					padding: 0px 30px;
+					white-space: wrap;
+					text-align: center;
 				}
 			}
 		}
