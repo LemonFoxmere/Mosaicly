@@ -1,7 +1,7 @@
 import { error, json } from "@sveltejs/kit";
 
-// database drawing post request
-export async function POST({ request, locals: { supabase, safeGetSession } }) {
+// database drawing PATCH request (updates canvas drawing json)
+export async function PATCH({ request, locals: { supabase, safeGetSession } }) {
 	const { session } = await safeGetSession();
 	if (session) {
 		const { canvasID, drawing } = await request.json();
