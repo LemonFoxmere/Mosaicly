@@ -22,7 +22,6 @@ export const load: LayoutServerLoad = async ({
 				githubHandle: "",
 				discordHandle: ""
 			},
-			canvases: []
 		};
 
 		// fetch from account table first
@@ -63,34 +62,6 @@ export const load: LayoutServerLoad = async ({
 				};
 			} else {
 				console.error("Did not find the user's profile details. Perhaps an RLS error?");
-			}
-		} else {
-			console.error(error);
-			fail(500);
-		}
-
-		// fetch from canvas table
-		({ data, error } = await supabase.from("canvas").select().eq("user_id", user.id));
-		if (!error) {
-			if (data && data.length > 0) {
-				for (const canvas of data) {
-					const mappedCanvas = {
-						id: canvas.id,
-						userId: canvas.user_id,
-						createdOn: canvas.created_on,
-						title: canvas.title,
-						locDesc: canvas.loc_desc,
-						drawing: canvas.drawing,
-						isArchived: canvas.is_archived,
-						longitude: canvas.longitude,
-						latitude: canvas.latitude,
-						accuracy: canvas.accuracy,
-						location: canvas.location
-					};
-					payload.canvases.push(mappedCanvas);
-				}
-			} else {
-				console.error("Did not find the user's canvas. Perhaps no canvas found?");
 			}
 		} else {
 			console.error(error);
