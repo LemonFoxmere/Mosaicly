@@ -14,7 +14,6 @@
 	let canvasName = $state("");
 	let locationDescription = $state("");
 
-	// Step2 data managed through clean interface
 	let step2Data = $state<Step2Data | null>(null);
 
 	let hiddenFormElement: HTMLFormElement | null = null;
