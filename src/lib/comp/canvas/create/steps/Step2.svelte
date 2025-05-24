@@ -2,52 +2,113 @@
 	import FormField from "$lib/comp/canvas/create/FormField.svelte";
 	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
-	import { isDisplayableMapCoordinate } from "$lib/comp/canvas/utils/Geolocation";
+	import {
+		fetchCoordinatesForDisplay,
+		parseCoordinateString,
+		formatCoordinateString,
+		isDisplayableMapCoordinate,
+		areCoordinatesEqual,
+		validateCoordinates
+	} from "$lib/comp/canvas/utils/Geolocation";
+
+	export interface Step2Data {
+		coordinates: { latitude: number; longitude: number; accuracy: number };
+		isValid: boolean;
+	}
 
 	interface Props {
-		canvasCoordinates: string;
-		parsedLong: number;
-		parsedLat: number;
-		errorState: { flag: boolean; message: string };
-		accuracy: number;
-		isFocused: boolean;
-		zoom?: number;
-		forceZoomChange?: any;
-		onLocate: () => void;
-		showMapMarker: boolean;
-		onMapClickWithCoords?: (lat: number, lng: number) => void;
+		onDataChange?: (data: Step2Data) => void;
 	}
-	let {
-		canvasCoordinates = $bindable(),
-		parsedLong = $bindable(),
-		parsedLat = $bindable(),
-		errorState = $bindable(),
-		isFocused = $bindable(false),
-		zoom = 18,
-		forceZoomChange = undefined,
-		onLocate,
-		showMapMarker = $bindable(),
-		onMapClickWithCoords = undefined
-	}: Props = $props();
 
-	let mapboxLatitude = $state(parsedLat);
-	let mapboxLongitude = $state(parsedLong);
-	let mapboxZoom = $state(zoom);
-	let mapboxForceZoomChange = $state(forceZoomChange);
+	let { onDataChange }: Props = $props();
+
+	let canvasCoordinates = $state("");
+	let latitude = $state(0);
+	let longitude = $state(0);
+	let accuracy = $state(0);
+	let isFocused = $state(false);
+
+	const DEFAULT_COORDS = { lat: 36.9940814, lng: -122.0612656 };
+
+	if (!isDisplayableMapCoordinate(latitude, longitude) || (latitude === 0 && longitude === 0)) {
+		latitude = DEFAULT_COORDS.lat;
+		longitude = DEFAULT_COORDS.lng;
+	}
+
+	const MAP_CONFIG = {
+		allowClickToUpdateCoordinates: true,
+		showMarkerWhenDefault: false
+	};
+
+	let showMapMarker = $derived.by(() => {
+		if (MAP_CONFIG.showMarkerWhenDefault) {
+			return true;
+		}
+
+		return (
+			!areCoordinatesEqual(latitude, longitude, DEFAULT_COORDS.lat, DEFAULT_COORDS.lng) &&
+			isDisplayableMapCoordinate(latitude, longitude)
+		);
+	});
+
+	let isValidOverall = $derived.by(() => {
+		const parsed = parseCoordinateString(canvasCoordinates);
+		if (canvasCoordinates.trim() === "" || !parsed.isValid) {
+			return false;
+		}
+
+		const validation = validateCoordinates(latitude, longitude, {
+			allowDefault: false,
+			defaultCoords: DEFAULT_COORDS
+		});
+
+		return validation.isValid;
+	});
+
+	// notifying parent of data changes
+	$effect(() => {
+		if (onDataChange) {
+			onDataChange({
+				coordinates: { latitude, longitude, accuracy },
+				isValid: isValidOverall
+			});
+		}
+	});
+
+	const handleLocateMeClick = async () => {
+		const coords = await fetchCoordinatesForDisplay();
+		if (coords.status !== 0 || !coords.location) {
+			return;
+		}
+
+		latitude = coords.location.latitude;
+		longitude = coords.location.longitude;
+		accuracy = coords.location.accuracy;
+	};
+
+	const handleMapClick = (lat: number, lng: number) => {
+		latitude = lat;
+		longitude = lng;
+	};
 
 	$effect(() => {
-		mapboxLatitude = parsedLat;
-		mapboxLongitude = parsedLong;
-		mapboxZoom = zoom;
-		mapboxForceZoomChange = forceZoomChange;
+		if (isFocused) {
+			const parsed = parseCoordinateString(canvasCoordinates);
+			if (parsed.isValid) {
+				if (parsed.latitude !== latitude || parsed.longitude !== longitude) {
+					latitude = parsed.latitude;
+					longitude = parsed.longitude;
+				}
+			}
+		}
 	});
 
 	$effect(() => {
-		if (mapboxLatitude !== parsedLat) {
-			parsedLat = mapboxLatitude;
-		}
-		if (mapboxLongitude !== parsedLong) {
-			parsedLong = mapboxLongitude;
+		if (!isFocused) {
+			const formattedCoords = formatCoordinateString(latitude, longitude);
+			if (canvasCoordinates !== formattedCoords) {
+				canvasCoordinates = formattedCoords;
+			}
 		}
 	});
 </script>
@@ -63,29 +124,42 @@
 					class="coordinate-input flex-fill"
 					onfocus={() => (isFocused = true)}
 					onblur={() => (isFocused = false)}
+					class:invalid={!isValidOverall && canvasCoordinates.trim() !== ""}
 				/>
-				<button id="locate" class="outline" onclick={onLocate}>
+				<button id="locate" class="outline" onclick={handleLocateMeClick}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
+			{#if !isValidOverall && canvasCoordinates.trim() !== "" && !areCoordinatesEqual(latitude, longitude, DEFAULT_COORDS.lat, DEFAULT_COORDS.lng)}
+				<p class="error-message">
+					Please enter valid coordinates or use the locate button.
+				</p>
+			{/if}
 		</FormField>
 	</div>
 
 	<section id="map-wrapper">
-		<p class="caption">No marker yet? Click where you want it to show up.</p>
+		<p class="caption">
+			{#if !showMapMarker}
+				No marker yet? Click where you want it to show up.
+			{:else}
+				Click on the map to update the location, or use the locate button.
+			{/if}
+		</p>
 		<div id="map">
-			{#if isDisplayableMapCoordinate(parsedLat, parsedLong)}
+			{#if isDisplayableMapCoordinate(latitude, longitude)}
 				<MapboxMap
-					bind:latitude={mapboxLatitude}
-					bind:longitude={mapboxLongitude}
-					zoom={mapboxZoom}
-					forceZoomChange={mapboxForceZoomChange}
-					allowClickToUpdateCoordinates={true}
+					bind:latitude
+					bind:longitude
+					allowClickToUpdateCoordinates={MAP_CONFIG.allowClickToUpdateCoordinates}
 					showMarker={showMapMarker}
-					onClickWithCoords={onMapClickWithCoords}
+					onClickWithCoords={handleMapClick}
 				/>
 			{:else}
-				<p id="bad-loc">That coordinate is so bad it doesn't even exist. Please fix it.</p>
+				<p id="bad-loc">
+					The current coordinates are not displayable. Please enter valid coordinates or
+					use the locate button.
+				</p>
 			{/if}
 		</div>
 	</section>
@@ -105,12 +179,7 @@
 
 		#coordinate-input-wrapper {
 			position: relative;
-
 			width: 100%;
-			display: flex;
-			flex-direction: row;
-			justify-content: center;
-			align-items: center;
 
 			#input-wrapper {
 				position: relative;
@@ -122,7 +191,11 @@
 
 				input {
 					flex-grow: 1;
-					width: 100%;
+				}
+
+				input.invalid {
+					border-color: $accent-error;
+					box-shadow: 0 0 0 1px $accent-error;
 				}
 
 				#locate {
@@ -134,6 +207,13 @@
 						margin-top: 0;
 					}
 				}
+			}
+			.error-message {
+				color: $accent-error;
+				font-size: 14px;
+				margin-top: 5px;
+				width: 100%;
+				text-align: left;
 			}
 		}
 
