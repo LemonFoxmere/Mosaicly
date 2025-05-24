@@ -123,7 +123,7 @@
 					message: result.data?.message || "An unknown error occurred."
 				};
 			} else {
-				goto("/profile");
+				goto("/settings#profile");
 			}
 		};
 	};
