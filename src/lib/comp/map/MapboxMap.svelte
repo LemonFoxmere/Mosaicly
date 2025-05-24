@@ -99,47 +99,43 @@
 		if (!map || typeof latitude !== "number" || typeof longitude !== "number" || !showMarker)
 			return;
 
-		// remove existing circle if it exists
-		try {
-			if (map.getSource(radiusCircleId)) {
-				map.removeLayer(radiusCircleId);
-				map.removeSource(radiusCircleId);
-			}
-		} catch (error) {
-			// Layer/source may not exist, continue
+		const circleData = {
+			type: "Feature",
+			geometry: {
+				type: "Point",
+				coordinates: [longitude, latitude]
+			},
+			properties: {}
+		};
+
+		const source = map.getSource(radiusCircleId) as mapboxgl.GeoJSONSource | undefined;
+
+		if (source) {
+			source.setData(circleData);
+		} else {
+			map.addSource(radiusCircleId, {
+				type: "geojson",
+				data: circleData
+			});
+
+			map.addLayer({
+				id: radiusCircleId,
+				type: "circle",
+				source: radiusCircleId,
+				paint: {
+					"circle-radius": {
+						stops: [
+							[0, 0],
+							[20, radiusMeters * 10]
+						],
+						base: 2
+					},
+					"circle-color": circleColor,
+					"circle-opacity": 0.5,
+					"circle-stroke-width": 0
+				}
+			});
 		}
-
-		// add the circle source
-		map.addSource(radiusCircleId, {
-			type: "geojson",
-			data: {
-				type: "Feature",
-				geometry: {
-					type: "Point",
-					coordinates: [longitude, latitude]
-				},
-				properties: {}
-			}
-		});
-
-		// add the circle layer
-		map.addLayer({
-			id: radiusCircleId,
-			type: "circle",
-			source: radiusCircleId,
-			paint: {
-				"circle-radius": {
-					stops: [
-						[0, 0],
-						[20, radiusMeters * 10]
-					],
-					base: 2
-				},
-				"circle-color": circleColor,
-				"circle-opacity": 0.5,
-				"circle-stroke-width": 0
-			}
-		});
 	};
 
 	const updateMapAndView = () => {
