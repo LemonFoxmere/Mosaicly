@@ -4,7 +4,7 @@
 
 	let { user = $bindable<DB.AppUser>() } = $props();
 
-	let canvases = $derived<DB.Canvas[]>([]);
+	let canvases = $derived<DB.Canvas[]>(user.canvases);
 
 	// canvas modal states
 	let isOpen = $state(false);

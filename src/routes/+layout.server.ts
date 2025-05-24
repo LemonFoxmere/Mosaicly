@@ -21,7 +21,7 @@ export const load: LayoutServerLoad = async ({
 				bio: "",
 				githubHandle: "",
 				discordHandle: ""
-			}
+			},
 		};
 
 		// fetch from account table first
