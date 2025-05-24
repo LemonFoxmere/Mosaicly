@@ -40,22 +40,21 @@
 		showMarkerWhenDefault: false
 	};
 
-	let showMapMarker = $derived.by(() => {
-		if (MAP_CONFIG.showMarkerWhenDefault) {
-			return true;
-		}
+	let hasInputText = $derived(canvasCoordinates.trim() !== "");
+	let isAtDefaultLocation = $derived(
+		areCoordinatesEqual(latitude, longitude, DEFAULT_COORDS.lat, DEFAULT_COORDS.lng)
+	);
+	let isDisplayable = $derived(isDisplayableMapCoordinate(latitude, longitude));
 
-		return (
-			!areCoordinatesEqual(latitude, longitude, DEFAULT_COORDS.lat, DEFAULT_COORDS.lng) &&
-			isDisplayableMapCoordinate(latitude, longitude)
-		);
-	});
+	let showMapMarker = $derived(
+		MAP_CONFIG.showMarkerWhenDefault || (!isAtDefaultLocation && isDisplayable)
+	);
 
 	let isValidOverall = $derived.by(() => {
+		if (!hasInputText) return false;
+
 		const parsed = parseCoordinateString(canvasCoordinates);
-		if (canvasCoordinates.trim() === "" || !parsed.isValid) {
-			return false;
-		}
+		if (!parsed.isValid) return false;
 
 		const validation = validateCoordinates(latitude, longitude, {
 			allowDefault: false,
@@ -121,16 +120,16 @@
 					type="text"
 					bind:value={canvasCoordinates}
 					placeholder="36.99979, 122.06337"
-					class="coordinate-input flex-fill"
+					class="coordinate-input"
 					onfocus={() => (isFocused = true)}
 					onblur={() => (isFocused = false)}
-					class:invalid={!isValidOverall && canvasCoordinates.trim() !== ""}
+					class:invalid={!isValidOverall && hasInputText}
 				/>
 				<button id="locate" class="outline" onclick={handleLocateMeClick}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
-			{#if !isValidOverall && canvasCoordinates.trim() !== "" && !areCoordinatesEqual(latitude, longitude, DEFAULT_COORDS.lat, DEFAULT_COORDS.lng)}
+			{#if !isValidOverall && hasInputText && !isAtDefaultLocation}
 				<p class="error-message">
 					Please enter valid coordinates or use the locate button.
 				</p>
@@ -147,10 +146,10 @@
 			{/if}
 		</p>
 		<div id="map">
-			{#if isDisplayableMapCoordinate(latitude, longitude)}
+			{#if isDisplayable}
 				<MapboxMap
-					bind:latitude
-					bind:longitude
+					{latitude}
+					{longitude}
 					allowClickToUpdateCoordinates={MAP_CONFIG.allowClickToUpdateCoordinates}
 					showMarker={showMapMarker}
 					onClickWithCoords={handleMapClick}
