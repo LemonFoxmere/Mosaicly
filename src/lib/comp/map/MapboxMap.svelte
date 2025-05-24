@@ -24,14 +24,14 @@
 	let mapContainer: HTMLDivElement;
 	let map: MapboxMapType | null = null;
 	let marker: MapboxMarkerType | null = null;
-	let radiusCircleId = "marker-radius-circle";
+	let radiusCircleId: string = "marker-radius-circle";
 
-	const DEFAULT_ZOOM = 14;
-	const USER_ACTION_ZOOM = 18;
-	let currentZoom = DEFAULT_ZOOM;
+	const DEFAULT_ZOOM: number = 14;
+	const USER_ACTION_ZOOM: number = 18;
+	let currentZoom: number = DEFAULT_ZOOM;
 
-	const circleColor = "rgba(236, 120, 70, 0.5)";
-	const radiusMeters = 20;
+	const circleColor: string = "rgba(236, 120, 70, 0.5)";
+	const radiusMeters: number = 20;
 
 	onMount(() => {
 		if (!mapContainer) return;
@@ -80,14 +80,18 @@
 	};
 
 	const setMarker = () => {
-		if (marker) {
-			marker.remove();
-		}
 		if (map && typeof latitude === "number" && typeof longitude === "number" && showMarker) {
-			const el = createCustomMarkerElement();
-			marker = new mapboxgl.Marker({ element: el })
-				.setLngLat([longitude, latitude])
-				.addTo(map);
+			if (marker) {
+				marker.setLngLat([longitude, latitude]);
+			} else {
+				const el = createCustomMarkerElement();
+				marker = new mapboxgl.Marker({ element: el })
+					.setLngLat([longitude, latitude])
+					.addTo(map);
+			}
+		} else if (marker) {
+			marker.remove();
+			marker = null;
 		}
 	};
 
