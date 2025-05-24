@@ -61,9 +61,7 @@
 				if (onClickWithCoords) {
 					const clickedLat = e.lngLat.lat;
 					const clickedLng = e.lngLat.lng;
-
 					currentZoom = USER_ACTION_ZOOM;
-
 					onClickWithCoords(clickedLat, clickedLng);
 				}
 			});
@@ -157,17 +155,9 @@
 
 		if (map.isStyleLoaded()) {
 			updateMapAndView();
-		}
-	});
-
-	$effect(() => {
-		if (!map) return;
-
-		if (!map.isStyleLoaded()) {
+		} else {
 			map.once("style.load", () => {
-				if (typeof latitude === "number" && typeof longitude === "number") {
-					updateMapAndView();
-				}
+				updateMapAndView();
 			});
 		}
 	});

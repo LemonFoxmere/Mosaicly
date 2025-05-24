@@ -22,94 +22,86 @@
 
 	let { onDataChange }: Props = $props();
 
-	let canvasCoordinates = $state("");
-	let latitude = $state(0);
-	let longitude = $state(0);
-	let accuracy = $state(0);
-	let isFocused = $state(false);
-
 	const DEFAULT_COORDS = { lat: 36.9940814, lng: -122.0612656 };
-
-	if (!isDisplayableMapCoordinate(latitude, longitude) || (latitude === 0 && longitude === 0)) {
-		latitude = DEFAULT_COORDS.lat;
-		longitude = DEFAULT_COORDS.lng;
-	}
-
 	const MAP_CONFIG = {
 		allowClickToUpdateCoordinates: true,
 		showMarkerWhenDefault: false
 	};
 
+	let coords = $state({
+		latitude: DEFAULT_COORDS.lat,
+		longitude: DEFAULT_COORDS.lng,
+		accuracy: 0
+	});
+	let canvasCoordinates = $state("");
+	let isFocused = $state(false);
+
 	let hasInputText = $derived(canvasCoordinates.trim() !== "");
 	let isAtDefaultLocation = $derived(
-		areCoordinatesEqual(latitude, longitude, DEFAULT_COORDS.lat, DEFAULT_COORDS.lng)
+		areCoordinatesEqual(
+			coords.latitude,
+			coords.longitude,
+			DEFAULT_COORDS.lat,
+			DEFAULT_COORDS.lng
+		)
 	);
-	let isDisplayable = $derived(isDisplayableMapCoordinate(latitude, longitude));
-
+	let isDisplayable = $derived(isDisplayableMapCoordinate(coords.latitude, coords.longitude));
 	let showMapMarker = $derived(
 		MAP_CONFIG.showMarkerWhenDefault || (!isAtDefaultLocation && isDisplayable)
 	);
 
-	let isValidOverall = $derived.by(() => {
-		if (!hasInputText) return false;
-
+	let coordParseAndValidation = $derived.by(() => {
 		const parsed = parseCoordinateString(canvasCoordinates);
-		if (!parsed.isValid) return false;
-
-		const validation = validateCoordinates(latitude, longitude, {
-			allowDefault: false,
-			defaultCoords: DEFAULT_COORDS
-		});
-
-		return validation.isValid;
+		const valid =
+			parsed.isValid &&
+			validateCoordinates(parsed.latitude, parsed.longitude, {
+				allowDefault: false,
+				defaultCoords: DEFAULT_COORDS
+			}).isValid;
+		return { parsed, valid };
 	});
 
-	// notifying parent of data changes
+	let isValidOverall = $derived(coordParseAndValidation.valid && hasInputText);
+
 	$effect(() => {
 		if (onDataChange) {
 			onDataChange({
-				coordinates: { latitude, longitude, accuracy },
+				coordinates: { ...coords },
 				isValid: isValidOverall
 			});
 		}
 	});
 
-	const handleLocateMeClick = async () => {
-		const coords = await fetchCoordinatesForDisplay();
-		if (coords.status !== 0 || !coords.location) {
-			return;
-		}
-
-		latitude = coords.location.latitude;
-		longitude = coords.location.longitude;
-		accuracy = coords.location.accuracy;
-	};
-
-	const handleMapClick = (lat: number, lng: number) => {
-		latitude = lat;
-		longitude = lng;
-	};
-
 	$effect(() => {
 		if (isFocused) {
-			const parsed = parseCoordinateString(canvasCoordinates);
-			if (parsed.isValid) {
-				if (parsed.latitude !== latitude || parsed.longitude !== longitude) {
-					latitude = parsed.latitude;
-					longitude = parsed.longitude;
-				}
+			const { parsed } = coordParseAndValidation;
+			if (
+				parsed.isValid &&
+				(parsed.latitude !== coords.latitude || parsed.longitude !== coords.longitude)
+			) {
+				coords = { ...coords, latitude: parsed.latitude, longitude: parsed.longitude };
 			}
-		}
-	});
-
-	$effect(() => {
-		if (!isFocused) {
-			const formattedCoords = formatCoordinateString(latitude, longitude);
+		} else {
+			const formattedCoords = formatCoordinateString(coords.latitude, coords.longitude);
 			if (canvasCoordinates !== formattedCoords) {
 				canvasCoordinates = formattedCoords;
 			}
 		}
 	});
+
+	const handleLocateMeClick = async () => {
+		const result = await fetchCoordinatesForDisplay();
+		if (result.status !== 0 || !result.location) return;
+		coords = {
+			latitude: result.location.latitude,
+			longitude: result.location.longitude,
+			accuracy: result.location.accuracy
+		};
+	};
+
+	const handleMapClick = (lat: number, lng: number) => {
+		coords = { ...coords, latitude: lat, longitude: lng };
+	};
 </script>
 
 <main>
@@ -148,8 +140,8 @@
 		<div id="map">
 			{#if isDisplayable}
 				<MapboxMap
-					{latitude}
-					{longitude}
+					latitude={coords.latitude}
+					longitude={coords.longitude}
 					allowClickToUpdateCoordinates={MAP_CONFIG.allowClickToUpdateCoordinates}
 					showMarker={showMapMarker}
 					onClickWithCoords={handleMapClick}
