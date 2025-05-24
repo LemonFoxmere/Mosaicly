@@ -19,6 +19,7 @@ declare global {
 		interface AppUser {
 			account: UserAccount;
 			profile: UserProfile;
+			canvases: Canvas[];
 		}
 		interface Canvas {
 			id: string;

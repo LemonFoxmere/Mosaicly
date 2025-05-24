@@ -12,6 +12,7 @@
 	let { displayName, bio } = $derived(data.user!.profile);
 
 	let canvases = $derived<DB.Canvas[]>(data.canvas || []);
+	$inspect(canvases);
 
 	let isSaving = $state(false);
 
