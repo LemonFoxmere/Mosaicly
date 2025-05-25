@@ -64,7 +64,7 @@
 				if (onClickWithCoords) {
 					const clickedLat = e.lngLat.lat;
 					const clickedLng = e.lngLat.lng;
-					currentZoom = USER_ACTION_ZOOM;
+					currentZoom = Math.max(currentZoom, USER_ACTION_ZOOM);
 					onClickWithCoords(clickedLat, clickedLng);
 				}
 			});
@@ -167,8 +167,9 @@
 			// Ensure the map is centered on the new coordinates with the current zoom level
 			map.flyTo({
 				center: [longitude, latitude],
-				zoom: USER_ACTION_ZOOM,
-				essential: true
+				zoom: Math.max(currentZoom, USER_ACTION_ZOOM),
+				essential: true,
+				speed: 1
 			});
 			setMarker();
 			addRadiusCircle();

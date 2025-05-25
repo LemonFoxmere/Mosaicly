@@ -1,11 +1,30 @@
 <script lang="ts">
 	import FormField from "$lib/comp/ui/general/FormField.svelte";
+	import Textarea from "$lib/comp/ui/general/Textarea.svelte";
 
 	interface Props {
 		canvasName: string;
 		locationDescription: string;
+		valid: boolean;
 	}
-	let { canvasName = $bindable(), locationDescription = $bindable() }: Props = $props();
+	let {
+		canvasName = $bindable(),
+		locationDescription = $bindable(),
+		valid = $bindable<boolean>(false)
+	}: Props = $props();
+
+	// validity checkers
+	let nameAccessed = $state(false); // when the user first loads, don't show red.
+	const nameMaxLen = 30; // max length of the description
+	let nameValid = $derived(!!canvasName && canvasName.length <= nameMaxLen);
+
+	const descMaxLen = 200; // max length of the description
+	let descValid = $derived(locationDescription.length <= descMaxLen);
+
+	// effect to update validity
+	$effect(() => {
+		valid = nameValid && descValid;
+	});
 </script>
 
 <main>
@@ -15,26 +34,38 @@
 	</section>
 
 	<form id="main-form">
-		<div id="canvas-name" class="form-item">
-			<FormField label="Canvas Name">
-				<input type="text" bind:value={canvasName} placeholder="Frog" />
-			</FormField>
-		</div>
+		<FormField
+			label={nameValid
+				? "Canvas Name"
+				: !canvasName
+					? "Give it a name"
+					: "That's way too long"}
+			invalid={!nameValid && nameAccessed}
+		>
+			<input
+				type="text"
+				class:invalid={!nameValid && nameAccessed}
+				bind:value={canvasName}
+				placeholder="My Canvas"
+				on:blur={() => {
+					nameAccessed = true;
+				}}
+			/>
+		</FormField>
 
-		<div id="location-description" class="form-item">
-			<FormField label="Location Description" stretch={true}>
-				{#snippet labelAction()}
-					<button id="what-is-this" class="none">
-						<span aria-label="What is this?">(What is this?)</span>
-					</button>
-				{/snippet}
-
-				<textarea
-					bind:value={locationDescription}
-					placeholder="On the pole near the entrance of the Cowell dining hall."
-				></textarea>
-			</FormField>
-		</div>
+		<FormField
+			label={descValid ? "Location Description" : "That's way too long"}
+			stretch={true}
+			invalid={!descValid}
+		>
+			<Textarea
+				bind:val={locationDescription}
+				placeholder={"Where can people find this canvas?"}
+				maxLen={descMaxLen}
+				showRemaining={true}
+				invalid={!descValid}
+			/>
+		</FormField>
 	</form>
 </main>
 
@@ -46,6 +77,7 @@
 		width: 100%;
 		height: 100%;
 		display: flex;
+		flex-grow: 1;
 		flex-direction: column;
 		gap: 15px;
 
@@ -61,17 +93,6 @@
 			display: flex;
 			flex-direction: column;
 			row-gap: 15px;
-
-			.form-item {
-				&#location-description {
-					height: 100%;
-
-					textarea {
-						height: 100%;
-						resize: none;
-					}
-				}
-			}
 		}
 	}
 </style>

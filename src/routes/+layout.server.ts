@@ -21,7 +21,7 @@ export const load: LayoutServerLoad = async ({
 				bio: "",
 				githubHandle: "",
 				discordHandle: ""
-			},
+			}
 		};
 
 		// fetch from account table first
@@ -46,7 +46,7 @@ export const load: LayoutServerLoad = async ({
 			}
 		} else {
 			console.error(error);
-			fail(500);
+			return fail(500);
 		}
 
 		// fetch from profile table
@@ -65,7 +65,7 @@ export const load: LayoutServerLoad = async ({
 			}
 		} else {
 			console.error(error);
-			fail(500);
+			return fail(500);
 		}
 	}
 
