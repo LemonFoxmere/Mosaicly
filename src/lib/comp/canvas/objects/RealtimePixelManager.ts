@@ -101,7 +101,8 @@ export class RealtimePixelManager {
 
 						// if nothing waiting, start readying for the canvas sending (1 second debounce)
 						this.clearDatabaseTimer();
-						this.databaseTimeout = setTimeout(() => this.saveToDatabase(pixels), 1000);
+						// this.databaseTimeout = setTimeout(async () => this.saveToDatabase(pixels), 1000);
+						this.saveToDatabase(pixels);
 					}
 				});
 		}
