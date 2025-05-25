@@ -37,7 +37,7 @@ export const load: PageServerLoad = async ({ url, locals: { supabase, safeGetSes
 		fail(500);
 	}
 
-	return { canvas: user?.canvases, tab };
+	return { canvases, tab };
 };
 
 export const actions = {
