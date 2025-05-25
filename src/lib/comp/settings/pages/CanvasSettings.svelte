@@ -2,9 +2,7 @@
 	import CanvasCard from "../CanvasCard.svelte";
 	import EditCanvasModal from "../EditCanvasModal.svelte";
 
-	let { user = $bindable<DB.AppUser>() } = $props();
-
-	let canvases = $derived<DB.Canvas[]>(user.canvases);
+	let { user = $bindable<DB.AppUser>(), canvases = $bindable<DB.Canvas[]>() } = $props();
 
 	// canvas modal states
 	let isOpen = $state(false);

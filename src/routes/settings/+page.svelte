@@ -82,7 +82,7 @@
 					<!-- profile render -->
 					<ProfileSettings user={data.user} />
 				{:else}
-					<CanvasSettings user={data.user} />
+					<CanvasSettings user={data.user} canvases={data.canvases} />
 				{/if}
 			</section>
 		{:else}
