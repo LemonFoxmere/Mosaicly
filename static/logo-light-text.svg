@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" width="696.4" height="150" viewBox="0 0 696.4 150">
+  <g id="Final_Logo" data-name="Final Logo">
+    <g id="Light_with_text" data-name="Light with text">
+      <g id="Large_Symbol" data-name="Large Symbol">
+        <g>
+          <path d="M43.87,25.64v32.9H10.97V25.64h32.9M49.84,14.68H5c-2.76,0-5,2.24-5,5v44.84c0,2.76,2.24,5,5,5h44.84c2.76,0,5-2.24,5-5V19.68c0-2.76-2.24-5-5-5h0Z"/>
+          <path d="M43.87,91.45v32.9H10.97v-32.9h32.9M49.84,80.48H5c-2.76,0-5,2.24-5,5v44.84c0,2.76,2.24,5,5,5h44.84c2.76,0,5-2.24,5-5v-44.84c0-2.76-2.24-5-5-5h0Z"/>
+          <path d="M109.68,25.64v32.9h-32.9V25.64h32.9M115.65,14.68h-44.84c-2.76,0-5,2.24-5,5v44.84c0,2.76,2.24,5,5,5h44.84c2.76,0,5-2.24,5-5V19.68c0-2.76-2.24-5-5-5h0Z"/>
+          <g>
+            <rect x="65.81" y="80.48" width="10.97" height="54.84" style="fill: #ef6738;"/>
+            <rect x="109.68" y="80.48" width="10.97" height="54.84" style="fill: #ef6738;"/>
+            <rect x="76.78" y="91.45" width="10.97" height="10.97" style="fill: #ef6738;"/>
+            <rect x="98.71" y="91.45" width="10.97" height="10.97" style="fill: #ef6738;"/>
+            <rect x="87.74" y="102.42" width="10.97" height="10.97" style="fill: #ef6738;"/>
+          </g>
+        </g>
+        <text transform="translate(169.61 120.06)" style="font-family: Outfit-Regular, Outfit; font-size: 143.27px; font-variation-settings: &apos;wght&apos; 400;"><tspan x="0" y="0" style="letter-spacing: -.03em;">m</tspan><tspan x="117.62" y="0" style="letter-spacing: -.03em;">o</tspan><tspan x="194.7" y="0" style="letter-spacing: -.02em;">s</tspan><tspan x="252.44" y="0" style="letter-spacing: -.03em;">aicl</tspan><tspan x="453.15" y="0" style="letter-spacing: -.01em;">y</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>
