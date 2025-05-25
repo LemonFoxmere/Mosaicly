@@ -4,12 +4,11 @@
 
 	interface Props {
 		canvasName: string;
-		onSave: () => void;
 		currentStep: number;
 		onQrImage?: () => void;
 		onQrPdf?: () => void;
 	}
-	let { canvasName, onSave, currentStep, onQrImage, onQrPdf }: Props = $props();
+	let { canvasName, currentStep, onQrImage, onQrPdf }: Props = $props();
 </script>
 
 <main>

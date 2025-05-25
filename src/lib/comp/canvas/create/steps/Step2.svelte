@@ -11,14 +11,15 @@
 
 	export interface Step2Data {
 		coordinates: { latitude: number; longitude: number; accuracy: number };
-		isValid: boolean;
+		valid: boolean;
 	}
 
 	interface Props {
 		onDataChange?: (data: Step2Data) => void;
+		valid: boolean;
 	}
 
-	let { onDataChange }: Props = $props();
+	let { onDataChange, valid: bindableValidity = $bindable<boolean>(false) }: Props = $props();
 
 	// map configs & coordinate states
 	// const DEFAULT_COORDS = { lat: 36.9940814, lng: -122.0612656 }; // the default coords
@@ -67,8 +68,9 @@
 		if (onDataChange) {
 			onDataChange({
 				coordinates: { ...coords },
-				isValid: isValidOverall
+				valid: isValidOverall
 			});
+			bindableValidity = isValidOverall; // update the valid prop
 		}
 	});
 
@@ -133,13 +135,7 @@
 	</div>
 
 	<section id="map-wrapper">
-		<p class="caption">
-			{#if !showMapMarker}
-				Where is this thing? Tap on the map or use the locate button to tell us.
-			{:else}
-				Screwed up? Tap on the map or use the locate button to fix it.
-			{/if}
-		</p>
+		<p class="caption">Tap on the map to set its location.</p>
 		<div id="map">
 			{#if isDisplayable || isAtDefaultLocation}
 				<MapboxMap
@@ -220,6 +216,7 @@
 
 			.caption {
 				color: $text-secondary;
+				text-align: center;
 			}
 
 			#map {

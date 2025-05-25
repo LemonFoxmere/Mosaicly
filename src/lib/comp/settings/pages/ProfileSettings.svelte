@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import FormField from "$lib/comp/ui/general/FormField.svelte";
+	import Textarea from "$lib/comp/ui/general/Textarea.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
 
 	let { user = $bindable<DB.AppUser>() } = $props();
@@ -34,42 +36,26 @@
 		};
 	}}
 >
-	<label class:invalid={!nameValid}>
-		<p class="caption">
-			{#if nameValid}
-				Display Name
-			{:else if !displayName}
-				You can't be nameless
-			{:else}
-				That's way too long
-			{/if}
-		</p>
+	<FormField
+		label={nameValid
+			? "Display Name"
+			: !displayName
+				? "You can't be nameless"
+				: "That's way too long"}
+		invalid={!nameValid}
+	>
 		<input
 			name="disp-name"
 			type="text"
 			placeholder="Guy"
-			autocomplete="off"
+			class:invalid={!nameValid}
 			bind:value={displayName}
 		/>
-	</label>
+	</FormField>
 
-	<label class="grow" class:invalid={!bioValid}>
-		<p class="caption">
-			{#if bioValid}
-				Bio
-			{:else}
-				That's way too long
-			{/if}
-		</p>
-		<textarea
-			name="bio"
-			placeholder="I'm just a chill guy."
-			rows="3"
-			autocomplete="off"
-			bind:value={bio}
-		/>
-		<p id="character-ct">{bioMaxLen - bio.length}</p>
-	</label>
+	<FormField label={bioValid ? "Bio" : "That's way too long"} invalid={!bioValid} stretch={true}>
+		<Textarea bind:val={bio} maxLen={bioMaxLen} showRemaining={true} invalid={!bioValid} />
+	</FormField>
 
 	<button disabled={!(dirty && inputValid)}>
 		{#if isSaving}
@@ -94,50 +80,6 @@
 			position: relative;
 			display: flex;
 			flex-direction: column;
-
-			* {
-				// for all children
-				transition: 150ms $out-generic;
-				transition-property: color, border-color, opacity;
-			}
-
-			textarea {
-				height: 100%;
-				display: flex;
-			}
-
-			#character-ct {
-				position: absolute;
-				text-align: right;
-				right: 1.5px;
-				bottom: 4px;
-				padding: 7px 15px;
-
-				background-color: $background-primary;
-				border-bottom-right-radius: 8px;
-				border-top-left-radius: 8px;
-			}
-
-			&.grow {
-				flex-grow: 1;
-			}
-			&.invalid {
-				p {
-					color: $accent-error;
-				}
-				input {
-					color: $accent-error;
-					border-color: $accent-error;
-
-					&::placeholder {
-						color: $accent-error;
-					}
-				}
-				textarea {
-					color: $accent-error;
-					border-color: $accent-error;
-				}
-			}
 		}
 
 		.warning {
