@@ -37,6 +37,7 @@
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.4",
 		"@types/qrcode": "^1.5.5",
+		"jspdf": "^3.0.1",
 		"pdfkit": "^0.17.1",
 		"qrcode": "^1.5.4",
 		"sass": "^1.86.3",

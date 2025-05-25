@@ -4,8 +4,6 @@
 
 	let inputText = $state("");
 	let finalText = $state(inputText);
-
-	function SaveToPDF() {}
 </script>
 
 <main>
@@ -21,8 +19,7 @@
 	<div id="QR-holder">
 		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
-	<button>JPG</button>
-	<PdfExport></PdfExport>
+	<PdfExport QrSRC={finalText}></PdfExport>
 </main>
 
 <style lang="scss">
