@@ -13,7 +13,7 @@
 	// const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
 
 	// props
-	let canvasInfo = $derived(<DB.Canvas>(data.canvas || {}));
+	let canvasInfo = $derived<Pick<DB.Canvas, "id" | "drawing">>(data.canvas);
 
 	let channelName = $derived(data.channelName);
 	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
