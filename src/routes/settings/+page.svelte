@@ -15,39 +15,24 @@
 	let editingProfile = $state(true);
 	let ready = $state(false);
 
-	const editProfile = () => {
-		editingProfile = true;
-		// update hash and push history
-		window.location.hash = "#profile";
-		window.history.pushState({}, "", window.location.href);
+	const setTab = (profileTab: boolean) => {
+		editingProfile = profileTab;
+		const hash = profileTab ? "#profile" : "#canvas";
+		history.pushState({}, "", hash);
 	};
 
-	const editCanvas = () => {
-		editingProfile = false;
-		// update hash and push history
-		window.location.hash = "#canvas";
-		window.history.pushState({}, "", window.location.href);
-	};
-
-	const routeChange = () => {
-		// set current step based on URL hash if there is one
-		const hash = window.location.hash;
-
-		if (hash && hash.includes("#canvas")) {
-			editingProfile = false;
-		} else {
-			editingProfile = true; // default to editing the profile
-		}
+	const syncTabFromHash = () => {
+		editingProfile = location.hash === "#canvas" ? false : true;
 	};
 
 	// detect what tab is being requested
 	onMount(() => {
-		routeChange(); // update editingProfile based on the current hash
+		syncTabFromHash();
 		ready = true;
 	});
 </script>
 
-<svelte:window on:hashchange={routeChange} />
+<svelte:window onhashchange={syncTabFromHash} />
 
 <main>
 	<!-- greet user -->
@@ -67,10 +52,10 @@
 	<section id="main-content">
 		{#if ready}
 			<section id="tabs-cta">
-				<button class={!editingProfile ? "outline" : ""} onclick={editProfile}>
+				<button class={!editingProfile ? "outline" : ""} onclick={() => setTab(true)}>
 					Profile
 				</button>
-				<button class={editingProfile ? "outline" : ""} onclick={editCanvas}>
+				<button class={editingProfile ? "outline" : ""} onclick={() => setTab(false)}>
 					Canvases
 				</button>
 
