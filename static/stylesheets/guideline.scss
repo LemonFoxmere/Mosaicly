@@ -33,7 +33,10 @@ $in-out-expo: cubic-bezier(1, 0, 0, 1);
 $in-out-circ: cubic-bezier(0.785, 0.135, 0.15, 0.86);
 
 $out-generic: cubic-bezier(0.37, 0.13, 0.33, 1);
-$out-generic-expo: cubic-bezier(0.3, 1, 0.22, 1);
+$out-generic-expo: cubic-bezier(0.3, 0.1, 0.1, 1);
+// $out-generic-expo: cubic-bezier(0.29, 0.25, 0, 1);
+$out-bounce: cubic-bezier(0.5, -0.2, 0, 1);
+$out-bounce-expo: cubic-bezier(1, -0.2, 0, 1);
 
 // SIZING
 $urlbar-height: 160px;
@@ -232,8 +235,19 @@ input {
 	-webkit-user-select: none;
 	-ms-user-select: none;
 
+	transition: 150ms $out-generic;
+	transition-property: color, border-color, opacity;
+
 	&::placeholder {
 		color: $text-tertiary;
+	}
+
+	&.invalid {
+		color: $accent-error;
+		border-color: $accent-error;
+		&::placeholder {
+			color: $accent-error;
+		}
 	}
 }
 
@@ -241,6 +255,25 @@ textarea {
 	@extend input;
 	padding: 20px;
 	height: auto;
+	resize: none;
+
+	transition: 150ms $out-generic;
+	transition-property: color, border-color, opacity;
+
+	// hide scrollbar
+	-ms-overflow-style: none; /* Internet Explorer 10+ */
+	scrollbar-width: none; /* Firefox */
+	&::-webkit-scrollbar {
+		display: none; /* Safari and Chrome */
+	}
+
+	&.invalid {
+		color: $accent-error;
+		border-color: $accent-error;
+		&::placeholder {
+			color: $accent-error;
+		}
+	}
 }
 
 a {

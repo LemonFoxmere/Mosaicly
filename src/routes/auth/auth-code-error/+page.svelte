@@ -22,7 +22,7 @@
 
 <main>
 	<section id="title-container">
-		<h1>Seems's like the login failed...</h1>
+		<h2>Seems's like the login failed...</h2>
 		<p>{description ?? "We don't know what happened either ¯\\_(ツ)_/¯"}</p>
 	</section>
 
@@ -41,9 +41,9 @@
 
 	main {
 		width: fit-content;
-		height: calc(100% - $navbar-height);
 		row-gap: 30px;
-		padding: 10px 30px;
+		padding: 30px 30px $navbar-height 30px;
+		margin: auto 0px;
 
 		display: flex;
 		flex-direction: column;
