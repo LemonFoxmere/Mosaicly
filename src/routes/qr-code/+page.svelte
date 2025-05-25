@@ -1,8 +1,11 @@
 <script lang="ts">
 	import QrGenerator from "$lib/comp/qrcode/QrGenerator.svelte";
+	import PdfExport from "$lib/comp/qrcode/PdfExport.svelte";
 
 	let inputText = $state("");
 	let finalText = $state(inputText);
+
+	function SaveToPDF() {}
 </script>
 
 <main>
@@ -18,6 +21,8 @@
 	<div id="QR-holder">
 		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
+	<button>JPG</button>
+	<PdfExport></PdfExport>
 </main>
 
 <style lang="scss">
