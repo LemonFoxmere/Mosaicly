@@ -120,7 +120,7 @@
 				>
 					{#if savingData}
 						{#if saveFinished}
-							<CircleCheck size={24} absoluteStrokeWidth={true} strokeWidth={1.5} />
+							<CircleCheck size={24} absoluteStrokeWidth={true} strokeWidth={2} />
 						{:else}
 							<LoaderCircle class="animate-spin" />
 						{/if}

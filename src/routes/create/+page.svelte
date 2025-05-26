@@ -1,39 +1,54 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { goto } from "$app/navigation";
-	import {
-		fetchCoordinatesForDisplay,
-		roundCoordinate
-	} from "$lib/comp/canvas/utils/Geolocation";
 	import type { ActionResult } from "@sveltejs/kit";
 
 	import ArrowNavCluster from "$lib/comp/canvas/create/ArrowNavCluster.svelte";
 	import GalleryItem from "$lib/comp/canvas/create/GalleryItem.svelte";
 	import StepHeader from "$lib/comp/canvas/create/StepHeader.svelte";
 	import Step1 from "$lib/comp/canvas/create/steps/Step1.svelte";
-	import Step2 from "$lib/comp/canvas/create/steps/Step2.svelte";
+	import Step2, { type Step2Data } from "$lib/comp/canvas/create/steps/Step2.svelte";
 	import Step3 from "$lib/comp/canvas/create/steps/Step3.svelte";
+	import { CircleCheck, LoaderCircle } from "@lucide/svelte";
 
+	// step configs
 	let currentStep = $state(1);
+	const currentStepDescription = [
+		"Some basic stuff.",
+		"Where is this thing?",
+		"Plaster it all over."
+	];
 	let canvasName = $state("");
 	let locationDescription = $state("");
 
-	let canvasCoordinates = $state("36.9980995, -122.0555466");
-	let formLatitude = $state(36.9980995);
-	let formLongitude = $state(-122.0555466);
-	let formAccuracy = $state(0.0);
-	let formZoom = $state(18);
-	let forceZoomChange = $state(0);
-	let coordinateValid = $state(false);
-	let canvasInputFocused = $state(false);
+	// step validity and state
+	let step1Valid = $state(false);
+	let step2Valid = $state(false);
+	let allInputValid = $derived(step1Valid && step2Valid);
 
-	// initialize to null so TS knows it's assigned
+	let step2Data = $state<Step2Data | null>(null);
+
+	// for submission
 	let hiddenFormElement: HTMLFormElement | null = null;
-	let errorState = $state({ flag: false, message: "" });
+
+	// UI states
+	let panicState = $state({ flag: false, message: "Failed to save data" });
+	let canvasSaving = $state(false);
+	let canvasSaved = $state(false);
+	let isReturning = $state(false);
+
+	const panic = (msg: string) => {
+		panicState.flag = true;
+		panicState.message = msg;
+		canvasSaving = false; // make the message visible
+	};
 
 	const nextStep = () => {
-		if (currentStep < 3) {
+		const nextStep = currentStep + 1;
+		if (nextStep <= 2) {
 			currentStep++;
+		} else if (nextStep === 3) {
+			// save canvas state
+			saveCanvas();
 		}
 	};
 
@@ -41,73 +56,21 @@
 		if (currentStep > 1) currentStep--;
 	};
 
-	const handleLocateMeClick = async () => {
-		const coords = await fetchCoordinatesForDisplay();
-		// error fetching coords. Do nothing
-		if (coords.status !== 0 || !coords.location) return;
-
-		// round here once
-		coords.location.latitude = roundCoordinate(coords.location.latitude);
-		coords.location.longitude = roundCoordinate(coords.location.longitude);
-
-		canvasCoordinates = `${coords.location.latitude}, ${coords.location.longitude}`;
-		formLatitude = coords.location.latitude;
-		formLongitude = coords.location.longitude;
-		formAccuracy = coords.location.accuracy;
-		formZoom = 18; // Reset zoom to default on locate
-		forceZoomChange += 1; // Increment to force zoom reset
+	const handleStep2DataChange = (data: Step2Data) => {
+		step2Data = data;
 	};
 
-	// Parse and validate the coordinates input
-	$effect(() => {
-		coordinateValid = false;
-		if (!canvasCoordinates) return;
-
-		const parts = canvasCoordinates.trim().split(",");
-		if (parts.length !== 2) return;
-
-		const [latStr, longStr] = parts.map((s) => s.trim());
-		const lat = Number(latStr);
-		const long = Number(longStr);
-		const valid =
-			isFinite(lat) && isFinite(long) && Math.abs(lat) <= 90 && Math.abs(long) <= 180;
-
-		if (!valid) return;
-
-		coordinateValid = true;
-		formLatitude = lat;
-		formLongitude = long;
-	});
-
-	// update canvasCoordinates from formLatitude/formLongitude when input is not focused
-	$effect(() => {
-		if (!canvasInputFocused) {
-			const targetLat = roundCoordinate(formLatitude);
-			const targetLong = roundCoordinate(formLongitude);
-			const expectedCanvasString = `${targetLat}, ${targetLong}`;
-
-			if (targetLat === 0 && targetLong === 0 && canvasCoordinates.trim() === "") {
-				return;
-			}
-
-			if (canvasCoordinates.trim() !== expectedCanvasString) {
-				canvasCoordinates = expectedCanvasString;
-			}
-		}
-	});
-
 	const saveCanvas = async () => {
+		canvasSaving = true;
+
 		if (hiddenFormElement) {
 			hiddenFormElement.requestSubmit();
 		} else {
-			errorState = {
-				flag: true,
-				message: "Error: Could not initiate save. Please try again."
-			};
+			panic("Something is wrong with the frontend page. Please reload and try again.");
 		}
 	};
 
-	const submitOptions = () => {
+	const submitCallback = () => {
 		return async ({
 			result
 		}: {
@@ -116,91 +79,55 @@
 			update: (opts?: any) => Promise<void>;
 		}) => {
 			if (result.type === "error") {
-				errorState = {
+				panicState = {
 					flag: true,
 					message: result.error?.message || "An unknown error occurred."
 				};
 			} else if (result.type === "failure") {
-				errorState = {
+				panicState = {
 					flag: true,
 					message: result.data?.message || "An unknown error occurred."
 				};
 			} else {
-				goto("/profile");
+				// success
+				canvasSaving = false;
+				canvasSaved = true;
+				panicState = { flag: false, message: "" }; // reset panic state
+
+				setTimeout(() => {
+					currentStep = 3;
+				}, 500);
 			}
 		};
 	};
 
-	// checks if the current step is valid or not
 	const isStepValid = (step: number): boolean => {
 		switch (step) {
 			case 1:
-				return !!canvasName;
+				return step1Valid;
 			case 2:
-				return isStepValid(1) && !!coordinateValid && !!canvasCoordinates;
+				return allInputValid;
 			default:
-				return false; // default to invalid
+				return false;
 		}
 	};
-
-	// const routeChange = () => {
-	// 	const hash = window.location.hash;
-
-	// 	// TODO: add more checks in to prevent bad submissions
-
-	// 	if (hash) {
-	// 		const step = parseInt(hash.replace("#s", ""));
-	// 		if (!isNaN(step) && step >= 1 && step <= 3) {
-	// 			if (isStepValid(step)) {
-	// 				currentStep = step;
-	// 			} else {
-	// 				// change the current s hash to 1
-	// 				const newUrl = new URL(window.location.href);
-	// 				newUrl.hash = "#s1";
-	// 				window.history.pushState({}, "", newUrl);
-	// 			}
-	// 		} else {
-	// 			// change the current s hash to 1
-	// 			const newUrl = new URL(window.location.href);
-	// 			newUrl.hash = "#s1";
-	// 			window.history.pushState({}, "", newUrl);
-	// 		}
-	// 	}
-	// };
-
-	// onMount(() => {
-	// 	// set current step based on URL hash if there is one
-	// 	routeChange();
-	// });
 </script>
-
-<!-- <svelte:window on:hashchange={routeChange} /> -->
 
 <main>
 	<section id="main-content">
-		<StepHeader {currentStep} stepTitle="Some basic stuff." />
+		<StepHeader {currentStep} stepTitle={currentStepDescription[currentStep - 1]} />
 
 		<section id="page-content">
 			<GalleryItem galleryIndex={currentStep} startVisIdx={1} endVisIdx={2}>
-				<Step1 bind:canvasName bind:locationDescription />
+				<Step1 bind:canvasName bind:locationDescription bind:valid={step1Valid} />
 			</GalleryItem>
 
 			<GalleryItem galleryIndex={currentStep} startVisIdx={2} endVisIdx={3}>
-				<Step2
-					bind:canvasCoordinates
-					bind:errorState
-					bind:parsedLong={formLongitude}
-					bind:parsedLat={formLatitude}
-					bind:isFocused={canvasInputFocused}
-					accuracy={formAccuracy}
-					onLocate={handleLocateMeClick}
-					zoom={formZoom}
-					{forceZoomChange}
-				/>
+				<Step2 onDataChange={handleStep2DataChange} bind:valid={step2Valid} />
 			</GalleryItem>
 
 			<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
-				<Step3 {canvasName} {currentStep} onSave={saveCanvas} />
+				<Step3 {canvasName} {currentStep} />
 			</GalleryItem>
 		</section>
 	</section>
@@ -208,18 +135,40 @@
 	<sect id="nav-container">
 		<GalleryItem galleryIndex={currentStep} startVisIdx={1} endVisIdx={3}>
 			<section id="arrow-cluster-container">
-				<ArrowNavCluster
-					onNext={nextStep}
-					onBack={prevStep}
-					leftDisabled={currentStep === 1}
-					rightDisabled={(currentStep === 1 && !isStepValid(1)) ||
-						(currentStep === 2 && !isStepValid(2))}
-				/>
+				{#if panicState.flag}
+					<p class="err-msg">{panicState.message}</p>
+				{:else if canvasSaving}
+					<LoaderCircle size={32} class="animate-spin" />
+				{:else if canvasSaved}
+					<CircleCheck size={32} absoluteStrokeWidth={true} strokeWidth={2} />
+				{:else}
+					<ArrowNavCluster
+						onNext={nextStep}
+						onBack={prevStep}
+						leftDisabled={currentStep === 1}
+						rightDisabled={(currentStep === 1 && !isStepValid(1)) ||
+							(currentStep === 2 && !isStepValid(2))}
+					/>
+				{/if}
 			</section>
 		</GalleryItem>
 
 		<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
-			<button id="return" on:click={saveCanvas}> Return to Canvas List </button>
+			<a
+				id="return"
+				href="/settings#canvas"
+				on:click={() => {
+					isReturning = true;
+				}}
+			>
+				<button id="return">
+					{#if isReturning}
+						<LoaderCircle size={24} class="animate-spin" />
+					{:else}
+						Return to Canvas List
+					{/if}
+				</button>
+			</a>
 		</GalleryItem>
 	</sect>
 </main>
@@ -228,14 +177,14 @@
 	id="hidden-form"
 	method="post"
 	action="/api/canvas?/createCanvas"
-	use:enhance={submitOptions}
+	use:enhance={submitCallback}
 	bind:this={hiddenFormElement}
 >
 	<input type="hidden" name="title" value={canvasName} />
 	<input type="hidden" name="loc_desc" value={locationDescription} />
-	<input type="hidden" name="latitude" bind:value={formLatitude} />
-	<input type="hidden" name="longitude" bind:value={formLongitude} />
-	<input type="hidden" name="accuracy" bind:value={formAccuracy} />
+	<input type="hidden" name="latitude" value={step2Data?.coordinates.latitude ?? 0} />
+	<input type="hidden" name="longitude" value={step2Data?.coordinates.longitude ?? 0} />
+	<input type="hidden" name="accuracy" value={step2Data?.coordinates.accuracy ?? 0} />
 </form>
 
 <style lang="scss">
@@ -286,6 +235,11 @@
 			justify-content: center;
 			align-items: center;
 
+			.err-msg {
+				color: $accent-error;
+				text-align: center;
+			}
+
 			#arrow-cluster-container {
 				display: flex;
 				flex-direction: column;
@@ -296,9 +250,10 @@
 
 			#return {
 				width: 100%;
-				@media screen and (min-width: $mobile-width) {
-					width: fit-content;
-				}
+				text-decoration: none;
+				display: flex;
+				justify-content: center;
+				align-items: center;
 			}
 		}
 

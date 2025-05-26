@@ -1,17 +1,15 @@
 <script lang="ts">
 	let {
 		canvas,
-		setCurrCanvas
+		onEdit: setCurrCanvas
 	}: {
 		canvas: DB.Canvas;
-		setCurrCanvas: (canvas: DB.Canvas) => void;
+		onEdit: (canvas: DB.Canvas) => void;
 	} = $props();
 	const options: Intl.DateTimeFormatOptions = {
 		month: "long",
 		day: "numeric",
 		year: "numeric",
-		// hour: 'numeric',
-		// minute: '2-digit',
 		hour12: true
 	};
 
