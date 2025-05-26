@@ -10,19 +10,22 @@
 			unit: "px",
 			format: "letter"
 		});
+
 		const pageWidth = doc.internal.pageSize.width;
 		const pageHeight = doc.internal.pageSize.height;
 
-		doc.setFont("times", "bold")
+		// directly setting coordiates of elements
+		doc.setFont("Helvetica", "bold")
 			.setFontSize(30)
-			.text("Like Pixel Art and Shitposting?", pageWidth / 2, 70, { align: "center" });
-		doc.setFont("times", "normal")
+			.text("Like pixel art and shitposting?", pageWidth / 2, 90, { align: "center" });
+		doc.setFont("Helvetica", "normal")
 			.setFontSize(18)
-			.text("Scan the QR code to start drawing on the X canvas", pageWidth / 2, 90, {
+			.setTextColor(146, 146, 146)
+			.text("Scan the QR code to start drawing on the X canvas", pageWidth / 2, 120, {
 				align: "center"
 			});
 
-		// qr-code is actually smaller than image size
+		// qr-code is smaller than image size
 		doc.addImage(
 			await QRCode.toDataURL(QrSRC),
 			"JPEG",
@@ -31,24 +34,25 @@
 			pageWidth / 2,
 			pageWidth / 2
 		);
-		doc.setFont("times", "normal")
+		doc.setFont("Helvetica", "normal")
 			.setFontSize(18)
 			.text(
-				"Is the QR code broken? Go to mosaicly.io/search\nand type in the backup code:",
+				"Is the QR code broken? Go to mosaicly.io/search and type in the\nbackup code:",
 				pageWidth / 2,
-				400,
+				380,
 				{
 					align: "center"
 				}
 			);
-		doc.setFont("times", "bold")
-			.setFontSize(18)
-			.text("XXXX-XXXX-XXXX", pageWidth / 2, 440, {
+		doc.setFont("Helvetica", "bold")
+			.setFontSize(25)
+			.setTextColor(0, 0, 0)
+			.text("XXXX-XXXX-XXXX", pageWidth / 2, 430, {
 				align: "center"
 			});
-		doc.setFont("times", "bold")
+		doc.setFont("Helvetica", "bold")
 			.setFontSize(20)
-			.text("Mosaicly: []", pageWidth / 2, 500, {
+			.text("[] mosaicly", pageWidth / 2, 520, {
 				align: "center"
 			});
 		doc.save("qrcode.pdf");

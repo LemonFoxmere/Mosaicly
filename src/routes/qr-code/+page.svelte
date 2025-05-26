@@ -2,7 +2,7 @@
 	import QrGenerator from "$lib/comp/qrcode/QrGenerator.svelte";
 	import PdfExport from "$lib/comp/qrcode/PdfExport.svelte";
 
-	let inputText = $state("");
+	let inputText = $state("a");
 	let finalText = $state(inputText);
 </script>
 
