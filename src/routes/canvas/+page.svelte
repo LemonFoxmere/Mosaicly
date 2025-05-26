@@ -61,11 +61,12 @@
 	</section>
 
 	<section id="canvas-container">
-		<Palette
-			changeColor={(_color: string) => {
-				selectedColor = _color;
-			}}
-		></Palette>
+		{#if editState != "view"}
+			<Palette
+				changeColor={(_color: string) => {
+					selectedColor = _color;
+				}} />
+		{/if}
 
 		<PixelCanvas
 			color={selectedColor}
