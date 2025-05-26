@@ -1,14 +1,23 @@
+import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
+export const load: PageServerLoad = async ({url, locals: { supabase, safeGetSession } }) => {
 	const { session } = await safeGetSession();
 	void session;
 
 	// TODO: Anonymous users can actually view the canvas too (as long as they are within the range)
 
-	// TODO: the selected canvas will dynamically change and will be checked
-	const channelName = "qwer-tyui-opas";
-	const { data, error } = await supabase
+	// get backup code parameter (ex: /canvas?c=qwer-tyui-opas)
+	const backup_code: string | null = url.searchParams.get("c");
+
+	// parameter null-checking (ex: /canvas without c parameter)
+	if (backup_code === null) {
+		error(404);
+	}
+	
+	// canvas existence check and archive check
+	const channelName = backup_code;
+	const { data } = await supabase
 		.from("canvas")
 		.select("drawing, id, backup_code, is_archived")
 		.eq("backup_code", channelName)
@@ -16,11 +25,10 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 		.maybeSingle();
 
 	if (data === null || data.is_archived === true) {
-		// TODO: 404 page (maybe we should also do this if the canvas was archived too?)
+		error(404);
 	}
-	if (error) {
-		// TODO: error handling
-	}
+
+	// TODO: distance checking
 
 	return {
 		canvas: data,

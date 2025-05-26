@@ -50,9 +50,10 @@ export class RealtimePixelManager {
 
 	// fetch request to send pixels to database
 	saveToDatabase(pixels: Record<string, PixelData>): void {
+		// takes a "snapshot" of what pixels will be sent to the database
 		const current: Record<string, PixelData> = Object.assign({}, this.pixelDatabaseQueue);
 		fetch("/api/canvas", {
-			method: "POST",
+			method: "PATCH",
 			headers: {
 				Accept: "application/json",
 				"Content-Type": "application/json"
@@ -75,8 +76,9 @@ export class RealtimePixelManager {
 	// broadcasts pixel changes and eventually saves the whole canvas
 	broadcastThenSave(pixels: Record<string, PixelData>): void {
 		if (this.isDirty && Object.keys(this.pixelBroadcastQueue).length > 0) {
-			// console.log("cunt");
+			// console.log("fuck");
 
+			// takes a "snapshot" of what pixels will be broadcasted
 			const current: Record<string, PixelData> = Object.assign({}, this.pixelBroadcastQueue);
 
 			// delete the soon-to-be-broadcasted pixels from the queue
@@ -97,12 +99,10 @@ export class RealtimePixelManager {
 					if (Object.keys(this.pixelBroadcastQueue).length == 0) {
 						this.isDirty = false;
 
-						// if nothing waiting, start batching for the canvas sending (1 second)
+						// if nothing waiting, start readying for the canvas sending (1 second debounce)
 						this.clearDatabaseTimer();
-						this.databaseTimeout = setTimeout(
-							async () => this.saveToDatabase(pixels),
-							1000
-						);
+						// this.databaseTimeout = setTimeout(async () => this.saveToDatabase(pixels), 1000);
+						this.saveToDatabase(pixels);
 					}
 				});
 		}
