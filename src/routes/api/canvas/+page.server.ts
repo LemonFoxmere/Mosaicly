@@ -1,13 +1,15 @@
 import { fail, type Actions } from "@sveltejs/kit";
 
+// HELPERS
+
 const maxCanvasNameLen = 30;
-const isCanvasNameValid = (name: string) => {
+const isCanvasNameValid = (name: string | null) => {
 	return !!name && name.length <= maxCanvasNameLen;
 };
 
 const maxLocationDescLen = 200;
-const isLocationDescValid = (val: string) => {
-	return val.length <= maxLocationDescLen;
+const isLocationDescValid = (val: string | null) => {
+	return !!val && val.length <= maxLocationDescLen;
 };
 
 const isLocationValid = (longitude: number, latitude: number, accuracy: number) => {
@@ -24,111 +26,198 @@ const isLocationValid = (longitude: number, latitude: number, accuracy: number) 
 	);
 };
 
+const ALPHANUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+const randomChar = (): string => {
+	const idx = Math.floor(Math.random() * ALPHANUM.length);
+	return ALPHANUM.charAt(idx);
+};
+
+const getRandomBackupCode = (): string => {
+	let result = "";
+	for (let i = 0; i < 12; i++) {
+		result += randomChar();
+		if ((i + 1) % 4 === 0 && i !== 11) result += "-";
+	}
+	return result;
+};
+
+// SERVER ACTIONS
+
 export const actions: Actions = {
 	createCanvas: async ({ request, locals: { user, supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();
-		if (session) {
-			// get data from form
-			const form = await request.formData();
+		if (!session) {
+			return fail(401);
+		}
 
-			const title = form.get("title");
-			const locDesc = form.get("loc_desc");
-			const longitude = form.get("longitude");
-			const latitude = form.get("latitude");
-			const accuracy = form.get("accuracy");
+		const form = await request.formData();
+		const formValues = Object.fromEntries(form);
 
-			// do some checks
-			if (!isCanvasNameValid(title?.toString() || ""))
-				return fail(400, { message: "Invalid canvas title" });
+		const title = form.get("title")?.toString() ?? "";
+		const locDesc = form.get("loc_desc")?.toString() ?? "";
+		const lonStr = form.get("longitude")?.toString() ?? "";
+		const latStr = form.get("latitude")?.toString() ?? "";
+		const accStr = form.get("accuracy")?.toString() ?? "";
 
-			if (!isLocationDescValid(locDesc?.toString() || ""))
-				return fail(400, { message: "Invalid location description" });
+		if (!isCanvasNameValid(title)) {
+			return fail(400, { message: "Invalid canvas title", data: formValues });
+		}
 
-			// check if longitude and latitude are valid numbers
-			const lng = parseFloat(longitude?.toString() || "");
-			const lat = parseFloat(latitude?.toString() || "");
-			const acc = parseFloat(accuracy?.toString() || "");
-			if (!isLocationValid(lng, lat, acc)) {
-				return fail(400, { message: "Invalid longitude or latitude" });
-			}
+		if (!isLocationDescValid(locDesc)) {
+			return fail(400, { message: "Invalid location description", data: formValues });
+		}
 
-			// send it over
-			const { error } = await supabase.from("canvas").insert({
-				id: crypto.randomUUID(), // generate a random UUID for the canvas
+		const longitude = parseFloat(lonStr);
+		const latitude = parseFloat(latStr);
+		const accuracy = parseFloat(accStr);
+		if (!isLocationValid(longitude, latitude, accuracy)) {
+			return fail(400, { message: "Invalid longitude or latitude", data: formValues });
+		}
+
+		let randomBackupCode = getRandomBackupCode();
+		let { data, error } = await supabase
+			.from("canvas")
+			.insert({
+				id: crypto.randomUUID(),
 				title,
 				loc_desc: locDesc,
 				longitude,
 				latitude,
 				accuracy,
-				location: `SRID=4269;POINT(${longitude} ${latitude})`, // PostGIS point format
+				backup_code: randomBackupCode,
+				location: `SRID=4326;POINT(${longitude} ${latitude})`,
 				user_id: user.id
-			});
+			})
+			.select();
 
-			if (error) {
-				// if fail, send back error message with form data untouched
-				return fail(400, { message: error.message, data: form });
+		if (error) {
+			if (
+				error.message.indexOf("duplicate key") !== -1 &&
+				error.message.indexOf("backup_code") !== -1
+			) {
+				// duplicate backup code
+				randomBackupCode = getRandomBackupCode(); // regen and try again
+				({ data, error } = await supabase
+					.from("canvas")
+					.insert({
+						id: crypto.randomUUID(),
+						title,
+						loc_desc: locDesc,
+						longitude,
+						latitude,
+						accuracy,
+						backup_code: randomBackupCode,
+						location: `SRID=4326;POINT(${longitude} ${latitude})`,
+						user_id: user.id
+					})
+					.select());
+			} else {
+				// some other error
+				return fail(500, {
+					message: "Something went wrong on our side. Reload and try again?",
+					data: formValues
+				});
 			}
-
-			return { success: true };
-		} else {
-			// unauthorized
-			return fail(401);
 		}
+
+		if (!data?.length) {
+			return fail(500, {
+				message: "We couldn't create your canvas for some reason. Reload and try again?"
+			});
+		}
+
+		return { success: true, canvas: data[0] };
 	},
 	updateCanvas: async ({ request, locals: { user, supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();
-		if (session) {
-			const form = await request.formData();
-			const title = form.get("title");
-			const locDesc = form.get("loc_desc");
-			const canvasId = form.get("canvas_id");
-
-			if (!title || title.toString().trim() === "") {
-				return fail(400, { message: "title cannot be empty" });
-			}
-
-			// owner can update canvas
-			const { error } = await supabase
-				.from("canvas")
-				.update({
-					title,
-					loc_desc: locDesc
-				})
-				.eq("id", canvasId)
-				.eq("user_id", user.id);
-
-			if (error) {
-				// if fail, send back error message with form data untouched
-				return fail(400, { message: error, data: form });
-			} else {
-				// success case, console.log for debug and double checking
-				console.log("updated canvas", "title:", title, "location:", locDesc);
-			}
+		if (!session) {
+			return fail(401);
 		}
+
+		const form = await request.formData();
+		const formValues = Object.fromEntries(form);
+
+		const title = form.get("title")?.toString() ?? "";
+		const locDesc = form.get("locDesc")?.toString() ?? "";
+		const canvasId = form.get("canvasId")?.toString() ?? "";
+
+		if (!isCanvasNameValid(title)) {
+			return fail(400, { message: "Invalid canvas title", data: formValues });
+		}
+
+		if (!isLocationDescValid(locDesc)) {
+			return fail(400, { message: "Invalid location description", data: formValues });
+		}
+
+		const { data, error } = await supabase
+			.from("canvas")
+			.update({
+				title,
+				loc_desc: locDesc
+			})
+			.eq("id", canvasId)
+			.eq("user_id", user.id)
+			.select();
+
+		if (error) {
+			// some random error, like the canvas doesn't exist
+			return fail(500, {
+				message: error.message,
+				data: formValues
+			});
+		}
+
+		if (!data || data.length === 0) {
+			return fail(404, {
+				message: "Canvas not found or you don't have permission to update it.",
+				data: formValues
+			});
+		}
+
+		return { success: true, canvas: data[0] };
 	},
-	toggleArchiveCanvas: async ({ request, locals: { user, supabase, safeGetSession } }) => {
+	toggleArchiveState: async ({ request, locals: { user, supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();
-		if (session) {
-			const form = await request.formData();
-			const is_archived = form.get("is_archived"); // boolean string, ie "false"
-			const canvas_id = form.get("canvas_id");
-
-			// owner can update canvas
-			const { error } = await supabase
-				.from("canvas")
-				.update({
-					is_archived: is_archived === "false"
-				})
-				.eq("id", canvas_id)
-				.eq("user_id", user.id);
-
-			if (error) {
-				// if fail, send back error message with form data untouched
-				return fail(400, { message: error, data: form });
-			} else {
-				// success case, console.log for debug and double checking
-				console.log("updated canvas", "is_archived: ", is_archived === "false");
-			}
+		if (!session) {
+			return fail(401);
 		}
+
+		const form = await request.formData();
+		const formValues = Object.fromEntries(form);
+
+		const isArchivedStr = form.get("isArchived")?.toString() ?? ""; // boolean string, ie "false"
+		if (isArchivedStr !== "true" && isArchivedStr !== "false") {
+			// safely parse bool
+			return fail(400);
+		}
+		const isCurrentlyArchived: boolean = isArchivedStr === "true"; // OLD data. New one inverts it
+		const canvasId = form.get("canvasId")?.toString() ?? ""; // parse canvasId
+
+		const { data, error } = await supabase
+			.from("canvas")
+			.update({
+				is_archived: !isCurrentlyArchived
+			})
+			.eq("id", canvasId)
+			.eq("user_id", user.id)
+			.select();
+
+		if (error) {
+			// some random error, like the canvas doesn't exist
+			return fail(500, {
+				message: error.message,
+				data: formValues
+			});
+		}
+
+		if (!data || data.length === 0) {
+			return fail(404, {
+				message: "Canvas not found or you don't have permission to update it.",
+				data: formValues
+			});
+		}
+
+		return { success: true, canvas: data[0] };
 	}
 };

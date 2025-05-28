@@ -6,77 +6,80 @@
 		canvas: DB.Canvas;
 		onEdit: (canvas: DB.Canvas) => void;
 	} = $props();
-	const options: Intl.DateTimeFormatOptions = {
+
+	const dateOptions: Intl.DateTimeFormatOptions = {
 		month: "long",
 		day: "numeric",
 		year: "numeric",
 		hour12: true
 	};
-
-	const format = (datestr: string) => {
-		return new Date(datestr)
-			.toLocaleString("en-US", options)
-			.replace(",", "")
-			.replace(" at", " @");
+	const formatDate = (date: string | Date) => {
+		const d = typeof date === "string" ? new Date(date) : date;
+		return d.toLocaleString("en-US", dateOptions).replace(" at", " @");
 	};
 
 	const { title, locDesc, createdOn, isArchived } = $derived(canvas);
 </script>
 
-<div class="item-frame container" class:archived={isArchived}>
-	<section>
-		<aside>
-			<div id="title">
-				<p><strong>{title}</strong></p>
-			</div>
-			{locDesc}
-		</aside>
+<main class="item-frame">
+	<section id="content" class:archived={isArchived}>
+		<section id="description">
+			<section id="title-container">
+				<p class="title">{title}</p>
+				<p class="desc-text">{locDesc}</p>
+			</section>
 
-		<p>
-			Created on {format(createdOn)}
-		</p>
+			<p>
+				Created on {formatDate(createdOn)}{isArchived ? " (Archieved)" : ""}
+			</p>
+		</section>
+
+		<button id="edit-canvas" class="none" onclick={() => setCurrCanvas(canvas)}>
+			<img src="icons/pencil.svg" alt="edit" />
+		</button>
 	</section>
+</main>
 
-	<button id="edit" onclick={() => setCurrCanvas(canvas)}>
-		<img src="icons/pencil.svg" alt="edit" />
-	</button>
-</div>
+<style lang="scss">
+	@use "$static/stylesheets/guideline" as *;
 
-<style>
-	.container {
-		display: flex;
-		justify-content: space-between;
-		padding: 16px;
-	}
+	main {
+		padding: 14px 20px;
 
-	section {
-		display: flex;
-		flex-direction: column;
-		place-self: center;
-		gap: 22px;
-	}
+		#content {
+			width: 100%;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			column-gap: 20px;
 
-	#title {
-		font-weight: 600;
-	}
+			&.archived {
+				opacity: 0.3;
+			}
 
-	#edit {
-		background-color: transparent;
-		place-self: center;
-		padding: 25px 15px;
+			#description {
+				display: flex;
+				flex-direction: column;
+				row-gap: 15px;
 
-		@media (hover: hover) {
-			&:hover {
-				opacity: 0.7;
+				#title-container {
+					display: flex;
+					flex-direction: column;
+
+					.desc-text {
+						display: -webkit-box;
+						line-clamp: 2;
+						-webkit-box-orient: vertical;
+						-webkit-line-clamp: 2;
+						overflow: hidden;
+					}
+				}
+			}
+
+			#edit-canvas {
+				padding: 5px;
+				cursor: pointer;
 			}
 		}
-
-		&:active {
-			opacity: 0.8;
-		}
-	}
-
-	.archived {
-		opacity: 0.5;
 	}
 </style>

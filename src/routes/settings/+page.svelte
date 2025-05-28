@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { replaceState } from "$app/navigation";
 	import CanvasSettings from "$lib/comp/settings/pages/CanvasSettings.svelte";
 	import ProfileSettings from "$lib/comp/settings/pages/ProfileSettings.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
@@ -10,6 +11,7 @@
 	// local state, sync from upstream as updates roll in
 	const profile = $derived(data.user?.profile);
 	let { displayName } = $derived(data.user!.profile);
+	let canvases = $state<DB.Canvas[]>([]); // used to session cache
 
 	// toggle between Profile | Canvases tab
 	let editingProfile = $state(true);
@@ -18,15 +20,13 @@
 	const editProfile = () => {
 		editingProfile = true;
 		// update hash and push history
-		window.location.hash = "#profile";
-		window.history.pushState({}, "", window.location.href);
+		replaceState("#profile", {});
 	};
 
 	const editCanvas = () => {
 		editingProfile = false;
 		// update hash and push history
-		window.location.hash = "#canvas";
-		window.history.pushState({}, "", window.location.href);
+		replaceState("#canvas", {});
 	};
 
 	const routeChange = () => {
@@ -82,7 +82,7 @@
 					<!-- profile render -->
 					<ProfileSettings user={data.user} />
 				{:else}
-					<CanvasSettings user={data.user} />
+					<CanvasSettings user={data.user} bind:canvases />
 				{/if}
 			</section>
 		{:else}

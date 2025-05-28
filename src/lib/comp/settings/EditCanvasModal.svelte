@@ -1,74 +1,113 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { CircleCheck, LoaderCircle } from "@lucide/svelte";
+	import type { ActionResult } from "@sveltejs/kit";
 	import CrossCircle from "../ui/icons/CrossCircle.svelte";
 
 	let {
 		open = $bindable<boolean>(),
-		canvas = $bindable<DB.Canvas | undefined>(),
-		isSaving = $bindable<boolean>()
-	}: { open: boolean; canvas: DB.Canvas | undefined; isSaving: boolean } = $props();
+		canvas = $bindable<DB.Canvas | undefined>()
+	}: { open: boolean; canvas: DB.Canvas | undefined } = $props();
 
-	let title = $state("");
-	let locDesc = $state("");
-	let isArchived = $state(false);
-	let id = $state("");
+	let title = $derived(canvas?.title ?? "");
+	let origTitle = $derived(canvas?.title ?? "");
+	let locDesc = $derived(canvas?.locDesc ?? "");
+	let origLocDesc = $derived(canvas?.locDesc ?? "");
+	let isArchived = $derived(canvas?.isArchived ?? false);
+	let id = $derived(canvas?.id ?? "");
+	let hasUnsavedChanges = $derived(title !== origTitle || locDesc !== origLocDesc); // if the user has unsaved changes
 
+	let errorStatus = $state({
+		flag: false,
+		message: ""
+	});
+	const showErr = (message: string) => {
+		errorStatus.flag = true;
+		errorStatus.message = message;
+		resetUISavingState();
+		open = true; // open modal if not already open
+	};
+
+	let forceOpen = $state(false); // stupid UI shit to prevent the window from closing when user is dragging text
+
+	let archiveHasSecondClick = $state(false); // confirm before archiving
 	let savingData = $state(false);
 	let archivingData = $state(false);
 	let saveFinished = $state(false);
 
+	const resetUISavingState = () => {
+		// reset all UI states
+		savingData = false;
+		archivingData = false;
+		saveFinished = false;
+	};
+
 	$effect(() => {
 		if (open) {
-			isSaving = false;
-			savingData = false;
-			archivingData = false;
-			saveFinished = false;
+			resetUISavingState();
+			errorStatus = {
+				flag: false,
+				message: ""
+			};
+			archiveHasSecondClick = false;
 		}
 	});
 
-	$effect(() => {
-		if (canvas) {
-			title = canvas.title ?? "";
-			locDesc = canvas.locDesc;
-			isArchived = canvas.isArchived;
-			id = canvas.id;
-		}
-	});
+	const submitCallback = () => {
+		return async ({
+			result
+		}: {
+			formData: FormData;
+			result: ActionResult;
+			update: (opts?: any) => Promise<void>;
+		}) => {
+			if (result.type === "error") {
+				showErr(result.error?.message);
+			} else if (result.type === "failure") {
+				showErr(result.data?.message);
+			} else if (result.type === "success") {
+				// finished callback. Update data and show a checkmark for 200ms
+				if (canvas && result.data) {
+					canvas.title = result.data.canvas.title;
+					canvas.locDesc = result.data.canvas.loc_desc;
+					canvas.isArchived = result.data.canvas.is_archived;
+				}
+				saveFinished = true;
+
+				setTimeout(async () => {
+					// reset states
+					open = false;
+					setTimeout(() => {
+						resetUISavingState(); // reset after 500ms
+					}, 500);
+				}, 200);
+			}
+		};
+	};
 </script>
 
 <main
 	class="no-drag"
 	class:hidden={!open}
 	onmouseup={() => {
-		open = false;
+		if (!forceOpen) {
+			open = false;
+		}
+		forceOpen = false;
 	}}
 >
-	<div class="modal-content" onmouseup={(e) => e.stopPropagation()}>
-		<form
-			method="POST"
-			action="/api/canvas?/updateCanvas"
-			use:enhance={() => {
-				isSaving = true;
-
-				return async ({ update }) => {
-					// finished callback. Show a checkmark for 500ms and then close
-					saveFinished = true;
-
-					setTimeout(async () => {
-						await update({ reset: false });
-						isSaving = false; // reset states
-						open = false;
-
-						setTimeout(() => {
-							savingData = false;
-							archivingData = false;
-							saveFinished = false; // reset after 500ms
-						}, 500);
-					}, 100);
-				};
-			}}
-		>
+	<div
+		class="modal-content"
+		onmouseup={(e) => e.stopPropagation()}
+		onmousedown={() => {
+			forceOpen = true;
+		}}
+		onclick={() => {
+			// cancel archive button second click
+			archiveHasSecondClick = false;
+		}}
+	>
+		<form method="POST" use:enhance={submitCallback}>
 			<section id="main-content">
 				<section id="title-container">
 					<p class="title">Editing "{title}"</p>
@@ -80,7 +119,7 @@
 							open = false;
 						}}
 					>
-						<CrossCircle s={42} />
+						<CrossCircle s={48} />
 					</button>
 				</section>
 
@@ -97,7 +136,7 @@
 				<label class="input-container">
 					<p class="caption">Location description</p>
 					<textarea
-						name="loc_desc"
+						name="locDesc"
 						placeholder="Location Description"
 						rows="5"
 						autocomplete="off"
@@ -106,52 +145,90 @@
 				</label>
 			</section>
 
-			<input name="is_archived" value={isArchived} type="hidden" />
-			<input name="canvas_id" value={id} type="hidden" />
+			<!-- this stores the CURRENT state of the archieved state.
+			The toggle function basically takes this and inverts it -->
+			<input name="isArchived" value={isArchived} type="hidden" />
+			<!-- hidden canvasID input that can be sent to the form as
+			a parameter to be used -->
+			<input name="canvasId" value={id} type="hidden" />
 
-			<div id="cta">
-				<button
-					type="submit"
-					disabled={isSaving}
-					class:full-opacity={savingData}
-					onclick={() => {
-						savingData = true;
-					}}
-				>
-					{#if savingData}
-						{#if saveFinished}
-							<CircleCheck size={24} absoluteStrokeWidth={true} strokeWidth={2} />
-						{:else}
-							<LoaderCircle class="animate-spin" />
-						{/if}
-					{:else}
-						Save
-					{/if}
-				</button>
+			<section id="cta-container">
+				{#if errorStatus.flag}
+					<p id="error-msg">{errorStatus.message}</p>
+				{/if}
+				{#if archiveHasSecondClick}
+					<p id="error-msg">
+						Are you sure you want to archive this canvas? Doing so will prevent others
+						from seeing or accessing it.
+					</p>
+				{/if}
 
-				<button
-					type="submit"
-					formaction="/api/canvas?/toggleArchiveCanvas"
-					class="outline"
-					class:full-opacity={archivingData}
-					disabled={isSaving}
-					onclick={() => {
-						archivingData = true;
-					}}
-				>
-					{#if archivingData}
-						{#if saveFinished}
-							<CircleCheck size={24} absoluteStrokeWidth={true} strokeWidth={1.5} />
+				<div id="cta">
+					<button
+						type="submit"
+						formaction="/api/canvas?/updateCanvas"
+						disabled={!hasUnsavedChanges || savingData || archivingData}
+						class:full-opacity={savingData}
+						onclick={() => {
+							setTimeout(() => {
+								// prevent the disabled flag from stopping data being sent
+								savingData = true;
+							}, 0);
+						}}
+					>
+						{#if savingData}
+							{#if saveFinished}
+								<CircleCheck size={24} absoluteStrokeWidth={true} strokeWidth={2} />
+							{:else}
+								<LoaderCircle class="animate-spin" />
+							{/if}
 						{:else}
-							<LoaderCircle class="animate-spin" />
+							Save
 						{/if}
-					{:else if isArchived}
-						Unarchive
-					{:else}
-						Archive
-					{/if}
-				</button>
-			</div>
+					</button>
+
+					<button
+						formaction={"/api/canvas?/toggleArchiveState"}
+						class="outline"
+						class:full-opacity={archivingData}
+						class:warn={archiveHasSecondClick}
+						disabled={archivingData || savingData}
+						onclick={(e) => {
+							if (archiveHasSecondClick || isArchived) {
+								// allow if we have a second click or we're trying to unarchive
+								setTimeout(() => {
+									// prevent the disabled flag from stopping data being sent
+									archivingData = true;
+									archiveHasSecondClick = false;
+								}, 0);
+							} else {
+								// require a second click
+								e.preventDefault();
+								setTimeout(() => {
+									// prevent root cancel event from overriding this
+									archiveHasSecondClick = true;
+								}, 0);
+							}
+						}}
+					>
+						{#if archivingData}
+							{#if saveFinished}
+								<CircleCheck
+									size={24}
+									absoluteStrokeWidth={true}
+									strokeWidth={1.5}
+								/>
+							{:else}
+								<LoaderCircle class="animate-spin" />
+							{/if}
+						{:else if isArchived}
+							Unarchive
+						{:else}
+							{archiveHasSecondClick ? "Yes I'm Sure" : "Archive"}
+						{/if}
+					</button>
+				</div>
+			</section>
 		</form>
 	</div>
 </main>
@@ -174,7 +251,7 @@
 		justify-content: center;
 		z-index: 110;
 
-		transition: opacity 700ms $out-generic-expo;
+		transition: opacity 500ms $out-generic-expo;
 
 		// no scroll thru
 		touch-action: none;
@@ -183,15 +260,17 @@
 		}
 
 		&.hidden {
-			transition-delay: 400ms;
+			transition-delay: 200ms;
 			opacity: 0;
 			pointer-events: none;
 
 			.modal-content {
 				opacity: 0;
-				transform: scale(0.9);
-				transition-timing-function: $in-cubic;
-				transition-duration: 300ms;
+				transform: translateY(50px);
+				// transform: scale(0.9);
+				transition-timing-function: $in-quad !important;
+				transition-duration: 300ms !important;
+				transition-delay: 0ms !important;
 			}
 		}
 
@@ -206,9 +285,9 @@
 			max-width: 700px;
 
 			opacity: 1;
-			transition: 700ms $out-generic-expo;
+			transition: 500ms $out-generic-expo;
 			transition-property: opacity transform;
-			transition-delay: 250ms;
+			transition-delay: 200ms;
 
 			form {
 				display: flex;
@@ -250,17 +329,35 @@
 					}
 				}
 
-				#cta {
-					display: flex;
-					flex-direction: row;
+				#cta-container {
 					width: 100%;
-					column-gap: 10px;
+					display: flex;
+					flex-direction: column;
+					row-gap: 15px;
 
-					button {
+					#error-msg {
 						width: 100%;
+						text-align: center;
+						color: $accent-error;
+					}
 
-						&.full-opacity {
-							opacity: 1 !important; // override disabled
+					#cta {
+						display: flex;
+						flex-direction: row;
+						width: 100%;
+						column-gap: 10px;
+
+						button {
+							width: 100%;
+
+							&.full-opacity {
+								opacity: 1 !important; // override disabled
+							}
+
+							&.warn {
+								border-color: $accent-error;
+								color: $accent-error;
+							}
 						}
 					}
 				}

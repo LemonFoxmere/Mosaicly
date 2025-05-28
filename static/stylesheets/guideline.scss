@@ -123,7 +123,8 @@ button {
 	-ms-user-select: none;
 
 	// basic transitions
-	transition: opacity 300ms $out-generic-expo;
+	transition: 300ms $out-generic-expo;
+	transition-property: opacity, transform, color, background-color, border-color;
 
 	@media (hover: hover) {
 		&:hover {
@@ -172,6 +173,7 @@ button {
 		}
 
 		&:active {
+			opacity: 1;
 			margin-top: 1.5px; // make sure the bounding box size stay consistent
 			height: calc($button-height - 1.5px);
 			border-bottom-width: 1.5px;
@@ -197,6 +199,9 @@ button {
 	&.none {
 		// no styling at all. Just a wrapper
 		all: unset;
+
+		transition: 200ms $out-generic-expo;
+		transition-property: opacity, transform;
 		-webkit-tap-highlight-color: transparent;
 
 		@media (hover: hover) {
@@ -206,7 +211,8 @@ button {
 		}
 
 		&:active {
-			opacity: 0.75;
+			opacity: 1;
+			transform: scale(0.8);
 		}
 	}
 }

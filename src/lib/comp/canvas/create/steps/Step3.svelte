@@ -4,20 +4,22 @@
 
 	interface Props {
 		canvasName: string;
+		canvasBackupCode: string;
 		currentStep: number;
 		onQrImage?: () => void;
 		onQrPdf?: () => void;
 	}
-	let { canvasName, currentStep, onQrImage, onQrPdf }: Props = $props();
+	let { canvasName, canvasBackupCode, currentStep, onQrImage, onQrPdf }: Props = $props();
 </script>
 
 <main>
 	<section id="congrats">
 		<p class="title">Congratulations, you did it.</p>
 		<p class="description">
-			Your "<strong>{canvasName || "Frog"}</strong>" canvas was created successfully, and is
-			now visible to the public. If people can find where you put your QR code, they will be
-			able to scan it and draw on your canvas.
+			Your "<strong>{canvasName ?? ""}</strong>" canvas was created successfully with the code
+			<strong>{canvasBackupCode ?? ""}</strong>, and is now visible to the public. If people
+			can find where you put your QR code, they will be able to scan it and draw on your
+			canvas.
 		</p>
 	</section>
 

@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 
 	// if (data.length === 0) HTTPError(404, { message: "Handle not found" }); // if not found
 
-	console.log(param);
+	// console.log(param);
 
 	return json({ param });
 };
