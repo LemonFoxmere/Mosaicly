@@ -23,7 +23,7 @@ export const actions: Actions = {
 			// check if the provider is supported
 			if (!SUPPORTED_PROVIDERS.includes(provider)) {
 				return fail(400, {
-					error: "Provider not supported."
+					message: "Provider not supported."
 				});
 			}
 
@@ -36,10 +36,11 @@ export const actions: Actions = {
 			});
 
 			// handle any errors during the OAuth sign-in process
-			if (error) {
+			if (error || !data.url) {
 				return fail(500, {
 					message: "Something went wrong."
 				});
+				return; // makes the ts error go away
 			}
 
 			// redirect to the OAuth confirmation page
@@ -47,7 +48,7 @@ export const actions: Actions = {
 		}
 
 		// If no provider is specified, fail with bad request
-		throw fail(400, {
+		return fail(400, {
 			message: "No provider specified."
 		});
 	}

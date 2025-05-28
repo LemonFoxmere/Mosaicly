@@ -48,8 +48,6 @@
 
 			color: $text-primary;
 
-			transition: opacity 300ms $out-generic-expo;
-
 			@media (hover: hover) {
 				&:hover {
 					opacity: 0.7;

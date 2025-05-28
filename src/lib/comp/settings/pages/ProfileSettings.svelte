@@ -3,39 +3,50 @@
 	import FormField from "$lib/comp/ui/general/FormField.svelte";
 	import Textarea from "$lib/comp/ui/general/Textarea.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
+	import type { ActionResult } from "@sveltejs/kit";
 
-	let { user = $bindable<DB.AppUser>() } = $props();
+	interface Props {
+		user: DB.AppUser | null | undefined;
+	}
+	let { user = $bindable<DB.AppUser>() }: Props = $props();
 
 	let isSaving = $state(false); // if settings are saving
 
-	let profile: DB.UserProfile = $derived(user.profile); // for typing
-	let { displayName, bio } = $derived(profile);
+	let profile: DB.UserProfile | null = $derived(user?.profile ?? null); // for typing
+	let displayName = $derived(profile ? profile.displayName : "");
+	let bio = $derived(profile ? profile.bio : "");
 
 	// consts
 	const nameMaxLen = 32;
 	const bioMaxLen = 200;
 
 	// state effects
-	let dirty = $derived(displayName !== profile.displayName || bio !== profile.bio); // do we have new data
+	let dirty = $derived(
+		profile ? displayName !== profile.displayName || bio !== profile.bio : false
+	); // do we have new data
 	// input checks
 	let nameValid = $derived(!!displayName && displayName.length <= nameMaxLen);
 	let bioValid = $derived(bio.length <= bioMaxLen);
 	let inputValid = $derived(nameValid && bioValid);
-</script>
 
-<form
-	method="POST"
-	action="/profile?/update_profile"
-	use:enhance={() => {
+	const submitCallback = () => {
 		// set UI effects
 		isSaving = true;
 
-		return async ({ update }) => {
+		return async ({
+			update
+		}: {
+			formData: FormData;
+			result: ActionResult;
+			update: (opts?: any) => Promise<void>;
+		}) => {
 			await update({ reset: false });
 			isSaving = false;
 		};
-	}}
->
+	};
+</script>
+
+<form method="POST" action="/profile?/update_profile" use:enhance={submitCallback}>
 	<FormField
 		label={nameValid
 			? "Display Name"
@@ -45,7 +56,7 @@
 		invalid={!nameValid}
 	>
 		<input
-			name="disp-name"
+			name="displayName"
 			type="text"
 			placeholder="Guy"
 			class:invalid={!nameValid}
@@ -54,7 +65,13 @@
 	</FormField>
 
 	<FormField label={bioValid ? "Bio" : "That's way too long"} invalid={!bioValid} stretch={true}>
-		<Textarea bind:val={bio} maxLen={bioMaxLen} showRemaining={true} invalid={!bioValid} />
+		<Textarea
+			bind:val={bio}
+			name={"bio"}
+			maxLen={bioMaxLen}
+			showRemaining={true}
+			invalid={!bioValid}
+		/>
 	</FormField>
 
 	<button disabled={!(dirty && inputValid)}>

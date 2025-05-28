@@ -13,7 +13,7 @@
 	// const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
 
 	// props
-	let canvasInfo = $derived(<DB.Canvas>(data.canvas || {}));
+	let canvasInfo = $derived<Pick<DB.Canvas, "id" | "drawing">>(data.canvas);
 
 	let channelName = $derived(data.channelName);
 	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
@@ -98,8 +98,8 @@
 
 		@media screen and (min-width: $mobile-width) {
 			// desktop
-			height: fit-content;
-			flex-grow: 0;
+			max-height: 800px;
+			flex-grow: 1;
 			margin: auto 0;
 			padding-bottom: $navbar-height;
 		}
@@ -134,7 +134,7 @@
 
 			@media screen and (min-width: $mobile-width) {
 				height: 100%;
-				flex-grow: 0;
+				flex-grow: 1;
 				height: fit-content;
 			}
 		}

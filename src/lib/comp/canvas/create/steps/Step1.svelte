@@ -43,6 +43,7 @@
 			invalid={!nameValid && nameAccessed}
 		>
 			<input
+				name="canvasName"
 				type="text"
 				class:invalid={!nameValid && nameAccessed}
 				bind:value={canvasName}
@@ -59,6 +60,7 @@
 			invalid={!descValid}
 		>
 			<Textarea
+				name="bio"
 				bind:val={locationDescription}
 				placeholder={"Where can people find this canvas?"}
 				maxLen={descMaxLen}

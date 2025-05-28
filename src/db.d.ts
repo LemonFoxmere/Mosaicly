@@ -23,17 +23,18 @@ declare global {
 		interface Canvas {
 			id: string;
 			userId: string;
-			createdOn: string;
+			createdOn: Date;
 
 			title: string;
+			backupCode: string;
 			locDesc: string;
-			drawing: Json;
+			drawing?: Json;
 			isArchived: bool;
 
 			longitude: number;
 			latitude: number;
-			accuracy: string;
-			location: unknown;
+			accuracy?: string;
+			location?: unknown;
 		}
 	}
 }

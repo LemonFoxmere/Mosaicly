@@ -36,6 +36,9 @@
 	let canvasSaved = $state(false);
 	let isReturning = $state(false);
 
+	// final UI states
+	let canvasBackupCode = $state("");
+
 	const panic = (msg: string) => {
 		panicState.flag = true;
 		panicState.message = msg;
@@ -88,11 +91,14 @@
 					flag: true,
 					message: result.data?.message || "An unknown error occurred."
 				};
-			} else {
+			} else if (result.type === "success") {
 				// success
 				canvasSaving = false;
 				canvasSaved = true;
 				panicState = { flag: false, message: "" }; // reset panic state
+
+				// get the canvas information
+				canvasBackupCode = result.data?.canvas?.backup_code ?? "";
 
 				setTimeout(() => {
 					currentStep = 3;
@@ -127,7 +133,7 @@
 			</GalleryItem>
 
 			<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
-				<Step3 {canvasName} {currentStep} />
+				<Step3 {canvasName} {canvasBackupCode} {currentStep} />
 			</GalleryItem>
 		</section>
 	</section>

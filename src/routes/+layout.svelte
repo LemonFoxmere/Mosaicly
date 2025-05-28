@@ -5,7 +5,7 @@
 	import type { PageData } from "./$types";
 
 	let { children, data }: { children: any; data: PageData } = $props();
-	let { showLogo, showCta } = $derived(data.appearance);
+	let { showLogo, showCta } = $derived(data.appearance!);
 	let session = $derived(data.session);
 	let user = $derived(data.user);
 
@@ -71,7 +71,7 @@
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/create#s1" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/create" on:click={closeMobileMenu}>
 				<p>Create a Canvas</p>
 			</a>
 
