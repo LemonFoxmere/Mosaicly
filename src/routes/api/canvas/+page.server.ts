@@ -138,12 +138,14 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const formValues = Object.fromEntries(form);
 
-		const title = form.get("title")?.toString() ?? "";
+		console.log(formValues);
+
+		const canvasName = form.get("canvasName")?.toString() ?? "";
 		const locDesc = form.get("locDesc")?.toString() ?? "";
 		const canvasId = form.get("canvasId")?.toString() ?? "";
 
-		if (!isCanvasNameValid(title)) {
-			return fail(400, { message: "Invalid canvas title", data: formValues });
+		if (!isCanvasNameValid(canvasName)) {
+			return fail(400, { message: "Invalid canvas name", data: formValues });
 		}
 
 		if (!isLocationDescValid(locDesc)) {
@@ -153,7 +155,7 @@ export const actions: Actions = {
 		const { data, error } = await supabase
 			.from("canvas")
 			.update({
-				title,
+				title: canvasName,
 				loc_desc: locDesc
 			})
 			.eq("id", canvasId)

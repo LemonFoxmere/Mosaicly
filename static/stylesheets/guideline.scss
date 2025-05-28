@@ -137,7 +137,8 @@ button {
 	}
 
 	&:active {
-		opacity: 0.8;
+		opacity: 1;
+		transform: scale(0.925);
 	}
 
 	&:disabled {

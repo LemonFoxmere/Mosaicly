@@ -56,7 +56,7 @@
 		invalid={!nameValid}
 	>
 		<input
-			name="disp-name"
+			name="displayName"
 			type="text"
 			placeholder="Guy"
 			class:invalid={!nameValid}
@@ -65,7 +65,13 @@
 	</FormField>
 
 	<FormField label={bioValid ? "Bio" : "That's way too long"} invalid={!bioValid} stretch={true}>
-		<Textarea bind:val={bio} maxLen={bioMaxLen} showRemaining={true} invalid={!bioValid} />
+		<Textarea
+			bind:val={bio}
+			name={"bio"}
+			maxLen={bioMaxLen}
+			showRemaining={true}
+			invalid={!bioValid}
+		/>
 	</FormField>
 
 	<button disabled={!(dirty && inputValid)}>

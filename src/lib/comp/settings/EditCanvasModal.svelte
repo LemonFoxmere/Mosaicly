@@ -2,20 +2,25 @@
 	import { enhance } from "$app/forms";
 	import { CircleCheck, LoaderCircle } from "@lucide/svelte";
 	import type { ActionResult } from "@sveltejs/kit";
+	import FormField from "../ui/general/FormField.svelte";
+	import Textarea from "../ui/general/Textarea.svelte";
 	import CrossCircle from "../ui/icons/CrossCircle.svelte";
 
-	let {
-		open = $bindable<boolean>(),
-		canvas = $bindable<DB.Canvas | undefined>()
-	}: { open: boolean; canvas: DB.Canvas | undefined } = $props();
+	interface Props {
+		open: boolean;
+		canvas: DB.Canvas | undefined;
+	}
 
-	let title = $derived(canvas?.title ?? "");
-	let origTitle = $derived(canvas?.title ?? "");
+	let { open = $bindable<boolean>(), canvas = $bindable<DB.Canvas | undefined>() }: Props =
+		$props();
+
+	let canvasName = $derived(canvas?.title ?? "");
+	let origCanvasName = $derived(canvas?.title ?? "");
 	let locDesc = $derived(canvas?.locDesc ?? "");
 	let origLocDesc = $derived(canvas?.locDesc ?? "");
 	let isArchived = $derived(canvas?.isArchived ?? false);
 	let id = $derived(canvas?.id ?? "");
-	let hasUnsavedChanges = $derived(title !== origTitle || locDesc !== origLocDesc); // if the user has unsaved changes
+	let hasUnsavedChanges = $derived(canvasName !== origCanvasName || locDesc !== origLocDesc); // if the user has unsaved changes
 
 	let errorStatus = $state({
 		flag: false,
@@ -34,6 +39,15 @@
 	let savingData = $state(false);
 	let archivingData = $state(false);
 	let saveFinished = $state(false);
+
+	// validity checkers
+	const nameMaxLen = 30; // max length of the description
+	let nameValid = $derived(!!canvasName && canvasName.length <= nameMaxLen);
+
+	const descMaxLen = 200; // max length of the description
+	let descValid = $derived(locDesc.length <= descMaxLen);
+
+	let valid = $derived(nameValid && descValid);
 
 	const resetUISavingState = () => {
 		// reset all UI states
@@ -98,7 +112,10 @@
 >
 	<div
 		class="modal-content"
-		onmouseup={(e) => e.stopPropagation()}
+		onmouseup={(e) => {
+			e.stopPropagation();
+			forceOpen = false;
+		}}
 		onmousedown={() => {
 			forceOpen = true;
 		}}
@@ -110,7 +127,7 @@
 		<form method="POST" use:enhance={submitCallback}>
 			<section id="main-content">
 				<section id="title-container">
-					<p class="title">Editing "{title}"</p>
+					<p class="title">Editing "{canvasName}"</p>
 
 					<button
 						type="button"
@@ -123,26 +140,38 @@
 					</button>
 				</section>
 
-				<label class="input-container">
-					<p class="caption">Title</p>
+				<FormField
+					label={nameValid
+						? "Canvas Name"
+						: !canvasName
+							? "Give it a name"
+							: "That's way too long"}
+					invalid={!nameValid}
+				>
 					<input
-						name="title"
-						placeholder="Canvas Title"
-						autocomplete="off"
-						bind:value={title}
+						type="text"
+						name={"canvasName"}
+						class:invalid={!nameValid}
+						bind:value={canvasName}
+						placeholder="My Canvas"
 					/>
-				</label>
+				</FormField>
 
-				<label class="input-container">
-					<p class="caption">Location description</p>
-					<textarea
-						name="locDesc"
-						placeholder="Location Description"
-						rows="5"
-						autocomplete="off"
-						bind:value={locDesc}
-					></textarea>
-				</label>
+				<FormField
+					label={descValid ? "Location Description" : "That's way too long"}
+					stretch={true}
+					invalid={!descValid}
+				>
+					<Textarea
+						bind:val={locDesc}
+						name={"locDesc"}
+						placeholder={"Where can people find this canvas?"}
+						maxLen={descMaxLen}
+						rows={5}
+						showRemaining={true}
+						invalid={!descValid}
+					/>
+				</FormField>
 			</section>
 
 			<!-- this stores the CURRENT state of the archieved state.
@@ -167,7 +196,7 @@
 					<button
 						type="submit"
 						formaction="/api/canvas?/updateCanvas"
-						disabled={!hasUnsavedChanges || savingData || archivingData}
+						disabled={!hasUnsavedChanges || savingData || archivingData || !valid}
 						class:full-opacity={savingData}
 						onclick={() => {
 							setTimeout(() => {
@@ -334,6 +363,10 @@
 					display: flex;
 					flex-direction: column;
 					row-gap: 15px;
+
+					button {
+						white-space: nowrap;
+					}
 
 					#error-msg {
 						width: 100%;

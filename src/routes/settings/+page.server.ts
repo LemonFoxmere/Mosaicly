@@ -3,14 +3,14 @@ import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
 	const { session } = await safeGetSession();
-	if (!session) redirect(403, "/login");
+	if (!session) redirect(303, "/login");
 };
 
 export const actions = {
 	// save profile on focus lost
 	update_profile: async ({ request, locals: { user, supabase } }) => {
 		const data = await request.formData();
-		const displayName = data.get("disp-name");
+		const displayName = data.get("displayName");
 		const bio = data.get("bio");
 
 		const { error } = await supabase

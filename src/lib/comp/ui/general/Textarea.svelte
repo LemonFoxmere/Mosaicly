@@ -3,20 +3,31 @@
 		val: string;
 		placeholder?: string;
 		maxLen?: number;
+		rows?: number; // how many rows should be showed?
 		showRemaining?: boolean;
 		invalid?: boolean;
+		name?: string; // for forms
 	}
 	let {
 		val = $bindable<string>(""),
 		placeholder = "",
 		maxLen = -1,
+		rows = -1,
 		showRemaining = false,
-		invalid = $bindable<boolean>(false)
+		invalid = $bindable<boolean>(false),
+		name = ""
 	}: Props = $props();
 </script>
 
 <main class:invalid>
-	<textarea name="bio" {placeholder} rows="3" autocomplete="off" class:invalid bind:value={val} />
+	<textarea
+		{name}
+		{placeholder}
+		rows={Math.max(rows, 0)}
+		autocomplete="off"
+		class:invalid
+		bind:value={val}
+	/>
 	{#if maxLen > 0 && showRemaining}
 		<p id="character-ct">{maxLen - val.length}</p>
 	{/if}

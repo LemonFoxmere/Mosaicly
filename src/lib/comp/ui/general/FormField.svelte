@@ -1,22 +1,25 @@
 <script lang="ts">
-	let {
-		label,
-		invalid = $bindable(false),
-		required = false,
-		stretch = false,
-		labelAction,
-		children
-	}: {
+	interface Props {
 		label: string;
 		invalid?: boolean;
 		required?: boolean;
 		stretch?: boolean;
 		labelAction?: () => any;
 		children?: () => any;
-	} = $props();
+		showDebugOutline?: boolean;
+	}
+	let {
+		label,
+		invalid = $bindable(false),
+		required = false,
+		stretch = false,
+		labelAction,
+		children,
+		showDebugOutline = false
+	}: Props = $props();
 </script>
 
-<main class:invalid class:stretch>
+<main class:invalid class:stretch class:showDebugOutline>
 	<p class="caption">
 		{label}{required ? "*" : ""}
 
@@ -38,6 +41,10 @@
 		// for all children
 		transition: 150ms $out-generic;
 		transition-property: color, border-color, opacity;
+
+		&.showDebugOutline {
+			border: 1px solid blue;
+		}
 
 		&.stretch {
 			flex-grow: 1;
