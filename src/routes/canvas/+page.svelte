@@ -52,12 +52,12 @@
 		>
 			Edit
 		</button>
-		<button
+		<!-- <button
 			class={`${editState === "inspect" ? "solid" : "outline"}`}
 			on:click={() => updateState("inspect")}
 		>
 			Inspect
-		</button>
+		</button> -->
 	</section>
 
 	<section id="canvas-container">
