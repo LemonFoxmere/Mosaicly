@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { RealtimePixelManager } from "$lib/comp/canvas/objects/RealtimePixelManager";
+	import { LoaderCircle } from "@lucide/svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 	import { supabase } from "../../lib/supabaseClient";
@@ -10,32 +11,36 @@
 
 	let { data }: PageProps = $props();
 
-	// const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+	// canvas infos
+	let canvasID = $derived(data.canvas.id);
+	let canvasDrawing = $derived(data.canvas.drawing); // will be used for initial canvas state
+	let canvasTitle = $derived(data.canvas.title); // used for the title in the header
+	let canvasLocDesc = $derived(data.canvas.loc_desc); // used for the description in the header
+	let canvasLoaded = $state(false);
 
-	// props
-	let canvasInfo = $derived<Pick<DB.Canvas, "id" | "drawing">>(data.canvas);
-
+	// realtime shit
 	let channelName = $derived(data.channelName);
 	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
-	let canvasID = $derived(canvasInfo.id);
-	let canvasDrawing = $derived(canvasInfo.drawing); // will be used for initial canvas state
 	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");
 	let userID = $derived(data.user?.account.id ?? "0");
 
 	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
 
-	let editable = $state(true);
+	let hasSession = $derived<boolean>(!!data.session);
 
 	const updateState = (newState: "view" | "edit" | "inspect") => {
 		editState = newState;
-		// TODO: do checking here
+	};
+
+	const readyCanvas = () => {
+		canvasLoaded = true;
 	};
 </script>
 
 <main>
 	<section id="title-container" class="no-drag">
-		<h2>Frog</h2>
-		<p>On the pole near the entrance of the Cowell dining hall.</p>
+		<h2>{canvasTitle}</h2>
+		<p>{canvasLocDesc}</p>
 	</section>
 
 	<section id="action-container">
@@ -47,10 +52,14 @@
 		</button>
 		<button
 			class={`${editState === "edit" ? "solid" : "outline"}`}
-			disabled={!editable}
+			disabled={!hasSession}
 			on:click={() => updateState("edit")}
 		>
-			Edit
+			{#if !hasSession}
+				Login to edit
+			{:else}
+				Edit
+			{/if}
 		</button>
 		<!-- <button
 			class={`${editState === "inspect" ? "solid" : "outline"}`}
@@ -61,6 +70,10 @@
 	</section>
 
 	<section id="canvas-container">
+		<div id="loading-cover" class:hidden={canvasLoaded}>
+			<LoaderCircle size={32} class="animate-spin" />
+		</div>
+
 		<Palette
 			changeColor={(_color: string) => {
 				selectedColor = _color;
@@ -70,7 +83,7 @@
 		<PixelCanvas
 			color={selectedColor}
 			mode={editState === "edit" ? "edit" : "view"}
-			load={() => {}}
+			load={readyCanvas}
 			backend={{
 				supabase,
 				realtimeManager,
@@ -126,11 +139,35 @@
 		}
 
 		#canvas-container {
+			position: relative;
 			display: flex;
 			flex-direction: column;
 			row-gap: 5px;
 			padding: 0px 10px;
 			flex-grow: 1;
+
+			#loading-cover {
+				position: absolute;
+				top: -10px;
+				left: -10px;
+
+				z-index: 5;
+				width: calc(100% + 20px);
+				height: calc(100% + 20px);
+				border-radius: 8px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				background-color: $background-primary;
+
+				transition: opacity 500ms $out-generic-expo;
+
+				&.hidden {
+					opacity: 0;
+					pointer-events: none;
+				}
+			}
 
 			@media screen and (min-width: $mobile-width) {
 				height: 100%;

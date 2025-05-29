@@ -3,7 +3,6 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ url, locals: { supabase, safeGetSession } }) => {
 	const { session } = await safeGetSession();
-	void session;
 
 	// TODO: Anonymous users can actually view the canvas too (as long as they are within the range)
 
@@ -17,21 +16,20 @@ export const load: PageServerLoad = async ({ url, locals: { supabase, safeGetSes
 
 	// canvas existence check and archive check
 	const channelName = backupCode;
-	const { data } = await supabase
+	const { data: rawData } = await supabase
 		.from("canvas")
-		.select("drawing, id, backup_code, is_archived")
+		.select("title, loc_desc, longitude, latitude, drawing, id, backup_code, is_archived")
 		.eq("backup_code", channelName)
 		.limit(1)
 		.maybeSingle();
 
-	if (data === null || data.is_archived === true) {
+	if (rawData === null || rawData.is_archived === true) {
 		error(404);
 	}
 
-	// TODO: distance checking
-
 	return {
-		canvas: data,
-		channelName: channelName
+		canvas: rawData,
+		channelName: channelName,
+		session: session
 	};
 };
