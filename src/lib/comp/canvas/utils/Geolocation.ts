@@ -159,3 +159,26 @@ export const validateCoordinates = (
 
 	return { isValid: true };
 };
+
+// helper function to return distance (in meters) between two latitude-longitude locations
+// adapted from talkol in Stack Overflow: https://stackoverflow.com/questions/14560999/using-the-haversine-formula-in-javascript
+const haversineDistance = (coord1: GeolocationPosition, coord2: GeolocationPosition) => {
+    const degreesToRad = (degree : number) => degree * Math.PI / 180;
+    
+    const lat1 = degreesToRad(coord1.coords.latitude);
+    const lon1 = degreesToRad(coord1.coords.longitude);
+    const lat2 = degreesToRad(coord2.coords.latitude);
+    const lon2 = degreesToRad(coord2.coords.longitude);
+    
+    const { sin, cos, sqrt, asin } = Math;
+    
+    const earthRadiusMeters = 6378137; // earth radius in meters (WGS84)
+    const deltaLat = lat2 - lat1;
+    const deltaLon = lon2 - lon1;
+    const a = sin(deltaLat / 2) * sin(deltaLat / 2)
+            + cos(lat1) * cos(lat2)
+            * sin(deltaLon / 2) * sin(deltaLon / 2);
+    const c = 2 * asin(sqrt(a));
+    const distance = earthRadiusMeters * c;
+    return distance; // distance in m
+}
