@@ -252,7 +252,7 @@
 		e.preventDefault();
 
 		// check if within bound
-		if (CursorUtils.isWithinBound(avgX, avgY, canvasBCR)) return;
+		if (!CursorUtils.isWithinBound(avgX, avgY, canvasBCR)) return;
 
 		// capture cursor positions
 		CursorUtils.captureCursor(sctx, avgX, avgY, canvasBCR);
@@ -363,7 +363,7 @@
 
 		// check if the mouse is inside the canvas first
 		const canvasBCR = canvasContainer.getBoundingClientRect();
-		if (CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR)) return;
+		if (!CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR)) return;
 
 		// detect right click
 		sctx.cursor.secondaryActive = e.button === 2;
@@ -386,7 +386,7 @@
 
 		// check if the mouse is inside the canvas or active first
 		const canvasBCR = canvasContainer.getBoundingClientRect();
-		if (!sctx.cursor.active && CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR))
+		if (!sctx.cursor.active && !CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR))
 			return;
 
 		// performance shit
@@ -403,7 +403,7 @@
 	const onMouseUp = (e: MouseEvent) => {
 		// check if the mouse is inside the canvas or active first
 		const canvasBCR = canvasContainer.getBoundingClientRect();
-		if (!sctx.cursor.active && CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR))
+		if (!sctx.cursor.active && !CursorUtils.isWithinBound(e.clientX, e.clientY, canvasBCR))
 			return;
 
 		// loop over all objects and call the onMouseUp function

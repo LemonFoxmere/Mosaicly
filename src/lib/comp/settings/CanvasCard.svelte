@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Pencil from "../ui/icons/Pencil.svelte";
+
 	let {
 		canvas,
 		onEdit: setCurrCanvas
@@ -35,7 +37,7 @@
 		</section>
 
 		<button id="edit-canvas" class="none" onclick={() => setCurrCanvas(canvas)}>
-			<img src="icons/pencil.svg" alt="edit" />
+			<Pencil s={28} />
 		</button>
 	</section>
 </main>
@@ -48,6 +50,7 @@
 
 		#content {
 			width: 100%;
+			max-width: 100%;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
@@ -59,14 +62,17 @@
 
 			#description {
 				display: flex;
+				max-width: calc(100% - 70px);
 				flex-direction: column;
 				row-gap: 15px;
 
 				#title-container {
 					display: flex;
+					max-width: 100%;
 					flex-direction: column;
 
 					.desc-text {
+						max-width: 100%;
 						display: -webkit-box;
 						line-clamp: 2;
 						-webkit-box-orient: vertical;
@@ -77,7 +83,11 @@
 			}
 
 			#edit-canvas {
-				padding: 5px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				width: 32px;
+				height: 32px;
 				cursor: pointer;
 			}
 		}

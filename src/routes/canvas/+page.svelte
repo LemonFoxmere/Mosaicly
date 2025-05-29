@@ -121,10 +121,33 @@
 		#title-container {
 			width: 100%;
 			display: flex;
+			flex-direction: column;
 			justify-content: space-between;
-			column-gap: 20px;
-			align-items: center;
+			row-gap: 5px;
+			align-items: flex-start;
 			padding: 0px 20px;
+
+			* {
+				max-width: 100%;
+			}
+
+			h2 {
+				// title 1 line
+				display: -webkit-box;
+				line-clamp: 1;
+				-webkit-box-orient: vertical;
+				-webkit-line-clamp: 1;
+				overflow: hidden;
+			}
+			p {
+				// description 2 lines
+				display: -webkit-box;
+				line-clamp: 2;
+				-webkit-box-orient: vertical;
+				-webkit-line-clamp: 2;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
 		}
 
 		#action-container {
@@ -153,7 +176,7 @@
 
 				z-index: 5;
 				width: calc(100% + 20px);
-				height: calc(100% + 20px);
+				height: calc(100% + 10px);
 				border-radius: 8px;
 
 				display: flex;
