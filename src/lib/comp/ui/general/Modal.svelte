@@ -4,12 +4,14 @@
 	interface Props {
 		opened: boolean;
 		title?: string;
+		subtitle?: string;
 		showCloseButton?: boolean;
 		children?: () => any;
 	}
 	let {
 		opened: open = $bindable<boolean>(),
 		title = $bindable<string>("New Modal"),
+		subtitle = $bindable<string>(""),
 		showCloseButton = $bindable<boolean>(true),
 		children
 	}: Props = $props();
@@ -40,7 +42,12 @@
 		<!-- Actual content -->
 		<section id="title-container">
 			{#if title}
-				<p class="title">{title}</p>
+				<section id="title-text-container">
+					<p class="title">{title}</p>
+					{#if subtitle}
+						<p id="subtitle">{subtitle}</p>
+					{/if}
+				</section>
 			{/if}
 			{#if showCloseButton}
 				<button
@@ -119,7 +126,17 @@
 				display: flex;
 				flex-direction: row;
 				justify-content: space-between;
+				align-items: flex-start;
 				column-gap: 20px;
+
+				#title-text-container {
+					display: flex;
+					flex-direction: column;
+
+					#subtitle {
+						padding-bottom: 20px; // pad for gap
+					}
+				}
 
 				button {
 					cursor: pointer !important;

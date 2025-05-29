@@ -96,7 +96,6 @@
 				</div>
 			{/if}
 
-			<!-- <EditCanvasModal bind:open={isOpen} bind:canvas={focusedCanvas} /> -->
 			<Modal bind:opened={isOpen} title={`Editing "${editedModalTitle}"`}>
 				<EditCanvas
 					bind:opened={isOpen}
