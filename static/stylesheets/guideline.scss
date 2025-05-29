@@ -216,6 +216,13 @@ button {
 			transform: scale(0.8);
 		}
 	}
+
+	&.hidden {
+		// hide completely
+		all: unset;
+		pointer-events: none;
+		display: none;
+	}
 }
 
 input {

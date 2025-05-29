@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { replaceState } from "$app/navigation";
-	import CanvasSettings from "$lib/comp/settings/pages/CanvasSettings.svelte";
-	import ProfileSettings from "$lib/comp/settings/pages/ProfileSettings.svelte";
+	import CanvasSettings from "$lib/comp/settings/tabContent/CanvasSettings.svelte";
+	import ProfileSettings from "$lib/comp/settings/tabContent/ProfileSettings.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
 	import type { PageProps } from "./$types";

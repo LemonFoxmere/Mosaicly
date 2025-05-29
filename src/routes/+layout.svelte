@@ -171,8 +171,23 @@
 				width: 100%;
 				display: flex;
 
+				p {
+					transition: transform 300ms $out-generic-expo;
+					transform-origin: left;
+				}
+				&:active {
+					p {
+						transform: scale(0.925);
+					}
+				}
+
 				button {
 					color: inherit;
+					transform-origin: left;
+
+					&:active {
+						transform: scale(0.925);
+					}
 
 					// for the button wrappers
 					&.none {

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import Modal from "$lib/comp/ui/general/Modal.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
 	import CanvasCard from "../CanvasCard.svelte";
-	import EditCanvasModal from "../EditCanvasModal.svelte";
+	import EditCanvas from "../modalContent/EditCanvas.svelte";
 
 	interface Props {
 		user: DB.AppUser | null | undefined;
@@ -25,11 +26,12 @@
 	};
 
 	let isOpen = $state(false);
-	let focusedCanvas = $state<DB.Canvas>();
+	let selectedCanvas = $state<DB.Canvas>();
+	let editedModalTitle = $state("");
 	let isReloading = $state(false);
 
 	const editThisCanvas = (canvas: DB.Canvas) => {
-		focusedCanvas = canvas;
+		selectedCanvas = canvas;
 		isOpen = true;
 	};
 
@@ -94,13 +96,20 @@
 				</div>
 			{/if}
 
-			<EditCanvasModal bind:open={isOpen} bind:canvas={focusedCanvas} />
+			<!-- <EditCanvasModal bind:open={isOpen} bind:canvas={focusedCanvas} /> -->
+			<Modal bind:opened={isOpen} title={`Editing "${editedModalTitle}"`}>
+				<EditCanvas
+					bind:opened={isOpen}
+					bind:canvas={selectedCanvas}
+					bind:editedTitle={editedModalTitle}
+				/>
+			</Modal>
 		{:else}
 			<div class="placeholder-container">
 				<LoaderCircle size={32} class="animate-spin" />
 			</div>
 		{/if}
-		<!-- add new canvas, popup like modal -->
+		<!-- redirects the user to add new canvas -->
 		<a id="new-canvas" href="/create">
 			<button> New Canvas </button>
 		</a>
