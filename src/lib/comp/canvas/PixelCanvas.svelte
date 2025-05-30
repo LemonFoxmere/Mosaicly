@@ -578,9 +578,9 @@
 	@use "$static/stylesheets/guideline" as *;
 
 	#canvas-container {
-		width: 100%;
-		flex-grow: 1;
 		position: relative;
+		width: 100%;
+		flex: 1;
 		padding: 0;
 
 		@media screen and (min-width: $mobile-width) {

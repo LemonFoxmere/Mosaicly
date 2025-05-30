@@ -46,7 +46,7 @@
 	};
 </script>
 
-<form method="POST" action="/profile?/update_profile" use:enhance={submitCallback}>
+<form class="no-drag" method="POST" action="/profile?/update_profile" use:enhance={submitCallback}>
 	<FormField
 		label={nameValid
 			? "Display Name"
@@ -68,6 +68,7 @@
 		<Textarea
 			bind:val={bio}
 			name={"bio"}
+			placeholder={"Just a chill guy."}
 			maxLen={bioMaxLen}
 			showRemaining={true}
 			invalid={!bioValid}

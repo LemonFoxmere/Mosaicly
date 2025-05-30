@@ -9,6 +9,7 @@ $background-accent: hsl(15, 30%, 92%);
 $text-primary: hsl(0, 24%, 17%);
 $text-secondary: hsl(0, 30%, 27%);
 $text-tertiary: hsl(10, 43%, 41%);
+$text-active-highlight: rgba($text-primary, 30%);
 
 $accent-error: hsl(359, 83%, 38%);
 
@@ -93,6 +94,8 @@ $global-max-width: 700px;
 
 // ========================== GENERIC ELEMENT STYLING ==========================
 button {
+	@extend .no-drag;
+
 	$button-height: 50px;
 	$shadow-height: 4px;
 
@@ -167,6 +170,8 @@ button {
 		margin: 0px;
 		padding: 11px 30px;
 
+		transition-property: opacity, color, background-color, border-color;
+
 		@media (hover: hover) {
 			&:hover {
 				opacity: 0.5;
@@ -204,6 +209,7 @@ button {
 		transition: 200ms $out-generic-expo;
 		transition-property: opacity, transform;
 		-webkit-tap-highlight-color: transparent;
+		border-radius: 8px;
 
 		@media (hover: hover) {
 			&:hover {
@@ -214,6 +220,7 @@ button {
 		&:active {
 			opacity: 1;
 			transform: scale(0.8);
+			background-color: $text-active-highlight;
 		}
 	}
 

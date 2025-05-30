@@ -49,7 +49,7 @@
 
 <svelte:window on:hashchange={routeChange} />
 
-<main>
+<main class="no-drag">
 	<!-- greet user -->
 	<section id="intro">
 		<section id="title-container">
