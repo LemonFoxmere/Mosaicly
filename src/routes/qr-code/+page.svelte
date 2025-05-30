@@ -4,6 +4,9 @@
 
 	let inputText = $state("a");
 	let finalText = $state(inputText);
+
+	const dummyCode = "d";
+	const dummyName = "dfdsfd";
 </script>
 
 <main>
@@ -19,7 +22,7 @@
 	<div id="QR-holder">
 		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
-	<PdfExport QrSRC={finalText}></PdfExport>
+	<PdfExport QrSRC="{finalText}," BackupCode="{dummyCode}," CanvasName={dummyName}></PdfExport>
 </main>
 
 <style lang="scss">

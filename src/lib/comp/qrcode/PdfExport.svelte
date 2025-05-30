@@ -2,13 +2,19 @@
 	import jsPDF from "jspdf";
 	import QRCode from "qrcode";
 
-	let { QrSRC = "" } = $props();
+	// QrSRC is the link to create QR code
+	let { QrSRC = "", BackupCode = "", CanvasName = "*name of canvas*" } = $props();
 
 	async function SaveToPDF() {
 		const doc = new jsPDF({
 			orientation: "portrait",
 			unit: "px",
 			format: "letter"
+		});
+		doc.setProperties({
+			title: "Mosaicly PDF",
+			subject: "QR code PDF",
+			author: "Mosaicly Team"
 		});
 
 		const pageWidth = doc.internal.pageSize.width;
@@ -17,7 +23,6 @@
 		doc.addFont("fonts/Outfit-Bold.ttf", "Outfit-Bold", "normal");
 		doc.addFont("fonts/Outfit-Regular.ttf", "Outfit-Regular", "normal");
 
-		// directly setting coordiates of elements
 		doc.setFont("Outfit-Bold", "normal")
 			.setFontSize(30)
 			.text("Like pixel art and shitposting?", pageWidth / 2, 80, { align: "center" });
@@ -25,7 +30,7 @@
 			.setFontSize(18)
 			.setTextColor(146, 146, 146)
 			.text(
-				"Scan the QR code to start drawing on the " + "*name of canvas*" + " canvas",
+				"Scan the QR code to start drawing on the " + CanvasName + " canvas",
 				pageWidth / 2,
 				110,
 				{
@@ -55,19 +60,20 @@
 					maxWidth: pageWidth * (2 / 3)
 				}
 			);
-		doc.setFont("Outfit-Bold", "normal")
+		doc.setFont("Outfit-Bold", "normal") // Backup Code
 			.setFontSize(25)
 			.setTextColor(0, 0, 0)
-			.text(QrSRC, pageWidth / 2, 430, {
+			.text(BackupCode, pageWidth / 2, 430, {
 				align: "center"
 			});
 
 		// logo
-		const img = new Image(); // Create new img element
+		const img = new Image();
 		img.src = "logos/logo-light-text.png";
-		const imgWidth = 120;
+		const imgWidth = 130;
 		doc.addImage(img, "png", pageWidth / 2 - imgWidth / 2, 540, imgWidth, 25);
-		doc.save("qrcode.pdf");
+		// doc.save("qrcode.pdf");	// download pdf
+		doc.output("dataurlnewwindow", { filename: "Mosaicly PDF" }); // open in new window
 	}
 </script>
 
