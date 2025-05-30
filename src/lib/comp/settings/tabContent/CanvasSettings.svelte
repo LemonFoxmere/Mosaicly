@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { LoaderCircle } from "@lucide/svelte";
+	import Modal from "$lib/comp/ui/general/Modal.svelte";
+	import Pencil from "$lib/comp/ui/icons/Pencil.svelte";
+	import CanvasCard from "$lib/comp/ui/listItems/CanvasCard.svelte";
+	import { EllipsisIcon, LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
-	import CanvasCard from "../CanvasCard.svelte";
-	import EditCanvasModal from "../EditCanvasModal.svelte";
+	import DetailCanvas from "../modalContent/DetailCanvas.svelte";
+	import EditCanvas from "../modalContent/EditCanvas.svelte";
 
 	interface Props {
 		user: DB.AppUser | null | undefined;
@@ -24,15 +27,60 @@
 		};
 	};
 
-	let isOpen = $state(false);
-	let focusedCanvas = $state<DB.Canvas>();
-	let isReloading = $state(false);
+	// modal properties
+	let isEditModalOpen: boolean = $state(false);
+	let isDetailModalOpen: boolean = $state(false);
+	let isModalOpen: boolean = $state(false);
+	let selectedCanvas: DB.Canvas | undefined = $state<DB.Canvas>();
+	let editedModalTitle: string = $state("");
+	let isReloading: boolean = $state(false);
+	let modalTitle: string = $derived.by(() => {
+		if (isEditModalOpen) {
+			return `Editing "${editedModalTitle}"`;
+		}
+		return `${selectedCanvas?.title} ${selectedCanvas?.isArchived ? "(Archived)" : ""}`; // return just the canvas name otherwise
+	});
+	let modalSubtitle: string = $derived.by(() => {
+		if (isDetailModalOpen) {
+			// show the location description
+			return `${selectedCanvas?.locDesc}`;
+		}
+		return ""; // empty by details
+	});
 
 	const editThisCanvas = (canvas: DB.Canvas) => {
-		focusedCanvas = canvas;
-		isOpen = true;
+		selectedCanvas = canvas;
+		isDetailModalOpen = false;
+		setTimeout(() => {
+			// prevent clashing
+			isEditModalOpen = true;
+			isModalOpen = true;
+		});
 	};
 
+	const detailThisCanvas = (canvas: DB.Canvas) => {
+		selectedCanvas = canvas;
+		isEditModalOpen = false;
+		setTimeout(() => {
+			// prevent clashing
+			isDetailModalOpen = true;
+			isModalOpen = true;
+		});
+	};
+
+	// helper for date
+	const dateOptions: Intl.DateTimeFormatOptions = {
+		month: "long",
+		day: "numeric",
+		year: "numeric",
+		hour12: true
+	};
+	const formatDate = (date: string | Date) => {
+		const d = typeof date === "string" ? new Date(date) : date;
+		return d.toLocaleString("en-US", dateOptions).replace(" at", " @");
+	};
+
+	// init function to get all the canvases
 	const fetchCanvases = async (): Promise<{ ok: boolean; err: string }> => {
 		if (!user) return { ok: false, err: "User is not logged in." };
 		if (canvases.length > 0) {
@@ -64,7 +112,6 @@
 
 		return { ok: true, err: "" };
 	};
-
 	const init = async () => {
 		const { ok, err } = await fetchCanvases();
 
@@ -78,14 +125,44 @@
 	onMount(init);
 </script>
 
-<main>
+<main class="no-drag">
 	{#if !panicState.flag}
 		{#if isLoaded}
 			<!-- canvases list render -->
 			{#if canvases.length > 0}
 				<div id="canvas-list">
 					{#each canvases as canvas (canvas.id)}
-						<CanvasCard {canvas} onEdit={editThisCanvas} />
+						<CanvasCard {canvas}>
+							{#snippet caption()}
+								<p class="canvas-card-caption">
+									Created on <span>{formatDate(canvas.createdOn)}</span>
+								</p>
+							{/snippet}
+
+							{#snippet ctaOptions()}
+								<!-- Edit button -->
+								<button
+									id="edit-canvas"
+									class="none canvas-card-cta"
+									onclick={() => {
+										editThisCanvas(canvas);
+									}}
+								>
+									<Pencil s={28} />
+								</button>
+
+								<!-- More options -->
+								<button
+									id="edit-canvas"
+									class="none canvas-card-cta"
+									onclick={() => {
+										detailThisCanvas(canvas);
+									}}
+								>
+									<EllipsisIcon size={28} />
+								</button>
+							{/snippet}
+						</CanvasCard>
 					{/each}
 				</div>
 			{:else}
@@ -94,13 +171,24 @@
 				</div>
 			{/if}
 
-			<EditCanvasModal bind:open={isOpen} bind:canvas={focusedCanvas} />
+			<!-- global modal -->
+			<Modal bind:opened={isModalOpen} title={modalTitle} subtitle={modalSubtitle}>
+				{#if isEditModalOpen}
+					<EditCanvas
+						bind:opened={isModalOpen}
+						bind:canvas={selectedCanvas}
+						bind:editedTitle={editedModalTitle}
+					/>
+				{:else if isDetailModalOpen}
+					<DetailCanvas bind:opened={isModalOpen} bind:canvas={selectedCanvas} />
+				{/if}
+			</Modal>
 		{:else}
 			<div class="placeholder-container">
 				<LoaderCircle size={32} class="animate-spin" />
 			</div>
 		{/if}
-		<!-- add new canvas, popup like modal -->
+		<!-- redirects the user to add new canvas -->
 		<a id="new-canvas" href="/create">
 			<button> New Canvas </button>
 		</a>
@@ -113,7 +201,7 @@
 			</section>
 			<!-- reload button -->
 			<button
-				on:click={() => {
+				onclick={() => {
 					window.location.reload();
 					isReloading = true;
 				}}
@@ -152,6 +240,23 @@
 			flex-direction: column;
 			justify-content: center;
 			row-gap: 10px;
+
+			.canvas-card-cta {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				width: 48px;
+				height: 48px;
+				cursor: pointer;
+				border-radius: 8px;
+			}
+
+			.canvas-card-caption {
+				span {
+					white-space: nowrap; // do not wrap things like date
+				}
+			}
 		}
 
 		#new-canvas {
@@ -194,6 +299,7 @@
 				bottom: 0px;
 
 				width: 100%;
+
 				&:disabled {
 					opacity: 1 !important;
 				}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { replaceState } from "$app/navigation";
-	import CanvasSettings from "$lib/comp/settings/pages/CanvasSettings.svelte";
-	import ProfileSettings from "$lib/comp/settings/pages/ProfileSettings.svelte";
+	import CanvasSettings from "$lib/comp/settings/tabContent/CanvasSettings.svelte";
+	import ProfileSettings from "$lib/comp/settings/tabContent/ProfileSettings.svelte";
 	import { LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
 	import type { PageProps } from "./$types";
@@ -49,7 +49,7 @@
 
 <svelte:window on:hashchange={routeChange} />
 
-<main>
+<main class="no-drag">
 	<!-- greet user -->
 	<section id="intro">
 		<section id="title-container">
@@ -136,6 +136,7 @@
 
 					#gradient-bg {
 						// have to use a bunch of importants here because of ordering
+						width: 100%;
 						top: 0px !important;
 						height: calc(100% + 20px) !important;
 						background: linear-gradient($background-primary, transparent) !important;
@@ -198,7 +199,7 @@
 
 				#gradient-bg {
 					position: absolute;
-					width: 100vw;
+					width: 100%;
 					top: -22px;
 					height: calc(100% + 40px);
 					background: linear-gradient($background-primary, transparent);
