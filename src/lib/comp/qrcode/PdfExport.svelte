@@ -3,7 +3,7 @@
 	import QRCode from "qrcode";
 
 	// QrSRC is the link to create QR code
-	let { QrSRC = "", BackupCode = "", CanvasName = "*name of canvas*" } = $props();
+	let { QrSRC = "", BackupCode = "", CanvasName = "" } = $props();
 
 	async function SaveToPDF() {
 		const doc = new jsPDF({
@@ -23,22 +23,6 @@
 		doc.addFont("fonts/Outfit-Bold.ttf", "Outfit-Bold", "normal");
 		doc.addFont("fonts/Outfit-Regular.ttf", "Outfit-Regular", "normal");
 
-		doc.setFont("Outfit-Bold", "normal")
-			.setFontSize(30)
-			.text("Like pixel art and shitposting?", pageWidth / 2, 80, { align: "center" });
-		doc.setFont("Outfit-Regular", "normal")
-			.setFontSize(18)
-			.setTextColor(146, 146, 146)
-			.text(
-				"Scan the QR code to start drawing on the " + CanvasName + " canvas",
-				pageWidth / 2,
-				110,
-				{
-					align: "center",
-					maxWidth: pageWidth * (2 / 3)
-				}
-			);
-
 		// qr-code is smaller than image size
 		doc.addImage(
 			await QRCode.toDataURL(QrSRC),
@@ -48,6 +32,22 @@
 			pageWidth / 2,
 			pageWidth / 2
 		);
+
+		doc.setFont("Outfit-Bold", "normal")
+			.setFontSize(30)
+			.text("Like pixel art and shitposting?", pageWidth / 2, 80, { align: "center" });
+		doc.setFont("Outfit-Regular", "normal")
+			.setFontSize(18)
+			.setTextColor(146, 146, 146)
+			.text(
+				'Scan the QR code to start drawing on the "' + CanvasName + '" canvas',
+				pageWidth / 2,
+				110,
+				{
+					align: "center",
+					maxWidth: pageWidth * (2 / 3)
+				}
+			);
 
 		doc.setFont("Outfit-Regular", "normal")
 			.setFontSize(18)

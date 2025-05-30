@@ -5,8 +5,10 @@
 	let inputText = $state("a");
 	let finalText = $state(inputText);
 
-	const dummyCode = "d";
-	const dummyName = "dfdsfd";
+	// Remember: max name length 30
+	const dummyName = "DUMMY NAME";
+
+	const dummyCode = "DUMMY CODE";
 </script>
 
 <main>
@@ -22,14 +24,14 @@
 	<div id="QR-holder">
 		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
-	<PdfExport QrSRC="{finalText}," BackupCode="{dummyCode}," CanvasName={dummyName}></PdfExport>
+	<PdfExport QrSRC={finalText} BackupCode={dummyCode} CanvasName={dummyName}></PdfExport>
 </main>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
 	#QR-holder {
-		background: #fff;
+		background: #9a9a9a;
 		padding: 2px;
 		border-radius: 5px;
 	}
