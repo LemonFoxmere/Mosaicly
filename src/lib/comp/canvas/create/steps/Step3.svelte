@@ -39,6 +39,9 @@
 				<Image s={22} />
 				Image
 			</button>
+			<button class="outline" on:click={() => window.open("http://example.com/someImage.png")}
+				>Dumb Image
+			</button>
 
 			<!-- QrSrc needs be full link (https://mosaicly.io/search/canvasBackupCode) -->
 			<PdfExport
@@ -46,11 +49,12 @@
 				BackupCode={canvasBackupCode}
 				CanvasName={canvasName}
 			></PdfExport>
-
+			<!--
 			<button class="outline" on:click={() => onQrPdf && onQrPdf()}>
 				<Document s={22} />
 				PDF
 			</button>
+			-->
 		</section>
 	</section>
 </main>

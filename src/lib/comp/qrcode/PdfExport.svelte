@@ -1,6 +1,7 @@
 <script lang="ts">
 	import jsPDF from "jspdf";
 	import QRCode from "qrcode";
+	import Document from "$lib/comp/ui/icons/Document.svelte";
 
 	// QrSRC is the link to create QR code
 	let { QrSRC = "", BackupCode = "", CanvasName = "" } = $props();
@@ -78,8 +79,28 @@
 	}
 </script>
 
-<button onclick={SaveToPDF}> PDF </button>
+<button class="outline" onclick={SaveToPDF}>
+	<Document s={22} />
+	PDF
+</button>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
+
+	// copied from Step 3
+	button {
+		flex-grow: 1;
+		height: 100%;
+		max-height: 130px;
+
+		display: flex;
+		flex-direction: column;
+		row-gap: 5px;
+
+		color: $text-primary;
+
+		@media screen and (min-width: $mobile-width) {
+			height: 130px;
+		}
+	}
 </style>
