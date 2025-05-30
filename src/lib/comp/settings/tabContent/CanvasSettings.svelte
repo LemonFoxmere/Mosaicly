@@ -26,14 +26,39 @@
 		};
 	};
 
-	let isOpen = $state(false);
+	// modal properties
+	let isEditModalOpen = $state(false);
+	let isDetailModalOpen = $state(false);
+	let isModalOpen = $state(false);
 	let selectedCanvas = $state<DB.Canvas>();
 	let editedModalTitle = $state("");
 	let isReloading = $state(false);
+	let modalTitle = $derived.by(() => {
+		if (isEditModalOpen) {
+			return `Editing "${editedModalTitle}"`;
+		}
+		return `${selectedCanvas?.title}`; // return just the canvas name otherwise
+	});
+	let modalSubtitle = $derived.by(() => {
+		if (isDetailModalOpen) {
+			// show the location description
+			return `${selectedCanvas?.locDesc}`;
+		}
+		return ""; // empty by details
+	});
 
 	const editThisCanvas = (canvas: DB.Canvas) => {
 		selectedCanvas = canvas;
-		isOpen = true;
+		isEditModalOpen = true;
+		isDetailModalOpen = false;
+		isModalOpen = true;
+	};
+
+	const detailThisCanvas = (canvas: DB.Canvas) => {
+		selectedCanvas = canvas;
+		isDetailModalOpen = true;
+		isEditModalOpen = false;
+		isModalOpen = true;
 	};
 
 	// helper for date
@@ -124,7 +149,7 @@
 									id="edit-canvas"
 									class="none canvas-card-cta"
 									onclick={() => {
-										editThisCanvas(canvas);
+										detailThisCanvas(canvas);
 									}}
 								>
 									<EllipsisIcon size={28} />
@@ -139,12 +164,17 @@
 				</div>
 			{/if}
 
-			<Modal bind:opened={isOpen} title={`Editing "${editedModalTitle}"`}>
-				<EditCanvas
-					bind:opened={isOpen}
-					bind:canvas={selectedCanvas}
-					bind:editedTitle={editedModalTitle}
-				/>
+			<!-- global modal -->
+			<Modal bind:opened={isModalOpen} title={modalTitle} subtitle={modalSubtitle}>
+				{#if isEditModalOpen}
+					<EditCanvas
+						bind:opened={isModalOpen}
+						bind:canvas={selectedCanvas}
+						bind:editedTitle={editedModalTitle}
+					/>
+				{:else if isDetailModalOpen}
+					<h1>Very nice</h1>
+				{/if}
 			</Modal>
 		{:else}
 			<div class="placeholder-container">

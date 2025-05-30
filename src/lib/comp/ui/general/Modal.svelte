@@ -16,26 +16,40 @@
 		children
 	}: Props = $props();
 
+	let closeButton: HTMLButtonElement;
+	let simulatedCloseButtonPress = $state(false); // improve UX by triggering clicked aniamtion when clicking outside
+
 	let forceOpen = $state(false); // stupid UI shit to prevent the window from closing when user is dragging text
 </script>
 
 <main
 	class="no-drag"
 	class:hidden={!open}
+	onmousedown={() => (simulatedCloseButtonPress = true)}
+	ontouchend={() => (simulatedCloseButtonPress = false)}
+	ontouchstart={() => (simulatedCloseButtonPress = true)}
 	onmouseup={() => {
 		if (!forceOpen) {
 			open = false;
 		}
 		forceOpen = false;
+		simulatedCloseButtonPress = false;
 	}}
 >
 	<div
 		class="modal-content"
+		ontouchstart={(e) => {
+			e.stopPropagation();
+		}}
+		ontouchend={(e) => {
+			e.stopPropagation();
+		}}
 		onmouseup={(e) => {
 			e.stopPropagation();
 			forceOpen = false;
 		}}
-		onmousedown={() => {
+		onmousedown={(e) => {
+			e.stopPropagation();
 			forceOpen = true;
 		}}
 	>
@@ -51,8 +65,10 @@
 			{/if}
 			{#if showCloseButton}
 				<button
-					type="button"
+					bind:this={closeButton}
+					id="close-button"
 					class="none"
+					class:sim-pressed={simulatedCloseButtonPress}
 					onclick={() => {
 						open = false;
 					}}
@@ -132,15 +148,28 @@
 				#title-text-container {
 					display: flex;
 					flex-direction: column;
+					padding-bottom: 20px; // pad for gap if the content gets too tall
 
 					#subtitle {
-						padding-bottom: 20px; // pad for gap
+						// limit to 2 lines
+						overflow: hidden;
+						text-overflow: ellipsis;
+						display: -webkit-box;
+						-webkit-box-orient: vertical;
+						-webkit-line-clamp: 2;
+						line-clamp: 2;
 					}
 				}
 
-				button {
+				#close-button {
 					border-radius: 100px;
 					cursor: pointer !important;
+
+					&.sim-pressed {
+						opacity: 1;
+						transform: scale(0.8);
+						background-color: $text-active-highlight;
+					}
 				}
 			}
 		}
