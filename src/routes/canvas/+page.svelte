@@ -3,9 +3,10 @@
 	import { LoaderCircle } from "@lucide/svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
-	import { setupListener } from "$lib/comp/canvas/utils/Geolocation";
+	import { UserWithinCanvas, setupListener } from "$lib/comp/canvas/utils/Geolocation";
 	import { supabase } from "../../lib/supabaseClient";
 	import type { PageProps } from "./$types";
+	import { Value } from "sass";
 
 	let selectedColor = $state("#000000");
 	let editState: "view" | "edit" | "inspect" = $state("view");
@@ -31,8 +32,9 @@
 
 	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
 
-	let isCloseToCanvas = $state(false);
-	setupListener(isCloseToCanvas, canvasLatitude, canvasLongitude);
+	const userWithinCanvas = new UserWithinCanvas;
+	let isCloseToCanvas = $state(() => userWithinCanvas.isCloseToCanvas);
+	setupListener(userWithinCanvas, canvasLatitude, canvasLongitude);
 
 	let hasSession = $derived<boolean>(!!data.session);
 
@@ -43,12 +45,17 @@
 	const readyCanvas = () => {
 		canvasLoaded = true;
 	};
+
+	$effect( () => {
+		console.log(isCloseToCanvas());
+	})
 </script>
 
 <main>
 	<section id="title-container" class="no-drag">
 		<h2>{canvasTitle}</h2>
 		<p>{canvasLocDesc}</p>
+		<p>{isCloseToCanvas}</p>
 	</section>
 
 	<section id="action-container">
