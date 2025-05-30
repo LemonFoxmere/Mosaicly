@@ -4,6 +4,7 @@
 	import CanvasCard from "$lib/comp/ui/listItems/CanvasCard.svelte";
 	import { EllipsisIcon, LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
+	import DetailCanvas from "../modalContent/DetailCanvas.svelte";
 	import EditCanvas from "../modalContent/EditCanvas.svelte";
 
 	interface Props {
@@ -27,19 +28,19 @@
 	};
 
 	// modal properties
-	let isEditModalOpen = $state(false);
-	let isDetailModalOpen = $state(false);
-	let isModalOpen = $state(false);
-	let selectedCanvas = $state<DB.Canvas>();
-	let editedModalTitle = $state("");
-	let isReloading = $state(false);
-	let modalTitle = $derived.by(() => {
+	let isEditModalOpen: boolean = $state(false);
+	let isDetailModalOpen: boolean = $state(false);
+	let isModalOpen: boolean = $state(false);
+	let selectedCanvas: DB.Canvas | undefined = $state<DB.Canvas>();
+	let editedModalTitle: string = $state("");
+	let isReloading: boolean = $state(false);
+	let modalTitle: string = $derived.by(() => {
 		if (isEditModalOpen) {
 			return `Editing "${editedModalTitle}"`;
 		}
 		return `${selectedCanvas?.title}`; // return just the canvas name otherwise
 	});
-	let modalSubtitle = $derived.by(() => {
+	let modalSubtitle: string = $derived.by(() => {
 		if (isDetailModalOpen) {
 			// show the location description
 			return `${selectedCanvas?.locDesc}`;
@@ -173,7 +174,7 @@
 						bind:editedTitle={editedModalTitle}
 					/>
 				{:else if isDetailModalOpen}
-					<h1>Very nice</h1>
+					<DetailCanvas bind:opened={isModalOpen} bind:canvas={selectedCanvas} />
 				{/if}
 			</Modal>
 		{:else}
