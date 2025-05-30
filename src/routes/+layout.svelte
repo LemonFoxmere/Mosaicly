@@ -31,27 +31,35 @@
 	};
 </script>
 
-<main>
+<main class="no-drag">
 	<nav bind:this={navbar} id="navbar" class="no-drag is-at-top">
 		<!-- <button class="small">Log in</button> -->
 		{#if showLogo}
-			<a class="wrapper item" href="/" on:click={closeMobileMenu}>
-				<div id="logo"><MosaiclyLogo s={28} /></div>
-				<!-- <p id="logo-text">mosaicly</p> -->
+			<a class="wrapper item no-drag" href="/" on:click={closeMobileMenu}>
+				<button class="none">
+					<div id="logo"><MosaiclyLogo s={28} /></div>
+				</button>
 			</a>
 		{/if}
 		{#if showCta}
 			{#if !session}
-				<a class="wrapper item" href="/login">
+				<a class="wrapper item no-drag" href="/login">
 					<button class="small">Log in</button>
 				</a>
 			{:else}
-				<a class="wrapper item large" href="" on:click={toggleMobileMenu}>
-					{#if user?.profile?.avatarUrl}
-						<img src={user.profile.avatarUrl} alt="Profile Picture" id="pfp" />
-					{:else}
-						<button class="small outline">Profile</button>
-					{/if}
+				<a class="wrapper item large no-drag" href="" on:click={toggleMobileMenu}>
+					<button class="none">
+						{#if user?.profile?.avatarUrl}
+							<img
+								class="no-drag"
+								src={user.profile.avatarUrl}
+								alt="Profile Picture"
+								id="pfp"
+							/>
+						{:else}
+							<button class="small outline no-drag">Profile</button>
+						{/if}
+					</button>
 				</a>
 			{/if}
 		{/if}
@@ -149,6 +157,12 @@
 					width: 42px;
 					height: 42px;
 				}
+
+				button {
+					&.none {
+						background-color: transparent !important;
+					}
+				}
 			}
 
 			#pfp {
@@ -187,6 +201,7 @@
 
 					&:active {
 						transform: scale(0.925);
+						background-color: transparent;
 					}
 
 					// for the button wrappers

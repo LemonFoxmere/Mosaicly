@@ -120,7 +120,7 @@
 			opacity: 1;
 			transition: 500ms $out-generic-expo;
 			transition-property: opacity transform;
-			transition-delay: 200ms;
+			transition-delay: 100ms;
 
 			#title-container {
 				display: flex;
@@ -139,6 +139,7 @@
 				}
 
 				button {
+					border-radius: 100px;
 					cursor: pointer !important;
 				}
 			}

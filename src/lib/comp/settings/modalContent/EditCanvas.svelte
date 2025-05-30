@@ -250,7 +250,7 @@
 
 	<!-- ===================== HIDDEN FORM DATA ===================== -->
 
-	<!-- this stores the CURRENT state of the archieved state.
+	<!-- this stores the CURRENT state of the Archived state.
 	The toggle function basically takes this and inverts it -->
 	<input name="isArchived" value={isArchived} type="hidden" />
 	<!-- hidden canvasID input that can be sent to the form as

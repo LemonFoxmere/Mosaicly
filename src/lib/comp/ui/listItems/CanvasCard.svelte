@@ -1,12 +1,10 @@
 <script lang="ts">
-	import Pencil from "../ui/icons/Pencil.svelte";
-
 	let {
 		canvas,
-		onEdit: setCurrCanvas
+		ctaOptions
 	}: {
 		canvas: DB.Canvas;
-		onEdit: (canvas: DB.Canvas) => void;
+		ctaOptions: () => any;
 	} = $props();
 
 	const dateOptions: Intl.DateTimeFormatOptions = {
@@ -27,18 +25,23 @@
 	<section id="content" class:archived={isArchived}>
 		<section id="description">
 			<section id="title-container">
-				<p class="title">{title}</p>
+				<p class="title">
+					{title}
+					{#if isArchived}
+						(Archived)
+					{/if}
+				</p>
 				<p class="desc-text">{locDesc}</p>
 			</section>
 
 			<p>
-				Created on {formatDate(createdOn)}{isArchived ? " (Archieved)" : ""}
+				Created on <span>{formatDate(createdOn)}</span>
 			</p>
 		</section>
+	</section>
 
-		<button id="edit-canvas" class="none" onclick={() => setCurrCanvas(canvas)}>
-			<Pencil s={28} />
-		</button>
+	<section id="cta">
+		{@render ctaOptions()}
 	</section>
 </main>
 
@@ -46,15 +49,18 @@
 	@use "$static/stylesheets/guideline" as *;
 
 	main {
-		padding: 14px 20px;
+		display: flex;
+		justify-content: space-between;
+		column-gap: 20px;
+
+		padding: 15px 20px;
 
 		#content {
-			width: 100%;
 			max-width: 100%;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			column-gap: 20px;
+			overflow: hidden;
 
 			&.archived {
 				opacity: 0.3;
@@ -62,7 +68,7 @@
 
 			#description {
 				display: flex;
-				max-width: calc(100% - 70px);
+				max-width: 100%;
 				flex-direction: column;
 				row-gap: 15px;
 
@@ -73,23 +79,28 @@
 
 					.desc-text {
 						max-width: 100%;
+						text-overflow: ellipsis;
+						overflow: hidden;
+
 						display: -webkit-box;
 						line-clamp: 2;
 						-webkit-box-orient: vertical;
 						-webkit-line-clamp: 2;
-						overflow: hidden;
 					}
 				}
 			}
 
-			#edit-canvas {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				width: 32px;
-				height: 32px;
-				cursor: pointer;
+			span {
+				white-space: nowrap; // do not wrap things like date
 			}
+		}
+
+		#cta {
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
+			gap: 5px;
 		}
 	}
 </style>

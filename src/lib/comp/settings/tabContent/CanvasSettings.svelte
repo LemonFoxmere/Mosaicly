@@ -1,8 +1,9 @@
 <script lang="ts">
 	import Modal from "$lib/comp/ui/general/Modal.svelte";
-	import { LoaderCircle } from "@lucide/svelte";
+	import Pencil from "$lib/comp/ui/icons/Pencil.svelte";
+	import CanvasCard from "$lib/comp/ui/listItems/CanvasCard.svelte";
+	import { EllipsisIcon, LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
-	import CanvasCard from "../CanvasCard.svelte";
 	import EditCanvas from "../modalContent/EditCanvas.svelte";
 
 	interface Props {
@@ -80,14 +81,38 @@
 	onMount(init);
 </script>
 
-<main>
+<main class="no-drag">
 	{#if !panicState.flag}
 		{#if isLoaded}
 			<!-- canvases list render -->
 			{#if canvases.length > 0}
 				<div id="canvas-list">
 					{#each canvases as canvas (canvas.id)}
-						<CanvasCard {canvas} onEdit={editThisCanvas} />
+						<CanvasCard {canvas}>
+							{#snippet ctaOptions()}
+								<!-- Edit button -->
+								<button
+									id="edit-canvas"
+									class="none canvas-card-cta"
+									onclick={() => {
+										editThisCanvas(canvas);
+									}}
+								>
+									<Pencil s={28} />
+								</button>
+
+								<!-- More options -->
+								<button
+									id="edit-canvas"
+									class="none canvas-card-cta"
+									onclick={() => {
+										editThisCanvas(canvas);
+									}}
+								>
+									<EllipsisIcon size={28} />
+								</button>
+							{/snippet}
+						</CanvasCard>
 					{/each}
 				</div>
 			{:else}
@@ -121,7 +146,7 @@
 			</section>
 			<!-- reload button -->
 			<button
-				on:click={() => {
+				onclick={() => {
 					window.location.reload();
 					isReloading = true;
 				}}
@@ -160,6 +185,17 @@
 			flex-direction: column;
 			justify-content: center;
 			row-gap: 10px;
+
+			.canvas-card-cta {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				width: 48px;
+				height: 48px;
+				cursor: pointer;
+				border-radius: 8px;
+			}
 		}
 
 		#new-canvas {
@@ -202,6 +238,7 @@
 				bottom: 0px;
 
 				width: 100%;
+
 				&:disabled {
 					opacity: 1 !important;
 				}
