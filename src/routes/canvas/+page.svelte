@@ -74,25 +74,31 @@
 			<LoaderCircle size={32} class="animate-spin" />
 		</div>
 
-		<Palette
-			changeColor={(_color: string) => {
-				selectedColor = _color;
-			}}
-		></Palette>
+		<div id="color-palette" class:hidden={editState === "view"}>
+			<Palette
+				changeColor={(_color: string) => {
+					selectedColor = _color;
+				}}
+			></Palette>
+		</div>
 
-		<PixelCanvas
-			color={selectedColor}
-			mode={editState === "edit" ? "edit" : "view"}
-			load={readyCanvas}
-			backend={{
-				supabase,
-				realtimeManager,
-				canvasChannel,
-				userDisplayName,
-				userID,
-				canvasDrawing
-			}}
-		/>
+		<div id="canvas-wrapper" class:shrink={editState === "edit"}>
+			<div id="canvas-content">
+				<PixelCanvas
+					color={selectedColor}
+					mode={editState === "edit" ? "edit" : "view"}
+					load={readyCanvas}
+					backend={{
+						supabase,
+						realtimeManager,
+						canvasChannel,
+						userDisplayName,
+						userID,
+						canvasDrawing
+					}}
+				/>
+			</div>
+		</div>
 	</section>
 </main>
 
@@ -107,7 +113,7 @@
 
 		flex-direction: column;
 		row-gap: 20px;
-		padding: 10px 0px 8px 0px; // less on the bottom cuz of some optical illustion shit
+		padding: 10px 0px 10px 0px;
 
 		@media screen and (min-width: $mobile-width) {
 			// desktop
@@ -164,10 +170,12 @@
 		#canvas-container {
 			position: relative;
 			display: flex;
+			align-items: center;
 			flex-direction: column;
-			row-gap: 5px;
 			padding: 0px 10px;
 			flex-grow: 1;
+
+			$movement-transition: 500ms $out-generic-expo;
 
 			#loading-cover {
 				position: absolute;
@@ -189,6 +197,58 @@
 				&.hidden {
 					opacity: 0;
 					pointer-events: none;
+				}
+			}
+
+			#color-palette {
+				z-index: 1;
+
+				position: absolute;
+				width: calc(100% - 20px); // account for padding
+				max-width: 400px;
+
+				transition: $movement-transition;
+				transition-property: opacity, transform;
+
+				&.hidden {
+					opacity: 0;
+					pointer-events: none;
+					transform: translate(0px, -15px);
+				}
+			}
+
+			#canvas-wrapper {
+				z-index: 2;
+
+				display: flex;
+				width: 100%;
+				flex: 1;
+				border-radius: 8px;
+				background-color: $text-primary;
+
+				clip-path: rect(0px 100% 100% 0px round 8px);
+
+				transition: $movement-transition;
+				transition-property: clip-path, transform;
+
+				overflow: hidden;
+
+				#canvas-content {
+					display: flex;
+					width: 100%;
+					flex: 1;
+
+					transition: $movement-transition;
+					transition-property: clip-path, transform;
+				}
+
+				// edit mode
+				&.shrink {
+					clip-path: rect(75px 100% 100% 0px round 8px);
+
+					#canvas-content {
+						transform: translate(0px, 40px);
+					}
 				}
 			}
 
