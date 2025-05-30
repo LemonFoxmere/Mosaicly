@@ -3,6 +3,7 @@
 	import { LoaderCircle } from "@lucide/svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
+	import { setupListener } from "$lib/comp/canvas/utils/Geolocation";
 	import { supabase } from "../../lib/supabaseClient";
 	import type { PageProps } from "./$types";
 
@@ -18,6 +19,10 @@
 	let canvasLocDesc = $derived(data.canvas.loc_desc); // used for the description in the header
 	let canvasLoaded = $state(false);
 
+	// canvas location infos
+	let canvasLatitude = $derived(data.canvas.latitude);
+	let canvasLongitude = $derived(data.canvas.longitude);
+
 	// realtime shit
 	let channelName = $derived(data.channelName);
 	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
@@ -25,6 +30,9 @@
 	let userID = $derived(data.user?.account.id ?? "0");
 
 	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
+
+	let isCloseToCanvas = $state(false);
+	setupListener(isCloseToCanvas, canvasLatitude, canvasLongitude);
 
 	let hasSession = $derived<boolean>(!!data.session);
 

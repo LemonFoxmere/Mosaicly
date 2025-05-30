@@ -6,7 +6,7 @@ type GetCurrentPosResult = {
 };
 
 // checks geolocation and permissions from user's browser and returns error number if needed
-const checkNavigatorConfig = async (): Promise<number> => {
+export const checkNavigatorConfig = async (): Promise<number> => {
 	if (!("geolocation" in navigator)) {
 		return 2; // error: 2
 	}
@@ -43,6 +43,25 @@ const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
 	});
 };
 
+// error handling for when status is not 0
+const handleStatusError = (status: number) => {
+	switch (status) {
+		case GeolocationPositionError.PERMISSION_DENIED:
+			alert("Location access was denied. Enable it in your browser settings.");
+			break;
+		case GeolocationPositionError.POSITION_UNAVAILABLE:
+			alert(
+				"Location access unavailable. Are you on a device that supports geolocation?"
+			);
+			break;
+		case GeolocationPositionError.TIMEOUT:
+			alert("Location access timed out. Try again in a bit.");
+			break;
+		default:
+			alert("Idk what happened but something is very wrong. Please try again later.");
+	}
+}
+
 export const fetchCoordinatesForDisplay = async (): Promise<{
 	location: Coordinates | null;
 	status: number;
@@ -50,25 +69,8 @@ export const fetchCoordinatesForDisplay = async (): Promise<{
 	const { location, status } = await getCurrentPos();
 
 	if (status !== 0) {
-		switch (status) {
-			case GeolocationPositionError.PERMISSION_DENIED:
-				alert("Location access was denied. Enable it in your browser settings.");
-				break;
-			case GeolocationPositionError.POSITION_UNAVAILABLE:
-				alert(
-					"Location access unavailable. Are you on a device that supports geolocation?"
-				);
-				break;
-			case GeolocationPositionError.TIMEOUT:
-				alert("Location access timed out. Try again in a bit.");
-				break;
-			default:
-				alert("Idk what happened but something is very wrong. Please try again later.");
-		}
-		return {
-			location: null,
-			status: status
-		};
+		handleStatusError(status);
+		return { location: null, status: status}
 	}
 
 	if (location) {
@@ -175,13 +177,13 @@ export const validateCoordinates = (
 
 // helper function to return distance (in meters) between two latitude-longitude locations
 // adapted from talkol in Stack Overflow: https://stackoverflow.com/questions/14560999/using-the-haversine-formula-in-javascript
-const haversineDistance = (coord1: GeolocationPosition, coord2: GeolocationPosition) => {
+const haversineDistance = (lat1Degrees: number, lon1Degrees: number, lat2Degrees: number, lon2Degrees: number) => {
     const degreesToRad = (degree : number) => degree * Math.PI / 180;
     
-    const lat1 = degreesToRad(coord1.coords.latitude);
-    const lon1 = degreesToRad(coord1.coords.longitude);
-    const lat2 = degreesToRad(coord2.coords.latitude);
-    const lon2 = degreesToRad(coord2.coords.longitude);
+    const lat1 = degreesToRad(lat1Degrees);
+    const lon1 = degreesToRad(lon1Degrees);
+    const lat2 = degreesToRad(lat2Degrees);
+    const lon2 = degreesToRad(lon2Degrees);
     
     const { sin, cos, sqrt, asin } = Math;
     
@@ -194,4 +196,34 @@ const haversineDistance = (coord1: GeolocationPosition, coord2: GeolocationPosit
     const c = 2 * asin(sqrt(a));
     const distance = earthRadiusMeters * c;
     return distance; // distance in m
+}
+
+// checks that user is within canvas coordinates
+const isWithinCanvas = (userPosition: GeolocationPosition, canvasLat: number, canvasLon: number): boolean => {
+	const distanceBound: number = 20; // user must be within 20m of canvas
+
+	const currDistance: number = haversineDistance(userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon);
+	console.log(currDistance);
+	console.log(userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon);
+
+	return currDistance < distanceBound;
+}
+
+// setup listener for user coordinates that checks for user location with canvas 
+// changes state of whether or not user is close to canvas
+export const setupListener = async (isCloseToCanvas: boolean, canvasLat: number, canvasLon: number) => {
+	const error: number = await checkNavigatorConfig(); // may return 0 or 1 if error, or -1 if no errors found
+	if (error !== -1) {
+		handleStatusError(error);
+		isCloseToCanvas = false;
+		return;
+	}
+
+	navigator.geolocation.watchPosition(
+		(position) => isCloseToCanvas = isWithinCanvas(position, canvasLat, canvasLon), 
+		(error) => {
+			handleStatusError(error.code);
+			return false
+		}, 
+		{ enableHighAccuracy: true, timeout: 2000, maximumAge: 0 });
 }
