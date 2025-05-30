@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Document from "$lib/comp/ui/icons/Document.svelte";
 	import Image from "$lib/comp/ui/icons/Image.svelte";
+	import PdfExport from "$lib/comp/qrcode/PdfExport.svelte";
 
 	interface Props {
 		canvasName: string;
@@ -38,6 +39,14 @@
 				<Image s={22} />
 				Image
 			</button>
+
+			<!-- QrSrc needs be full link (https://mosaicly.io/search/canvasBackupCode) -->
+			<PdfExport
+				QrSRC={"https://mosaicly.io/search/" + canvasBackupCode}
+				BackupCode={canvasBackupCode}
+				CanvasName={canvasName}
+			></PdfExport>
+
 			<button class="outline" on:click={() => onQrPdf && onQrPdf()}>
 				<Document s={22} />
 				PDF

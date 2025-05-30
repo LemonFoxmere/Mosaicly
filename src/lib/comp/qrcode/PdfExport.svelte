@@ -72,6 +72,7 @@
 		img.src = "logos/logo-light-text.png";
 		const imgWidth = 130;
 		doc.addImage(img, "png", pageWidth / 2 - imgWidth / 2, 540, imgWidth, 25);
+
 		// doc.save("qrcode.pdf");	// download pdf
 		doc.output("dataurlnewwindow", { filename: "Mosaicly PDF" }); // open in new window
 	}

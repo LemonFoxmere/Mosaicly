@@ -6,8 +6,8 @@
 	let finalText = $state(inputText);
 
 	// Remember: max name length 30
+	const dummyLink = "https://mosaicly.io/search/" + finalText;
 	const dummyName = "DUMMY NAME";
-
 	const dummyCode = "DUMMY CODE";
 </script>
 
@@ -24,7 +24,7 @@
 	<div id="QR-holder">
 		<QrGenerator QrSRC={finalText}></QrGenerator>
 	</div>
-	<PdfExport QrSRC={finalText} BackupCode={dummyCode} CanvasName={dummyName}></PdfExport>
+	<PdfExport QrSRC={dummyLink} BackupCode={dummyCode} CanvasName={dummyName}></PdfExport>
 </main>
 
 <style lang="scss">
