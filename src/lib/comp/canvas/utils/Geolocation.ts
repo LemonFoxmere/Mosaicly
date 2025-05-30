@@ -5,22 +5,35 @@ type GetCurrentPosResult = {
 	status: number;
 };
 
-const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
+// checks geolocation and permissions from user's browser and returns error number if needed
+const checkNavigatorConfig = async (): Promise<number> => {
 	if (!("geolocation" in navigator)) {
-		return { location: null, status: 2 };
+		return 2; // error: 2
 	}
 
 	if ("permissions" in navigator) {
 		try {
 			const { state } = await navigator.permissions.query({ name: "geolocation" });
 			if (state === "denied") {
-				return { location: null, status: 1 };
+				return 1; // status: 1
 			}
 		} catch {
 			// ignore and proceed
 		}
 	}
 
+	return -1; // -1 if no errors found
+}
+
+const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
+
+	// check that user has the correct geolocation configurations
+	const error: number = await checkNavigatorConfig(); // may return 0 or 1 if error, or -1 if no errors found
+	if (error !== -1) {
+		return { location: null, status: error }
+	}
+
+	// otherwise, get current location
 	return new Promise<GetCurrentPosResult>((resolve) => {
 		navigator.geolocation.getCurrentPosition(
 			(position) => resolve({ location: position, status: 0 }),
