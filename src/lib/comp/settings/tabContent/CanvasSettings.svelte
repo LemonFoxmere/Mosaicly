@@ -36,6 +36,19 @@
 		isOpen = true;
 	};
 
+	// helper for date
+	const dateOptions: Intl.DateTimeFormatOptions = {
+		month: "long",
+		day: "numeric",
+		year: "numeric",
+		hour12: true
+	};
+	const formatDate = (date: string | Date) => {
+		const d = typeof date === "string" ? new Date(date) : date;
+		return d.toLocaleString("en-US", dateOptions).replace(" at", " @");
+	};
+
+	// init function to get all the canvases
 	const fetchCanvases = async (): Promise<{ ok: boolean; err: string }> => {
 		if (!user) return { ok: false, err: "User is not logged in." };
 		if (canvases.length > 0) {
@@ -67,7 +80,6 @@
 
 		return { ok: true, err: "" };
 	};
-
 	const init = async () => {
 		const { ok, err } = await fetchCanvases();
 
@@ -89,6 +101,12 @@
 				<div id="canvas-list">
 					{#each canvases as canvas (canvas.id)}
 						<CanvasCard {canvas}>
+							{#snippet caption()}
+								<p class="canvas-card-caption">
+									Created on <span>{formatDate(canvas.createdOn)}</span>
+								</p>
+							{/snippet}
+
 							{#snippet ctaOptions()}
 								<!-- Edit button -->
 								<button
@@ -195,6 +213,12 @@
 				height: 48px;
 				cursor: pointer;
 				border-radius: 8px;
+			}
+
+			.canvas-card-caption {
+				span {
+					white-space: nowrap; // do not wrap things like date
+				}
 			}
 		}
 

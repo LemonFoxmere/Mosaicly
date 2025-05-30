@@ -1,24 +1,12 @@
 <script lang="ts">
-	let {
-		canvas,
-		ctaOptions
-	}: {
+	interface Props {
 		canvas: DB.Canvas;
-		ctaOptions: () => any;
-	} = $props();
+		ctaOptions?: () => any;
+		caption?: () => any;
+	}
+	let { canvas, ctaOptions, caption }: Props = $props();
 
-	const dateOptions: Intl.DateTimeFormatOptions = {
-		month: "long",
-		day: "numeric",
-		year: "numeric",
-		hour12: true
-	};
-	const formatDate = (date: string | Date) => {
-		const d = typeof date === "string" ? new Date(date) : date;
-		return d.toLocaleString("en-US", dateOptions).replace(" at", " @");
-	};
-
-	const { title, locDesc, createdOn, isArchived } = $derived(canvas);
+	const { title, locDesc, isArchived } = $derived(canvas);
 </script>
 
 <main class="item-frame">
@@ -34,14 +22,12 @@
 				<p class="desc-text">{locDesc}</p>
 			</section>
 
-			<p>
-				Created on <span>{formatDate(createdOn)}</span>
-			</p>
+			{@render caption?.()}
 		</section>
 	</section>
 
 	<section id="cta">
-		{@render ctaOptions()}
+		{@render ctaOptions?.()}
 	</section>
 </main>
 
@@ -88,10 +74,6 @@
 						-webkit-line-clamp: 2;
 					}
 				}
-			}
-
-			span {
-				white-space: nowrap; // do not wrap things like date
 			}
 		}
 
