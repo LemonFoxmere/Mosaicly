@@ -9,7 +9,7 @@ const isCanvasNameValid = (name: string | null) => {
 
 const maxLocationDescLen = 200;
 const isLocationDescValid = (val: string | null) => {
-	return !!val && val.length <= maxLocationDescLen;
+	return val !== null && val.length <= maxLocationDescLen;
 };
 
 const isLocationValid = (longitude: number, latitude: number, accuracy: number) => {
