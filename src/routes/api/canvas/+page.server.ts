@@ -45,6 +45,24 @@ const getRandomBackupCode = (): string => {
 // SERVER ACTIONS
 
 export const actions: Actions = {
+	/**
+	 * Creates a new canvas record for an authenticated user.
+	 *
+	 * Workflow:
+	 * - Ensures the user is authenticated; rejects with HTTP 401 if not.
+	 * - Extracts form data including title, location description, longitude, latitude, and accuracy.
+	 * - Validates each field:
+	 *   - Title and location description are validated for content and format.
+	 *   - Longitude, latitude, and accuracy are parsed and validated for geographic correctness.
+	 *   - Any validation failure results in HTTP 400 with detailed error information.
+	 * - Attempts to insert a new canvas record into the database:
+	 *   - Assigns a unique UUID.
+	 *   - Generates a random backup code.
+	 *   - Stores the geographic location as a PostGIS SRID 4326 POINT.
+	 * - If the backup code insertion fails due to duplication, retries once with a new backup code.
+	 * - Any other insertion failure results in HTTP 500.
+	 * - If insertion succeeds, returns HTTP 200 with the newly created canvas record.
+	 */
 	createCanvas: async ({ request, locals: { user, supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();
 		if (!session) {
@@ -129,6 +147,22 @@ export const actions: Actions = {
 
 		return { success: true, canvas: data[0] };
 	},
+
+	/**
+	 * Updates an existing canvas record for an authenticated user.
+	 *
+	 * Workflow:
+	 * - Verifies user session; rejects with HTTP 401 if unauthenticated.
+	 * - Extracts form data: canvasName, location description, and canvasId.
+	 * - Validates canvasName and location description:
+	 *   - Rejects with HTTP 400 on invalid input, including form data for client handling.
+	 * - Performs database update:
+	 *   - Updates title and location description fields for the specified canvasId, but only if it belongs to the current user.
+	 *   - Selects and returns the updated record.
+	 * - On database error, rejects with HTTP 500 including error message and form data.
+	 * - If no record is updated (either non-existent or unauthorized), rejects with HTTP 404 and form data.
+	 * - On successful update, returns HTTP 200 with the updated canvas record.
+	 */
 	updateCanvas: async ({ request, locals: { user, supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();
 		if (!session) {
@@ -137,8 +171,6 @@ export const actions: Actions = {
 
 		const form = await request.formData();
 		const formValues = Object.fromEntries(form);
-
-		console.log(formValues);
 
 		const canvasName = form.get("canvasName")?.toString() ?? "";
 		const locDesc = form.get("locDesc")?.toString() ?? "";
@@ -179,12 +211,27 @@ export const actions: Actions = {
 
 		return { success: true, canvas: data[0] };
 	},
+
+	/**
+	 * Toggles the archive state of a canvas record for an authenticated user.
+	 *
+	 * Workflow:
+	 * - Validates user session; rejects with HTTP 401 if unauthenticated.
+	 * - Extracts form data: isArchived (as boolean string) and canvasId.
+	 * - Validates isArchived input:
+	 *   - Must be "true" or "false" string; rejects with HTTP 400 if invalid.
+	 * - Updates database record:
+	 *   - Inverts the is_archived state for the specified canvasId, but only if it belongs to the current user.
+	 *   - Selects and returns the updated record.
+	 * - On database error, rejects with HTTP 500 including error message and original form data.
+	 * - If no matching record is found (non-existent or unauthorized), rejects with HTTP 404 and form data.
+	 * - On successful update, returns HTTP 200 with the updated canvas record.
+	 */
 	toggleArchiveState: async ({ request, locals: { user, supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();
 		if (!session) {
 			return fail(401);
 		}
-
 		const form = await request.formData();
 		const formValues = Object.fromEntries(form);
 
@@ -193,6 +240,7 @@ export const actions: Actions = {
 			// safely parse bool
 			return fail(400);
 		}
+
 		const isCurrentlyArchived: boolean = isArchivedStr === "true"; // OLD data. New one inverts it
 		const canvasId = form.get("canvasId")?.toString() ?? ""; // parse canvasId
 
@@ -216,6 +264,54 @@ export const actions: Actions = {
 		if (!data || data.length === 0) {
 			return fail(404, {
 				message: "Canvas not found or you don't have permission to update it.",
+				data: formValues
+			});
+		}
+
+		return { success: true, canvas: data[0] };
+	},
+
+	/**
+	 * Deletes a canvas record for an authenticated user.
+	 *
+	 * Workflow:
+	 * - Validates user session; rejects with HTTP 401 if unauthenticated.
+	 * - Extracts form data: canvasId.
+	 * - Performs database delete:
+	 *   - Deletes the record matching canvasId and current user ID.
+	 *   - Selects and returns the deleted record.
+	 * - On database error, rejects with HTTP 500 including error message and original form data.
+	 * - If no matching record is found (non-existent or unauthorized), rejects with HTTP 404 and form data.
+	 * - On successful deletion, returns HTTP 200 with the deleted canvas record.
+	 */
+	deleteCanvas: async ({ request, locals: { user, supabase, safeGetSession } }) => {
+		const { session } = await safeGetSession();
+		if (!session) {
+			return fail(401);
+		}
+
+		const form = await request.formData();
+		const formValues = Object.fromEntries(form);
+
+		const canvasId = form.get("canvasId")?.toString() ?? "";
+
+		const { data, error } = await supabase
+			.from("canvas")
+			.delete()
+			.eq("id", canvasId)
+			.eq("user_id", user.id)
+			.select();
+
+		if (error) {
+			return fail(500, {
+				message: error.message,
+				data: formValues
+			});
+		}
+
+		if (!data || data.length === 0) {
+			return fail(404, {
+				message: "Canvas not found or you don't have permission to delete it.",
 				data: formValues
 			});
 		}

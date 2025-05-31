@@ -22,21 +22,20 @@
 	let forceOpen = $state(false); // stupid UI shit to prevent the window from closing when user is dragging text
 </script>
 
-<main
-	class="no-drag"
-	class:hidden={!open}
-	ontouchend={() => (simulatedCloseButtonPress = false)}
-	ontouchstart={() => (simulatedCloseButtonPress = true)}
-	onmousedown={() => (simulatedCloseButtonPress = true)}
-	onmouseup={() => {
-		if (!forceOpen) {
-			open = false;
-		}
-		forceOpen = false;
-		simulatedCloseButtonPress = false;
-	}}
->
-	<section id="content">
+<main class="no-drag" class:hidden={!open}>
+	<section
+		id="content"
+		ontouchend={() => (simulatedCloseButtonPress = false)}
+		ontouchstart={() => (simulatedCloseButtonPress = true)}
+		onmousedown={() => (simulatedCloseButtonPress = true)}
+		onmouseup={() => {
+			if (!forceOpen) {
+				open = false;
+			}
+			forceOpen = false;
+			simulatedCloseButtonPress = false;
+		}}
+	>
 		<div
 			class="modal-content"
 			ontouchstart={(e) => {
@@ -103,7 +102,7 @@
 
 		transition: opacity 500ms $out-generic-expo;
 
-		// no scroll thru
+		// prevent scroll thru
 		touch-action: none;
 
 		&.hidden {
@@ -122,6 +121,8 @@
 		}
 
 		#content {
+			position: absolute;
+
 			width: 100%;
 			height: 100%;
 			padding: 15px;
@@ -171,6 +172,7 @@
 
 					#close-button {
 						border-radius: 100px;
+						aspect-ratio: 1/1;
 						cursor: pointer !important;
 
 						&.sim-pressed {
