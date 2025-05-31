@@ -85,6 +85,12 @@
 
 			<hr class="menu-items" />
 
+			<a class="menu-items" href="/nearby" on:click={closeMobileMenu}>
+				<p>Nearby Canvases</p>
+			</a>
+
+			<hr class="menu-items" />
+
 			<a class="menu-items" id="sign-out">
 				<button class="none" formaction="/api/auth?/signout">
 					<p>Sign Out</p>
@@ -218,7 +224,7 @@
 					}
 				}
 
-				@for $i from 1 through 7 {
+				@for $i from 1 through 9 {
 					// Change the number based on the number of buttons
 					&:nth-child(#{$i}) {
 						animation: fly-in 500ms $out-cubic #{($i - 1) * $stagger} forwards;
@@ -274,7 +280,7 @@
 
 			&.disabled {
 				.menu-items {
-					@for $i from 1 through 7 {
+					@for $i from 1 through 9 {
 						// Change the number based on the number of buttons
 						&:nth-child(#{$i}) {
 							animation: fly-out 250ms $in-cubic #{($i - 1) * $stagger} forwards;
