@@ -2,6 +2,7 @@
 	import Document from "$lib/comp/ui/icons/Document.svelte";
 	import Image from "$lib/comp/ui/icons/Image.svelte";
 	import PdfExport from "$lib/comp/qrcode/PdfExport.svelte";
+	import QrGenerator from "$lib/comp/qrcode/QrGenerator.svelte";
 
 	interface Props {
 		canvasName: string;
@@ -11,6 +12,8 @@
 		onQrPdf?: () => void;
 	}
 	let { canvasName, canvasBackupCode, currentStep, onQrImage, onQrPdf }: Props = $props();
+
+	let displayQR = $state(false); // dumb code for Image button
 </script>
 
 <main>
@@ -35,26 +38,19 @@
 		</section>
 
 		<section id="cta">
-			<button class="outline" on:click={() => onQrImage && onQrImage()}>
-				<Image s={22} />
-				Image
+			<button class="outline" on:click={() => (displayQR = !displayQR)}>
+				<Image s={22} /> Image
 			</button>
-			<button class="outline" on:click={() => window.open("http://example.com/someImage.png")}
-				>Dumb Image
-			</button>
+			{#if displayQR}
+				<QrGenerator QrSRC={"https://mosaicly.io/search/" + canvasBackupCode}></QrGenerator>
+			{/if}
 
-			<!-- QrSrc needs be full link (https://mosaicly.io/search/canvasBackupCode) -->
+			<!-- PDF: QrSrc is full link -->
 			<PdfExport
 				QrSRC={"https://mosaicly.io/search/" + canvasBackupCode}
 				BackupCode={canvasBackupCode}
 				CanvasName={canvasName}
 			></PdfExport>
-			<!--
-			<button class="outline" on:click={() => onQrPdf && onQrPdf()}>
-				<Document s={22} />
-				PDF
-			</button>
-			-->
 		</section>
 	</section>
 </main>
