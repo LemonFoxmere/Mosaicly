@@ -3,8 +3,9 @@
 	import { LoaderCircle } from "@lucide/svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
-	import { UserWithinCanvas, setupListener } from "$lib/comp/canvas/utils/Geolocation";
+	import { UserLocationInfo, setupListener } from "$lib/comp/canvas/utils/Geolocation";
 	import { supabase } from "../../lib/supabaseClient";
+	import { onMount } from "svelte";
 	import type { PageProps } from "./$types";
 	import { Value } from "sass";
 
@@ -32,9 +33,8 @@
 
 	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
 
-	const userWithinCanvas = new UserWithinCanvas;
-	let isCloseToCanvas = $state(() => userWithinCanvas.isCloseToCanvas);
-	setupListener(userWithinCanvas, canvasLatitude, canvasLongitude);
+	const userLocationInfo = new UserLocationInfo;
+	let isCloseToCanvas = $state(() => userLocationInfo.isCloseToCanvas);
 
 	let hasSession = $derived<boolean>(!!data.session);
 
@@ -49,13 +49,17 @@
 	$effect( () => {
 		console.log(isCloseToCanvas());
 	})
+
+	onMount(() => {
+		setupListener(userLocationInfo, canvasLatitude, canvasLongitude);
+	})
 </script>
 
 <main>
 	<section id="title-container" class="no-drag">
 		<h2>{canvasTitle}</h2>
 		<p>{canvasLocDesc}</p>
-		<p>{isCloseToCanvas}</p>
+		<p>{isCloseToCanvas()} {userLocationInfo.getDistance()}</p>
 	</section>
 
 	<section id="action-container">

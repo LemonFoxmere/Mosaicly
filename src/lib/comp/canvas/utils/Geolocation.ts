@@ -199,10 +199,11 @@ const haversineDistance = (lat1Degrees: number, lon1Degrees: number, lat2Degrees
 }
 
 // checks that user is within canvas coordinates
-const isWithinCanvas = (userPosition: GeolocationPosition, canvasLat: number, canvasLon: number): boolean => {
+const isWithinCanvas = (userLocationInfo: UserLocationInfo, userPosition: GeolocationPosition, canvasLat: number, canvasLon: number): boolean => {
 	const distanceBound: number = 20; // user must be within 20m of canvas
 
 	const currDistance: number = haversineDistance(userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon);
+	userLocationInfo.setDistance(currDistance);
 	console.log(currDistance, "meters");
 	console.log(userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon);
 
@@ -211,8 +212,9 @@ const isWithinCanvas = (userPosition: GeolocationPosition, canvasLat: number, ca
 	// return coord.toString();
 }
 
-export class UserWithinCanvas {
+export class UserLocationInfo {
 	isCloseToCanvas: boolean = false;
+	distance: number = 0;
 
 	getIsCloseToCanvas() {
 		return this.isCloseToCanvas;
@@ -220,29 +222,36 @@ export class UserWithinCanvas {
 	setIsCloseToCanvas(bool: boolean) {
 		this.isCloseToCanvas = bool;
 	}
+
+	getDistance() {
+		return this.distance;
+	}
+
+	setDistance(dist: number) {
+		this.distance = dist;
+	}
 }
 
 // setup listener for user coordinates that checks for user location with canvas 
 // changes state of whether or not user is close to canvas
-export const setupListener = async (userWithinCanvas: UserWithinCanvas, canvasLat: number, canvasLon: number) => {
+export const setupListener = async (userLocationInfo: UserLocationInfo, canvasLat: number, canvasLon: number) => {
 	const error: number = await checkNavigatorConfig(); // may return 0 or 1 if error, or -1 if no errors found
-	userWithinCanvas.setIsCloseToCanvas(true);
+	userLocationInfo.setIsCloseToCanvas(true);
 	if (error !== -1) {
 		handleStatusError(error);
-		userWithinCanvas.setIsCloseToCanvas(false);
+		userLocationInfo.setIsCloseToCanvas(false);
 	} else {
-
-		console.log(fetchCoordinatesForDisplay())
 
 		navigator.geolocation.watchPosition(
 			(position) => {
 				// isCloseToCanvas(isWithinCanvas(position, canvasLat, canvasLon))
-				userWithinCanvas.setIsCloseToCanvas(isWithinCanvas(position, canvasLat, canvasLon));
+				console.log(position)
+				userLocationInfo.setIsCloseToCanvas(isWithinCanvas(userLocationInfo, position, canvasLat, canvasLon));
 			}, 
 			(error) => {
 				// handleStatusError(error.code);
 				console.log(error.code)
-				userWithinCanvas.setIsCloseToCanvas(false);
+				userLocationInfo.setIsCloseToCanvas(false);
 			}, 
 			{ enableHighAccuracy: true, timeout: Infinity, maximumAge: 0 });
 	}
