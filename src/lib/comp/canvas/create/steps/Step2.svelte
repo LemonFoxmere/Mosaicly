@@ -143,6 +143,7 @@
 					longitude={coords.longitude}
 					allowClickToUpdateCoordinates={MAP_CONFIG.allowClickToUpdateCoordinates}
 					showMarker={showMapMarker}
+					showRadius={showMapMarker}
 					onClickWithCoords={handleMapClick}
 				/>
 			{:else}

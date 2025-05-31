@@ -10,6 +10,7 @@
 		longitude: number;
 		allowClickToUpdateCoordinates?: boolean;
 		showMarker?: boolean;
+		showRadius?: boolean;
 		onClickWithCoords?: (lat: number, lng: number) => void;
 	}
 
@@ -18,6 +19,7 @@
 		longitude = $bindable(),
 		allowClickToUpdateCoordinates = false,
 		showMarker = true,
+		showRadius = false,
 		onClickWithCoords = undefined
 	}: Props = $props();
 
@@ -50,7 +52,9 @@
 		// Add navigation controls
 		map.on("load", () => {
 			setMarker();
-			addRadiusCircle();
+			if (showRadius) {
+				addRadiusCircle();
+			}
 		});
 		map.on("zoomend", () => {
 			if (map) {
@@ -113,7 +117,7 @@
 			typeof longitude !== "number" ||
 			isNaN(latitude) ||
 			isNaN(longitude) ||
-			!showMarker
+			!showRadius
 		)
 			return;
 
@@ -156,6 +160,16 @@
 		}
 	};
 
+	const removeRadiusCircle = () => {
+		if (!map) return;
+		if (map.getLayer(radiusCircleId)) {
+			map.removeLayer(radiusCircleId);
+		}
+		if (map.getSource(radiusCircleId)) {
+			map.removeSource(radiusCircleId);
+		}
+	};
+
 	const updateMapAndView = () => {
 		if (
 			map &&
@@ -164,7 +178,6 @@
 			!isNaN(latitude) &&
 			!isNaN(longitude)
 		) {
-			// Ensure the map is centered on the new coordinates with the current zoom level
 			map.flyTo({
 				center: [longitude, latitude],
 				zoom: Math.max(currentZoom, USER_ACTION_ZOOM),
@@ -172,7 +185,11 @@
 				speed: 1
 			});
 			setMarker();
-			addRadiusCircle();
+			if (showRadius) {
+				addRadiusCircle();
+			} else {
+				removeRadiusCircle();
+			}
 		}
 	};
 
