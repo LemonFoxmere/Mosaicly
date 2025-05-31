@@ -44,7 +44,7 @@ const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
 };
 
 // error handling for when status is not 0
-const handleStatusError = (status: number) => {
+export const handleStatusError = (status: number) => {
 	switch (status) {
 		case GeolocationPositionError.PERMISSION_DENIED:
 			alert("Location access was denied. Enable it in your browser settings.");
@@ -177,7 +177,7 @@ export const validateCoordinates = (
 
 // helper function to return distance (in meters) between two latitude-longitude locations
 // adapted from talkol in Stack Overflow: https://stackoverflow.com/questions/14560999/using-the-haversine-formula-in-javascript
-const haversineDistance = (lat1Degrees: number, lon1Degrees: number, lat2Degrees: number, lon2Degrees: number) => {
+export const haversineDistance = (lat1Degrees: number, lon1Degrees: number, lat2Degrees: number, lon2Degrees: number) => {
     const degreesToRad = (degree : number) => degree * Math.PI / 180;
     
     const lat1 = degreesToRad(lat1Degrees);
@@ -196,63 +196,4 @@ const haversineDistance = (lat1Degrees: number, lon1Degrees: number, lat2Degrees
     const c = 2 * asin(sqrt(a));
     const distance = earthRadiusMeters * c;
     return distance; // distance in m
-}
-
-// checks that user is within canvas coordinates
-const isWithinCanvas = (userLocationInfo: UserLocationInfo, userPosition: GeolocationPosition, canvasLat: number, canvasLon: number): boolean => {
-	const distanceBound: number = 20; // user must be within 20m of canvas
-
-	const currDistance: number = haversineDistance(userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon);
-	userLocationInfo.setDistance(currDistance);
-	console.log(currDistance, "meters");
-	console.log(userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon);
-
-	return currDistance < distanceBound;
-	// let coord: number[] = [currDistance, userPosition.coords.latitude, userPosition.coords.longitude, canvasLat, canvasLon]
-	// return coord.toString();
-}
-
-export class UserLocationInfo {
-	isCloseToCanvas: boolean = false;
-	distance: number = 0;
-
-	getIsCloseToCanvas() {
-		return this.isCloseToCanvas;
-	}
-	setIsCloseToCanvas(bool: boolean) {
-		this.isCloseToCanvas = bool;
-	}
-
-	getDistance() {
-		return this.distance;
-	}
-
-	setDistance(dist: number) {
-		this.distance = dist;
-	}
-}
-
-// setup listener for user coordinates that checks for user location with canvas 
-// changes state of whether or not user is close to canvas
-export const setupListener = async (userLocationInfo: UserLocationInfo, canvasLat: number, canvasLon: number) => {
-	const error: number = await checkNavigatorConfig(); // may return 0 or 1 if error, or -1 if no errors found
-	userLocationInfo.setIsCloseToCanvas(true);
-	if (error !== -1) {
-		handleStatusError(error);
-		userLocationInfo.setIsCloseToCanvas(false);
-	} else {
-
-		navigator.geolocation.watchPosition(
-			(position) => {
-				// isCloseToCanvas(isWithinCanvas(position, canvasLat, canvasLon))
-				console.log(position)
-				userLocationInfo.setIsCloseToCanvas(isWithinCanvas(userLocationInfo, position, canvasLat, canvasLon));
-			}, 
-			(error) => {
-				// handleStatusError(error.code);
-				console.log(error.code)
-				userLocationInfo.setIsCloseToCanvas(false);
-			}, 
-			{ enableHighAccuracy: true, timeout: Infinity, maximumAge: 0 });
-	}
 }
