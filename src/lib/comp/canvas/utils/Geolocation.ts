@@ -1,6 +1,5 @@
 type Coordinates = { latitude: number; longitude: number; accuracy: number };
 
-// Canvas-related types moved here to consolidate location functionality
 export interface NearbyCanvas {
     id: string;
     title: string;
