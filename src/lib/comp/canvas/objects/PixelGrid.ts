@@ -229,6 +229,7 @@ export class PixelGrid extends CanvasObject {
 
 	update(sctx: SceneContext): void {
 		void sctx;
+		this.realtimeManager.broadcastThenSave(this.pixels);
 	}
 
 	onCursorDown(sctx: SceneContext): void {
@@ -271,7 +272,6 @@ export class PixelGrid extends CanvasObject {
 			this.placePixel(sctx.cursor.relx, sctx.cursor.rely, sctx.pixelGrid.brush.color, sctx);
 		}
 
-		this.realtimeManager.broadcastThenSave(this.pixels); // push any pending pixel changes to the server
 		sctx.pixelGrid.brush.active = false;
 	}
 }

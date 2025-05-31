@@ -6,7 +6,7 @@
 	style="--s: {s}px;"
 	fill="none"
 	viewBox="0 0 24 24"
-	stroke-width="0.75"
+	stroke-width="1"
 	stroke="currentColor"
 	class="size-6"
 >

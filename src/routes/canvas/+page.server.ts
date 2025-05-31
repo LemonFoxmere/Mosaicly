@@ -1,35 +1,29 @@
-import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ url, locals: { supabase, safeGetSession } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
 	const { session } = await safeGetSession();
+	void session;
 
 	// TODO: Anonymous users can actually view the canvas too (as long as they are within the range)
 
-	// get backup code parameter (ex: /canvas?c=qwer-tyui-opas)
-	const backupCode: string | null = url.searchParams.get("c");
-
-	// parameter null-checking (ex: /canvas without c parameter)
-	if (backupCode === null) {
-		error(404);
-	}
-
-	// canvas existence check and archive check
-	const channelName = backupCode;
-	const { data: rawData } = await supabase
+	// TODO: the selected canvas will dynamically change and will be checked
+	const channelName = "qwer-tyui-opas";
+	const { data, error } = await supabase
 		.from("canvas")
-		.select("title, loc_desc, longitude, latitude, drawing, id, backup_code, is_archived")
+		.select("drawing, id, backup_code, is_archived")
 		.eq("backup_code", channelName)
 		.limit(1)
 		.maybeSingle();
 
-	if (rawData === null || rawData.is_archived === true) {
-		error(404);
+	if (data === null || data.is_archived === true) {
+		// TODO: 404 page (maybe we should also do this if the canvas was archived too?)
+	}
+	if (error) {
+		// TODO: error handling
 	}
 
 	return {
-		canvas: rawData,
-		channelName: channelName,
-		session: session
+		canvas: data,
+		channelName: channelName
 	};
 };

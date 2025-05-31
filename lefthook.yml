@@ -1,0 +1,6 @@
+# lefthook.yml
+pre-commit:
+    commands:
+        format:
+            run: npm run format -- {staged_files}
+            stage_fixed: true

@@ -5,7 +5,7 @@
 	import type { PageData } from "./$types";
 
 	let { children, data }: { children: any; data: PageData } = $props();
-	let { showLogo, showCta } = $derived(data.appearance!);
+	let { showLogo, showCta } = $derived(data.appearance);
 	let session = $derived(data.session);
 	let user = $derived(data.user);
 
@@ -31,35 +31,28 @@
 	};
 </script>
 
-<main class="no-drag">
+<main>
 	<nav bind:this={navbar} id="navbar" class="no-drag is-at-top">
 		<!-- <button class="small">Log in</button> -->
 		{#if showLogo}
-			<a class="wrapper item no-drag" href="/" on:click={closeMobileMenu}>
-				<button class="none">
-					<div id="logo"><MosaiclyLogo s={28} /></div>
-				</button>
+			<a class="wrapper item" href="/" on:click={closeMobileMenu}>
+				<div id="logo"><MosaiclyLogo s={28} /></div>
+				<!-- <p id="logo-text">mosaicly</p> -->
 			</a>
 		{/if}
 		{#if showCta}
 			{#if !session}
-				<a class="wrapper item no-drag" href="/login">
+				<a class="wrapper item" href="/login">
 					<button class="small">Log in</button>
 				</a>
 			{:else}
-				<a class="wrapper item large no-drag" href="" on:click={toggleMobileMenu}>
-					<button class="none">
-						{#if user?.profile?.avatarUrl}
-							<img
-								class="no-drag"
-								src={user.profile.avatarUrl}
-								alt="Profile Picture"
-								id="pfp"
-							/>
-						{:else}
-							<button class="small outline no-drag">Profile</button>
-						{/if}
-					</button>
+				<a class="wrapper item large" href="" on:click={toggleMobileMenu}>
+					<!-- TODO: replace with profile pic -->
+					{#if user?.profile?.avatarUrl}
+						<img src={user.profile.avatarUrl} alt="Profile Picture" id="pfp" />
+					{:else}
+						<button class="small outline">Profile</button>
+					{/if}
 				</a>
 			{/if}
 		{/if}
@@ -67,19 +60,19 @@
 
 	<MobileMenu {mobileMenuOpened} {closeMobileMenu}>
 		<form class={mobileMenuOpened ? "" : "disabled"} id="mobile-cta" method="post">
-			<a class="menu-items" href="/settings#profile" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/profile" on:click={closeMobileMenu}>
 				<p>Account & Profile</p>
 			</a>
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/settings#canvas" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/profile?tab=canvases" on:click={closeMobileMenu}>
 				<p>My Canvases</p>
 			</a>
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/create" on:click={closeMobileMenu}>
+			<a class="menu-items" href="/create#s1" on:click={closeMobileMenu}>
 				<p>Create a Canvas</p>
 			</a>
 
@@ -157,12 +150,6 @@
 					width: 42px;
 					height: 42px;
 				}
-
-				button {
-					&.none {
-						background-color: transparent !important;
-					}
-				}
 			}
 
 			#pfp {
@@ -185,24 +172,8 @@
 				width: 100%;
 				display: flex;
 
-				p {
-					transition: transform 300ms $out-generic-expo;
-					transform-origin: left;
-				}
-				&:active {
-					p {
-						transform: scale(0.925);
-					}
-				}
-
 				button {
 					color: inherit;
-					transform-origin: left;
-
-					&:active {
-						transform: scale(0.925);
-						background-color: transparent;
-					}
 
 					// for the button wrappers
 					&.none {

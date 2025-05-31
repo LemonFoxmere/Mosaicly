@@ -35,7 +35,7 @@
 		transform: translate(0px, 0px);
 
 		transition:
-			transform 500ms $out-generic-expo,
+			transform 700ms $out-generic-expo,
 			opacity 500ms $out-generic-expo;
 		// transition-property: transform opacity;
 

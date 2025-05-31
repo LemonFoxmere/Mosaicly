@@ -1,155 +1,91 @@
 <script lang="ts">
-	import {
-		fetchCoordinatesForDisplay,
-		formatCoordinateString,
-		isDisplayableMapCoordinate,
-		parseCoordinateString,
-		validateCoordinates
-	} from "$lib/comp/canvas/utils/Geolocation";
+	import FormField from "$lib/comp/canvas/create/FormField.svelte";
 	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 	import GeoLocate from "$lib/comp/ui/icons/GeoLocate.svelte";
-
-	export interface Step2Data {
-		coordinates: { latitude: number; longitude: number; accuracy: number };
-		valid: boolean;
-	}
+	import { isDisplayableMapCoordinate } from "$lib/comp/canvas/utils/Geolocation";
 
 	interface Props {
-		onDataChange?: (data: Step2Data) => void;
-		valid: boolean;
+		canvasCoordinates: string;
+		parsedLong: number;
+		parsedLat: number;
+		errorState: { flag: boolean; message: string };
+		accuracy: number;
+		isFocused: boolean;
+		zoom?: number;
+		forceZoomChange?: any;
+		onLocate: () => void;
+		showMapMarker: boolean;
+		onMapClickWithCoords?: (lat: number, lng: number) => void;
 	}
+	let {
+		canvasCoordinates = $bindable(),
+		parsedLong = $bindable(),
+		parsedLat = $bindable(),
+		errorState = $bindable(),
+		isFocused = $bindable(false),
+		zoom = 18,
+		forceZoomChange = undefined,
+		onLocate,
+		showMapMarker = $bindable(),
+		onMapClickWithCoords = undefined
+	}: Props = $props();
 
-	let { onDataChange, valid: bindableValidity = $bindable<boolean>(false) }: Props = $props();
-
-	// map configs & coordinate states
-	// const DEFAULT_COORDS = { lat: 36.9940814, lng: -122.0612656 }; // the default coords
-	const DEFAULT_COORDS = { lat: NaN, lng: NaN }; // the default coords
-	const MAP_CONFIG = {
-		// map cfg
-		allowClickToUpdateCoordinates: true,
-		showMarkerWhenDefault: false
-	};
-	let coords = $state({
-		// current coordinate obj
-		latitude: DEFAULT_COORDS.lat,
-		longitude: DEFAULT_COORDS.lng,
-		accuracy: 0
-	});
-	let isAtDefaultLocation = $derived(
-		// flag for detecting default position
-		isNaN(coords.latitude) || isNaN(coords.longitude)
-	);
-	let isDisplayable = $derived(isDisplayableMapCoordinate(coords.latitude, coords.longitude)); // sanity check
-	let showMapMarker = $derived(
-		MAP_CONFIG.showMarkerWhenDefault || (!isAtDefaultLocation && isDisplayable)
-	);
-	let canvasCoordinateStr = $state(""); // raw input
-	let coordParseAndValidation = $derived.by(() => {
-		// parsed coordinate obj from raw string
-		const parsed = parseCoordinateString(canvasCoordinateStr);
-		const valid =
-			parsed.isValid &&
-			validateCoordinates(parsed.latitude, parsed.longitude, {
-				allowDefault: false,
-				defaultCoords: DEFAULT_COORDS
-			}).isValid;
-		return { parsed, valid };
-	});
-
-	// input configs & states
-	let isInputFocused = $state(false);
-	let hasInputText = $derived(canvasCoordinateStr.trim() !== "");
-	let isValidOverall = $derived(
-		coordParseAndValidation.valid && hasInputText && !isAtDefaultLocation
-	);
+	let mapboxLatitude = $state(parsedLat);
+	let mapboxLongitude = $state(parsedLong);
+	let mapboxZoom = $state(zoom);
+	let mapboxForceZoomChange = $state(forceZoomChange);
 
 	$effect(() => {
-		// broadcast dispatch signal on data change
-		if (onDataChange) {
-			onDataChange({
-				coordinates: { ...coords },
-				valid: isValidOverall
-			});
-			bindableValidity = isValidOverall; // update the valid prop
-		}
+		mapboxLatitude = parsedLat;
+		mapboxLongitude = parsedLong;
+		mapboxZoom = zoom;
+		mapboxForceZoomChange = forceZoomChange;
 	});
 
 	$effect(() => {
-		if (isInputFocused) {
-			const { parsed } = coordParseAndValidation;
-			if (
-				parsed.isValid &&
-				(parsed.latitude !== coords.latitude || parsed.longitude !== coords.longitude)
-			) {
-				coords = { ...coords, latitude: parsed.latitude, longitude: parsed.longitude };
-			}
-		} else {
-			const formattedCoords = formatCoordinateString(coords.latitude, coords.longitude);
-			if (canvasCoordinateStr !== formattedCoords) {
-				canvasCoordinateStr = formattedCoords;
-			}
+		if (mapboxLatitude !== parsedLat) {
+			parsedLat = mapboxLatitude;
+		}
+		if (mapboxLongitude !== parsedLong) {
+			parsedLong = mapboxLongitude;
 		}
 	});
-
-	const handleLocateMeClick = async () => {
-		const result = await fetchCoordinatesForDisplay();
-		if (result.status !== 0 || !result.location) return;
-		coords = {
-			latitude: result.location.latitude,
-			longitude: result.location.longitude,
-			accuracy: result.location.accuracy
-		};
-	};
-
-	const handleMapClick = (lat: number, lng: number) => {
-		coords = { ...coords, latitude: lat, longitude: lng };
-	};
 </script>
 
 <main>
 	<div id="coordinate-input-wrapper">
-		<label class:invalid={isValidOverall || isAtDefaultLocation}>
-			<p class="caption">
-				{#if isValidOverall || isAtDefaultLocation}
-					<!-- cancel out the effect by default location -->
-					Canvas Coordinates
-				{:else}
-					Please enter valid coordinates or use the locate button.
-				{/if}
-			</p>
-
+		<FormField label="Canvas Coordinates">
 			<div id="input-wrapper">
 				<input
 					type="text"
-					bind:value={canvasCoordinateStr}
-					placeholder="36.9940814, -122.0612656"
-					class="coordinate-input"
-					onfocus={() => (isInputFocused = true)}
-					onblur={() => (isInputFocused = false)}
+					bind:value={canvasCoordinates}
+					placeholder="36.99979, 122.06337"
+					class="coordinate-input flex-fill"
+					onfocus={() => (isFocused = true)}
+					onblur={() => (isFocused = false)}
 				/>
-				<button id="locate" class="outline" onclick={handleLocateMeClick}>
+				<button id="locate" class="outline" onclick={onLocate}>
 					<GeoLocate s={32} />
 				</button>
 			</div>
-		</label>
+		</FormField>
 	</div>
 
 	<section id="map-wrapper">
-		<p class="caption">Tap on the map to set its location.</p>
+		<p class="caption">No marker yet? Click where you want it to show up.</p>
 		<div id="map">
-			{#if isDisplayable || isAtDefaultLocation}
+			{#if isDisplayableMapCoordinate(parsedLat, parsedLong)}
 				<MapboxMap
-					latitude={coords.latitude}
-					longitude={coords.longitude}
-					allowClickToUpdateCoordinates={MAP_CONFIG.allowClickToUpdateCoordinates}
+					bind:latitude={mapboxLatitude}
+					bind:longitude={mapboxLongitude}
+					zoom={mapboxZoom}
+					forceZoomChange={mapboxForceZoomChange}
+					allowClickToUpdateCoordinates={true}
 					showMarker={showMapMarker}
-					onClickWithCoords={handleMapClick}
+					onClickWithCoords={onMapClickWithCoords}
 				/>
 			{:else}
-				<p id="bad-loc">
-					The current coordinates are not displayable. Please enter valid coordinates or
-					use the locate button.
-				</p>
+				<p id="bad-loc">That coordinate is so bad it doesn't even exist. Please fix it.</p>
 			{/if}
 		</div>
 	</section>
@@ -169,7 +105,12 @@
 
 		#coordinate-input-wrapper {
 			position: relative;
+
 			width: 100%;
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
 
 			#input-wrapper {
 				position: relative;
@@ -181,11 +122,7 @@
 
 				input {
 					flex-grow: 1;
-				}
-
-				input.invalid {
-					border-color: $accent-error;
-					box-shadow: 0 0 0 1px $accent-error;
+					width: 100%;
 				}
 
 				#locate {
@@ -198,13 +135,6 @@
 					}
 				}
 			}
-			.error-message {
-				color: $accent-error;
-				font-size: 14px;
-				margin-top: 5px;
-				width: 100%;
-				text-align: left;
-			}
 		}
 
 		#map-wrapper {
@@ -216,7 +146,6 @@
 
 			.caption {
 				color: $text-secondary;
-				text-align: center;
 			}
 
 			#map {

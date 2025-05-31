@@ -46,7 +46,7 @@ export const load: LayoutServerLoad = async ({
 			}
 		} else {
 			console.error(error);
-			return fail(500);
+			fail(500);
 		}
 
 		// fetch from profile table
@@ -65,7 +65,7 @@ export const load: LayoutServerLoad = async ({
 			}
 		} else {
 			console.error(error);
-			return fail(500);
+			fail(500);
 		}
 	}
 
@@ -75,7 +75,7 @@ export const load: LayoutServerLoad = async ({
 		showCta: true
 	};
 
-	if (["/login", "/settings", "/profile"].includes(url.pathname)) {
+	if (["/login", "/profile", "/profile"].includes(url.pathname)) {
 		appearanceConfig.showLogo = true;
 		appearanceConfig.showCta = false;
 	}

@@ -11,10 +11,10 @@ export class CursorUtils {
 	 */
 	static isWithinBound(x: number, y: number, boundingRect: DOMRect): boolean {
 		return (
-			x >= boundingRect.left &&
-			x <= boundingRect.right &&
-			y >= boundingRect.top &&
-			y <= boundingRect.bottom
+			x < boundingRect.left &&
+			x > boundingRect.right &&
+			y < boundingRect.top &&
+			y > boundingRect.bottom
 		);
 	}
 
