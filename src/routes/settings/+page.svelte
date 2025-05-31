@@ -136,6 +136,7 @@
 
 					#gradient-bg {
 						// have to use a bunch of importants here because of ordering
+						width: 100%;
 						top: 0px !important;
 						height: calc(100% + 20px) !important;
 						background: linear-gradient($background-primary, transparent) !important;
@@ -198,7 +199,7 @@
 
 				#gradient-bg {
 					position: absolute;
-					width: 100vw;
+					width: 100%;
 					top: -22px;
 					height: calc(100% + 40px);
 					background: linear-gradient($background-primary, transparent);

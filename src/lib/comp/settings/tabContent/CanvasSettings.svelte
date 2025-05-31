@@ -38,7 +38,7 @@
 		if (isEditModalOpen) {
 			return `Editing "${editedModalTitle}"`;
 		}
-		return `${selectedCanvas?.title}`; // return just the canvas name otherwise
+		return `${selectedCanvas?.title} ${selectedCanvas?.isArchived ? "(Archived)" : ""}`; // return just the canvas name otherwise
 	});
 	let modalSubtitle: string = $derived.by(() => {
 		if (isDetailModalOpen) {
@@ -50,16 +50,22 @@
 
 	const editThisCanvas = (canvas: DB.Canvas) => {
 		selectedCanvas = canvas;
-		isEditModalOpen = true;
 		isDetailModalOpen = false;
-		isModalOpen = true;
+		setTimeout(() => {
+			// prevent clashing
+			isEditModalOpen = true;
+			isModalOpen = true;
+		});
 	};
 
 	const detailThisCanvas = (canvas: DB.Canvas) => {
 		selectedCanvas = canvas;
-		isDetailModalOpen = true;
 		isEditModalOpen = false;
-		isModalOpen = true;
+		setTimeout(() => {
+			// prevent clashing
+			isDetailModalOpen = true;
+			isModalOpen = true;
+		});
 	};
 
 	// helper for date

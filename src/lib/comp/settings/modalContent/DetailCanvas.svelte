@@ -17,17 +17,15 @@
 </script>
 
 <main>
-	{#if !isArchived}
-		<a
-			id="go-to-canvas"
-			class:disabled={isArchived}
-			href={isArchived ? "" : `/canvas?c=${backupCode}`}
-			target="_blank"
-			class="no-drag"
-		>
-			<button disabled={isArchived}> Open Canvas </button>
-		</a>
-	{/if}
+	<a
+		id="go-to-canvas"
+		class:disabled={isArchived}
+		href={isArchived ? "" : `/canvas?c=${backupCode}`}
+		target="_blank"
+		class="no-drag"
+	>
+		<button disabled={isArchived}> Open Canvas </button>
+	</a>
 </main>
 
 <style lang="scss">
