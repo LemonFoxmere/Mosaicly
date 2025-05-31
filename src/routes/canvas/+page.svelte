@@ -47,6 +47,8 @@
 	};
 
 	onMount(() => {
+
+		// set up user location listening on the browser
 		userLocationListener.setupListener(canvasLatitude, canvasLongitude);
 	})
 </script>
@@ -55,7 +57,6 @@
 	<section id="title-container" class="no-drag">
 		<h2>{canvasTitle}</h2>
 		<p>{canvasLocDesc}</p>
-		<p>{userLocationListener.getIsCloseToCanvas()} {userLocationListener.getDistance()}</p>
 	</section>
 
 	<section id="action-container">
