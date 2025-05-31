@@ -15,7 +15,7 @@
 
 	// validity checkers
 	let nameAccessed = $state(false); // when the user first loads, don't show red.
-	const nameMaxLen = 30; // max length of the description
+	const nameMaxLen = 30; // max length of the name
 	let nameValid = $derived(!!canvasName && canvasName.length <= nameMaxLen);
 
 	const descMaxLen = 200; // max length of the description
