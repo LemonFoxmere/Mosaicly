@@ -32,7 +32,6 @@
 
 	// component bindings
 	let formSaveButton: HTMLButtonElement;
-	let formArchiveButton: HTMLButtonElement;
 
 	// any error messages that pops up
 	let errorStatus = $state({
@@ -90,25 +89,6 @@
 		}
 	};
 
-	const toggleArchive = (e: MouseEvent) => {
-		if (archiveHasSecondClick || isArchived) {
-			// allow if we have a second click or we're trying to unarchive
-			archivingData = true;
-			archiveHasSecondClick = false; // reset second click state
-			// trigger the formArchiveButton
-			if (formArchiveButton) {
-				formArchiveButton.click();
-			} else {
-				showErr("Failed to archive canvas. Please reload and try again.");
-				resetUISavingState();
-			}
-		} else {
-			// require a second click
-			e.preventDefault();
-			archiveHasSecondClick = true;
-		}
-	};
-
 	const submitCallback = () => {
 		// called upon finishing submission
 		return async ({
@@ -144,12 +124,7 @@
 </script>
 
 <form method="POST" use:enhance={submitCallback}>
-	<section
-		id="input-container"
-		onclick={() => {
-			archiveHasSecondClick = false;
-		}}
-	>
+	<section id="input-container">
 		<FormField
 			label={nameValid
 				? "Canvas Name"
@@ -219,40 +194,11 @@
 				formaction="/api/canvas?/updateCanvas"
 				class="hidden"
 			/>
-
-			<button
-				class="outline"
-				class:full-opacity={archivingData}
-				class:warn={archiveHasSecondClick}
-				disabled={archivingData || savingData}
-				onclick={toggleArchive}
-			>
-				{#if archivingData}
-					{#if saveFinished}
-						<CircleCheck size={24} absoluteStrokeWidth={true} strokeWidth={1.5} />
-					{:else}
-						<LoaderCircle class="animate-spin" />
-					{/if}
-				{:else if isArchived}
-					Unarchive
-				{:else}
-					{archiveHasSecondClick ? "Yes I'm Sure" : "Archive"}
-				{/if}
-			</button>
-			<button
-				bind:this={formArchiveButton}
-				type="submit"
-				formaction="/api/canvas?/toggleArchiveState"
-				class="hidden"
-			/>
 		</div>
 	</section>
 
 	<!-- ===================== HIDDEN FORM DATA ===================== -->
 
-	<!-- this stores the CURRENT state of the Archived state.
-	The toggle function basically takes this and inverts it -->
-	<input name="isArchived" value={isArchived} type="hidden" />
 	<!-- hidden canvasID input that can be sent to the form as
 	a parameter to be used -->
 	<input name="canvasId" value={id} type="hidden" />

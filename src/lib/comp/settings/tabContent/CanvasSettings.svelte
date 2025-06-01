@@ -13,6 +13,8 @@
 	}
 	let { user = $bindable<DB.AppUser>(), canvases = $bindable<DB.Canvas[]>([]) }: Props = $props();
 
+	let mainContent: HTMLElement;
+
 	// canvas modal states
 	let isLoaded = $state(false); // for loading canvases
 	let panicState = $state({
@@ -39,13 +41,6 @@
 			return `Editing "${editedModalTitle}"`;
 		}
 		return `${selectedCanvas?.title} ${selectedCanvas?.isArchived ? "(Archived)" : ""}`; // return just the canvas name otherwise
-	});
-	let modalSubtitle: string = $derived.by(() => {
-		if (isDetailModalOpen) {
-			// show the location description
-			return `${selectedCanvas?.locDesc}`;
-		}
-		return ""; // empty by details
 	});
 
 	const editThisCanvas = (canvas: DB.Canvas) => {
@@ -125,7 +120,7 @@
 	onMount(init);
 </script>
 
-<main class="no-drag">
+<main bind:this={mainContent} class="no-drag">
 	{#if !panicState.flag}
 		{#if isLoaded}
 			<!-- canvases list render -->
@@ -172,7 +167,7 @@
 			{/if}
 
 			<!-- global modal -->
-			<Modal bind:opened={isModalOpen} title={modalTitle} subtitle={modalSubtitle}>
+			<Modal bind:opened={isModalOpen} title={modalTitle}>
 				{#if isEditModalOpen}
 					<EditCanvas
 						bind:opened={isModalOpen}
@@ -180,7 +175,11 @@
 						bind:editedTitle={editedModalTitle}
 					/>
 				{:else if isDetailModalOpen}
-					<DetailCanvas bind:opened={isModalOpen} bind:canvas={selectedCanvas} />
+					<DetailCanvas
+						bind:opened={isModalOpen}
+						bind:canvas={selectedCanvas}
+						bind:canvasList={canvases}
+					/>
 				{/if}
 			</Modal>
 		{:else}
