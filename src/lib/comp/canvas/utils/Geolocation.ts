@@ -28,7 +28,7 @@ export const checkNavigatorConfig = async (): Promise<number> => {
 const getCurrentPos = async (): Promise<GetCurrentPosResult> => {
 
 	// check that user has the correct geolocation configurations
-	const error: number = await checkNavigatorConfig(); // may return 0 or 1 if error, or -1 if no errors found
+	const error: number = await checkNavigatorConfig(); // may return 1 or 2 if error, or -1 if no errors found
 	if (error !== -1) {
 		return { location: null, status: error }
 	}
@@ -187,7 +187,7 @@ export const haversineDistance = (lat1Degrees: number, lon1Degrees: number, lat2
     
     const { sin, cos, sqrt, asin } = Math;
     
-    const earthRadiusMeters = 6378137; // earth radius in km (WGS84)
+    const earthRadiusMeters = 6378137; // earth radius in m (WGS84)
     const deltaLat = lat2 - lat1;
     const deltaLon = lon2 - lon1;
     const a = sin(deltaLat / 2) * sin(deltaLat / 2)
