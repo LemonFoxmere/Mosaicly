@@ -1,6 +1,6 @@
 <script lang="ts">
-	import QrGenerator from "$lib/comp/qrcode/QrGenerator.svelte";
 	import PdfExport from "$lib/comp/qrcode/PdfExport.svelte";
+	import QrGenerator from "$lib/comp/qrcode/QrGenerator.svelte";
 
 	let inputText = $state("a");
 	let finalText = $state(inputText);
@@ -31,7 +31,6 @@
 	@use "$static/stylesheets/guideline" as *;
 
 	#QR-holder {
-		background: #9a9a9a;
 		padding: 2px;
 		border-radius: 5px;
 	}

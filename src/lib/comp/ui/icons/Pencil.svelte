@@ -19,6 +19,7 @@
 	svg {
 		width: $s;
 		height: $s;
+		scale: 90%;
 		color: inherit;
 	}
 </style>
