@@ -25,6 +25,15 @@ export class UserLocationListener {
 			return Infinity
 	}
 
+	// get rounded distance in feet
+	getRoundedDistanceInFeet(decimalPlaces: number = 0) {
+		
+		const meterDistance = this.getDistance();
+		const feetDistance = meterDistance * 3.28084 // meters to feet conversion
+		const factor = Math.pow(10, decimalPlaces);
+		return Math.round(feetDistance * factor) / factor;
+	}
+
 	// push distance to the list of distances (maintains at most 5 distances)
 	pushDistance(dist: number) {
 		if (this.distances.length == 5) {

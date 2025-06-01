@@ -46,6 +46,13 @@
 		canvasLoaded = true;
 	};
 
+	// force view mode if user is too far away from the canvas
+	$effect(() => {
+		if (!userLocationListener.getIsCloseToCanvas()) {
+			updateState("view");
+		}
+	})
+
 	onMount(() => {
 
 		// set up user location listening on the browser
@@ -68,7 +75,7 @@
 		</button>
 		<button
 			class={`${editState === "edit" ? "solid" : "outline"}`}
-			disabled={!hasSession}
+			disabled={!hasSession || !userLocationListener.getIsCloseToCanvas()}
 			on:click={() => updateState("edit")}
 		>
 			{#if !hasSession}
@@ -84,6 +91,10 @@
 			Inspect
 		</button> -->
 	</section>
+	
+	{#if !userLocationListener.getIsCloseToCanvas() && userLocationListener.getDistance() !== Infinity}
+		<p class="err-msg">You need to move closer to the canvas to edit (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
+	{/if}
 
 	<section id="canvas-container">
 		<div id="loading-cover" class:hidden={canvasLoaded}>
@@ -181,6 +192,13 @@
 			button {
 				width: 100%;
 			}
+		}
+
+		.err-msg {
+			width: 100%;
+			text-align: center;
+			padding: 0px 10px;
+			color: $accent-error;
 		}
 
 		#canvas-container {
