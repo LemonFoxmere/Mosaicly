@@ -9,9 +9,6 @@
 	import type { PageProps } from "./$types";
 	import { Value } from "sass";
 
-	let selectedColor = $state("#000000");
-	let editState: "view" | "edit" | "inspect" = $state("view");
-
 	let { data }: PageProps = $props();
 
 	// canvas infos
@@ -35,8 +32,33 @@
 
 	// manages user location and state
 	const userLocationListener = new UserLocationListener;
+	let userIsTooFarFromCanvas = $derived(!userLocationListener.getIsCloseToCanvas() 
+									&& userLocationListener.getDistance() !== Infinity); // user is close (and does not have an invalid distance)
+
+	let userWithinCanvasBeforeInitial = false; // initial assignment to be used in userWithinCanvasBefore
+	let userWithinCanvasBefore: boolean = $derived.by(() => {
+
+		// when user arrives to canvas the first arrival, they will always be able to see that canvas
+		if (userLocationListener.getIsCloseToCanvas() || userWithinCanvasBefore === true) {
+			userWithinCanvasBeforeInitial = true;
+			return true
+		} else {
+			return false
+		}
+	});
 
 	let hasSession = $derived<boolean>(!!data.session);
+
+	let selectedColor = $state("#000000");
+
+	// if user is too far away from the canvas then force view mode (derived state can be updated since Svelte v5.25)
+	let editState: "view" | "edit" | "inspect" = $derived.by(() => {
+		if (!userLocationListener.getIsCloseToCanvas()) {
+			return "view"
+		} else {
+			return "view"
+		}
+	});
 
 	const updateState = (newState: "view" | "edit" | "inspect") => {
 		editState = newState;
@@ -45,13 +67,6 @@
 	const readyCanvas = () => {
 		canvasLoaded = true;
 	};
-
-	// force view mode if user is too far away from the canvas
-	$effect(() => {
-		if (!userLocationListener.getIsCloseToCanvas()) {
-			updateState("view");
-		}
-	})
 
 	onMount(() => {
 
@@ -92,11 +107,13 @@
 		</button> -->
 	</section>
 	
-	{#if !userLocationListener.getIsCloseToCanvas() && userLocationListener.getDistance() !== Infinity}
+	{#if userIsTooFarFromCanvas && !userWithinCanvasBefore}
+		<p class="err-msg">You need to move closer to the canvas to view (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
+	{:else if userIsTooFarFromCanvas}
 		<p class="err-msg">You need to move closer to the canvas to edit (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
 	{/if}
 
-	<section id="canvas-container">
+	<section id="canvas-container" class:hidden={!userWithinCanvasBefore}>
 		<div id="loading-cover" class:hidden={canvasLoaded}>
 			<LoaderCircle size={32} class="animate-spin" />
 		</div>
@@ -284,6 +301,12 @@
 						transform: translate(0px, 40px);
 					}
 				}
+			}
+
+			&.hidden {
+				opacity: 0;
+				pointer-events: none;
+				transform: translate(0px, -15px);
 			}
 
 			@media screen and (min-width: $mobile-width) {
