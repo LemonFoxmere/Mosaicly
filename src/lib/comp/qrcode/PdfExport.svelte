@@ -31,13 +31,14 @@
 
 		// Adding QrCode image using dataURL, size is (PAGE_WIDTH / 2.2) x (PAGE_WIDTH / 2.2)
 		// Note: qr-code is smaller than defined image size
+		const QR_SIZE = PAGE_WIDTH / 2.2;
 		doc.addImage(
 			await QRCode.toDataURL(QrSRC),
 			"JPEG", // file type (EX: JPEG, png)
-			PAGE_WIDTH / 4,
+			(PAGE_WIDTH - QR_SIZE) / 2,
 			130,
-			PAGE_WIDTH / 2.2,
-			PAGE_WIDTH / 2.2
+			QR_SIZE,
+			QR_SIZE
 		);
 
 		/* Adding text to pdf
