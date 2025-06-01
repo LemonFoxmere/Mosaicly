@@ -1,0 +1,75 @@
+# HTTPS Setup Instructions - Clean Working Steps
+
+## 1. Install mkcert
+```cmd
+winget install FiloSottile.mkcert
+```
+
+## 2. Install the local CA certificate
+```cmd
+mkcert -install
+```
+
+## 3. Get your local IP addresses
+```cmd
+ipconfig | findstr IPv4
+```
+(Note: You'll need these IPs for the next step)
+
+## 4. Generate certificates with all your IPs
+```cmd
+mkcert localhost 127.0.0.1 ::1 0.0.0.0 100.64.181.233 172.20.32.1 192.168.137.1 192.168.56.1
+```
+(Replace the IP addresses with your actual ones from step 3)
+
+This creates: localhost+7.pem and localhost+7-key.pem
+(The number may vary based on how many domains you include)
+
+## 5. Update vite.config.ts
+Add fs import and https config:
+
+```typescript
+import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
+import fs from "fs";
+
+export default defineConfig({
+	plugins: [sveltekit()],
+	server: {
+		port: 3000,
+		host: "0.0.0.0", // test on mobile locally
+		https: {
+			key: fs.readFileSync("./localhost+7-key.pem"),
+			cert: fs.readFileSync("./localhost+7.pem")
+		}
+	},
+	ssr: {
+		external: ["@xstate/svelte"]
+	},
+	build: {
+		rollupOptions: {
+			external: ["sharp"]
+		}
+	}
+});
+```
+
+## 6. Add certificates to .gitignore
+Add this line to .gitignore:
+```
+# SSL certificates
+*.pem
+```
+
+## 7. Start the dev server
+```cmd
+yarn dev
+```
+
+The server will run on https://localhost:3001/ (or next available port)
+Use the Network URLs shown in terminal for mobile testing.
+
+## Notes:
+- Update certificate filenames in vite.config.ts if the generated names are different
+- Certificates are valid for 2+ years
+- For new networks, repeat steps 3-4 and update vite.config.ts with new certificate names 

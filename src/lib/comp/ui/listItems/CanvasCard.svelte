@@ -1,33 +1,14 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-
 	interface Props {
-		title?: string;
-		locDesc?: string;
-		distance?: string;
-		isArchived?: boolean;
+		canvas: DB.Canvas;
 		clickable?: boolean;
 		onClick?: () => void;
-		canvas?: DB.Canvas;
-		ctaOptions?: Snippet;
-		caption?: Snippet;
+		ctaOptions?: () => any;
+		caption?: () => any;
 	}
-	let {
-		title: titleProp,
-		locDesc: locDescProp,
-		distance,
-		isArchived: isArchivedProp,
-		clickable = false,
-		onClick,
-		canvas,
-		ctaOptions,
-		caption
-	}: Props = $props();
+	let { canvas, clickable = false, onClick, ctaOptions, caption }: Props = $props();
 
-	const title = $derived(canvas?.title ?? titleProp ?? "");
-	const locDesc = $derived(canvas?.locDesc ?? locDescProp ?? "");
-	const isArchived = $derived(canvas?.isArchived ?? isArchivedProp ?? false);
-
+	const { title, locDesc, isArchived } = $derived(canvas);
 	const WrapperElement = clickable ? "button" : "div";
 </script>
 
@@ -48,9 +29,6 @@
 					{/if}
 				</p>
 				<p class="desc-text">{locDesc}</p>
-				{#if distance}
-					<p class="distance">{distance}</p>
-				{/if}
 			</section>
 
 			{@render caption?.()}
@@ -146,12 +124,6 @@
 						line-clamp: 2;
 						-webkit-box-orient: vertical;
 						-webkit-line-clamp: 2;
-					}
-
-					.distance {
-						font-size: 14px;
-						font-weight: 500;
-						color: $text-tertiary;
 					}
 				}
 			}
