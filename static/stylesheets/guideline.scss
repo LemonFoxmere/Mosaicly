@@ -1,7 +1,7 @@
 // COLORS
 $background-primary: hsl(18, 81%, 60%);
-$background-primary-translucent-heavy: hsl(18, 81%, 60%, 70%);
-$background-primary-translucent-light: hsl(18, 81%, 60%, 40%);
+$background-primary-translucent-heavy: rgba($background-primary, 70%);
+$background-primary-translucent-light: rgba($background-primary, 40%);
 
 $background-secondary: hsl(0, 27%, 9%);
 $background-accent: hsl(15, 30%, 92%);
@@ -51,7 +51,7 @@ $global-max-width: 700px;
 // ========================== COMMONLY USED CLASSES ==========================
 
 // RESPONSIVE DESIGN
-.only-phone {
+.only-mobile {
 	@media screen and (min-width: $mobile-width) {
 		display: none !important;
 	}

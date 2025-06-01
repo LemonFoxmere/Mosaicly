@@ -14,8 +14,6 @@
 
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import Document from "$lib/comp/ui/icons/Document.svelte";
-	import Image from "$lib/comp/ui/icons/Image.svelte";
 	import { CircleCheck, LoaderCircle } from "@lucide/svelte";
 	import type { ActionResult } from "@sveltejs/kit";
 
@@ -38,7 +36,7 @@
 	let canvasName: string = $derived(canvas?.title ?? "");
 	let locDesc = $derived(canvas?.locDesc ?? "");
 	let isArchived = $derived(canvas?.isArchived ?? false);
-	let backupCode = $derived(canvas?.backupCode ?? false);
+	let backupCode = $derived(canvas?.backupCode ?? "");
 	let createdOn = $derived(formatDate(canvas?.createdOn ?? ""));
 	let id = $derived(canvas?.id ?? "");
 
@@ -208,7 +206,7 @@
 		<p>Canvas Code: <strong>{backupCode}</strong></p>
 		<p>Created On: <strong>{createdOn}</strong></p>
 
-		<p>QR Codes:</p>
+		<!-- <p>QR Codes:</p>
 		<section id="cta">
 			<section id="cta">
 				<button class="outline">
@@ -218,11 +216,11 @@
 					<Document s={22} />
 				</button>
 			</section>
-		</section>
+		</section> -->
 	</section>
 
 	<section class="content-container" id="actions">
-		<p class="caption">Canvas Actions</p>
+		<!-- <p class="caption">Canvas Actions</p> -->
 		<section id="cta">
 			<!-- Open the canvas -->
 			<a
@@ -299,6 +297,8 @@
 
 		width: 100%;
 		height: 100%;
+
+		margin-top: 20px;
 
 		#go-to-canvas {
 			width: 100%;

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import Modal from "$lib/comp/ui/general/Modal.svelte";
 	import Pencil from "$lib/comp/ui/icons/Pencil.svelte";
+	import QrCode from "$lib/comp/ui/icons/QRCode.svelte";
 	import CanvasCard from "$lib/comp/ui/listItems/CanvasCard.svelte";
 	import { EllipsisIcon, LoaderCircle } from "@lucide/svelte";
 	import { onMount } from "svelte";
+	import CanvasQr from "../modalContent/CanvasQR.svelte";
 	import DetailCanvas from "../modalContent/DetailCanvas.svelte";
 	import EditCanvas from "../modalContent/EditCanvas.svelte";
 
@@ -31,14 +33,18 @@
 
 	// modal properties
 	let isEditModalOpen: boolean = $state(false);
+	let isQrModalOpen: boolean = $state(false);
 	let isDetailModalOpen: boolean = $state(false);
 	let isModalOpen: boolean = $state(false);
+
 	let selectedCanvas: DB.Canvas | undefined = $state<DB.Canvas>();
 	let editedModalTitle: string = $state("");
 	let isReloading: boolean = $state(false);
 	let modalTitle: string = $derived.by(() => {
 		if (isEditModalOpen) {
 			return `Editing "${editedModalTitle}"`;
+		} else if (isQrModalOpen) {
+			return `QR Codes`;
 		}
 		return `${selectedCanvas?.title} ${selectedCanvas?.isArchived ? "(Archived)" : ""}`; // return just the canvas name otherwise
 	});
@@ -46,6 +52,7 @@
 	const editThisCanvas = (canvas: DB.Canvas) => {
 		selectedCanvas = canvas;
 		isDetailModalOpen = false;
+		isQrModalOpen = false;
 		setTimeout(() => {
 			// prevent clashing
 			isEditModalOpen = true;
@@ -53,9 +60,22 @@
 		});
 	};
 
+	const getThisCanvasQr = (canvas: DB.Canvas) => {
+		selectedCanvas = canvas;
+		isDetailModalOpen = false;
+		isEditModalOpen = false;
+
+		setTimeout(() => {
+			// prevent clashing
+			isQrModalOpen = true;
+			isModalOpen = true;
+		});
+	};
+
 	const detailThisCanvas = (canvas: DB.Canvas) => {
 		selectedCanvas = canvas;
 		isEditModalOpen = false;
+		isQrModalOpen = false;
 		setTimeout(() => {
 			// prevent clashing
 			isDetailModalOpen = true;
@@ -135,16 +155,29 @@
 							{/snippet}
 
 							{#snippet ctaOptions()}
-								<!-- Edit button -->
-								<button
-									id="edit-canvas"
-									class="none canvas-card-cta"
-									onclick={() => {
-										editThisCanvas(canvas);
-									}}
-								>
-									<Pencil s={28} />
-								</button>
+								{#if !canvas.isArchived}
+									<!-- Edit button -->
+									<button
+										id="edit-canvas"
+										class="none canvas-card-cta"
+										onclick={() => {
+											editThisCanvas(canvas);
+										}}
+									>
+										<Pencil s={28} />
+									</button>
+
+									<!-- QR Code button -->
+									<button
+										id="edit-canvas"
+										class="none canvas-card-cta"
+										onclick={() => {
+											getThisCanvasQr(canvas);
+										}}
+									>
+										<QrCode s={28} />
+									</button>
+								{/if}
 
 								<!-- More options -->
 								<button
@@ -174,6 +207,8 @@
 						bind:canvas={selectedCanvas}
 						bind:editedTitle={editedModalTitle}
 					/>
+				{:else if isQrModalOpen}
+					<CanvasQr bind:opened={isModalOpen} bind:canvas={selectedCanvas} />
 				{:else if isDetailModalOpen}
 					<DetailCanvas
 						bind:opened={isModalOpen}

@@ -1,15 +1,49 @@
 <script lang="ts">
+	import { QRUtils } from "$lib/comp/qrcode/utils/QrcodeUtils";
 	import Document from "$lib/comp/ui/icons/Document.svelte";
 	import Image from "$lib/comp/ui/icons/Image.svelte";
+	import type { createPageModalModes } from "$route/create/+page.svelte";
 
 	interface Props {
 		canvasName: string;
 		canvasBackupCode: string;
-		currentStep: number;
-		onQrImage?: () => void;
-		onQrPdf?: () => void;
+		modalTitle: string;
+		modalSubtitle: string;
+		modalOpened: boolean;
+		modalMode: createPageModalModes;
 	}
-	let { canvasName, canvasBackupCode, currentStep, onQrImage, onQrPdf }: Props = $props();
+	let {
+		canvasName,
+		canvasBackupCode,
+		modalTitle = $bindable<string>(""),
+		modalSubtitle = $bindable<string>(""),
+		modalOpened = $bindable<boolean>(false),
+		modalMode = $bindable<createPageModalModes>(null)
+	}: Props = $props();
+
+	const generateQrImage = async () => {
+		const { data: imgBlob, err } = await QRUtils.genImgBlob(canvasBackupCode);
+		// err handling
+		if (err || !imgBlob) {
+			console.error("Failed to generate QR code:" + err);
+			return;
+		}
+
+		// open it in a new tab
+		window.open(URL.createObjectURL(imgBlob));
+	};
+	const generateQrPDF = async () => {
+		const { data: pdfBlob, err } = await QRUtils.genPDFBlob(canvasBackupCode, canvasName);
+		// err handling
+		if (err || !pdfBlob) {
+			console.error("Failed to generate PDF: " + err);
+			return;
+		}
+
+		// convert blob to URL and open in new window
+		const pdfURL = URL.createObjectURL(pdfBlob);
+		window.open(pdfURL, "_blank");
+	};
 </script>
 
 <main>
@@ -34,14 +68,19 @@
 		</section>
 
 		<section id="cta">
-			<button class="outline" on:click={() => onQrImage && onQrImage()}>
-				<Image s={22} />
-				Image
+			<button class="outline" on:click={generateQrImage}>
+				<Image s={22} /> Image
 			</button>
-			<button class="outline" on:click={() => onQrPdf && onQrPdf()}>
-				<Document s={22} />
-				PDF
+
+			<button class="outline" on:click={generateQrPDF}>
+				<Document s={22} /> PDF
 			</button>
+			<!-- PDF: QrSrc is full link -->
+			<!-- <PdfExport
+				QrSRC={"https://mosaicly.io/search/" + canvasBackupCode}
+				BackupCode={canvasBackupCode}
+				CanvasName={canvasName}
+			></PdfExport> -->
 		</section>
 	</section>
 </main>

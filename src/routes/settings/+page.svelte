@@ -134,12 +134,17 @@
 				#tabs-cta {
 					top: 0px !important;
 
+					z-index: 1;
+
 					#gradient-bg {
 						// have to use a bunch of importants here because of ordering
 						width: 100%;
 						top: 0px !important;
 						height: calc(100% + 20px) !important;
 						background: linear-gradient($background-primary, transparent) !important;
+					}
+					button {
+						z-index: 1000;
 					}
 				}
 

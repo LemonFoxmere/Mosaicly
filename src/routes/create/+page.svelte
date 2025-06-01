@@ -1,3 +1,7 @@
+<script lang="ts" context="module">
+	export type createPageModalModes = "qr" | "locDesc" | null;
+</script>
+
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import type { ActionResult } from "@sveltejs/kit";
@@ -8,6 +12,7 @@
 	import Step1 from "$lib/comp/canvas/create/steps/Step1.svelte";
 	import Step2, { type Step2Data } from "$lib/comp/canvas/create/steps/Step2.svelte";
 	import Step3 from "$lib/comp/canvas/create/steps/Step3.svelte";
+	import Modal from "$lib/comp/ui/general/Modal.svelte";
 	import { CircleCheck, LoaderCircle } from "@lucide/svelte";
 
 	// step configs
@@ -35,6 +40,12 @@
 	let canvasSaving = $state(false);
 	let canvasSaved = $state(false);
 	let isReturning = $state(false);
+
+	// modal states
+	let modalOpened = $state(false);
+	let modalTitle = $state("");
+	let modalSubtitle = $state("");
+	let modalMode = $state<createPageModalModes>(null);
 
 	// final UI states
 	let canvasBackupCode = $state("");
@@ -119,6 +130,20 @@
 	};
 </script>
 
+<form
+	id="hidden-form"
+	method="post"
+	action="/api/canvas?/createCanvas"
+	use:enhance={submitCallback}
+	bind:this={hiddenFormElement}
+>
+	<input type="hidden" name="title" value={canvasName} />
+	<input type="hidden" name="loc_desc" value={locationDescription} />
+	<input type="hidden" name="latitude" value={step2Data?.coordinates.latitude ?? 0} />
+	<input type="hidden" name="longitude" value={step2Data?.coordinates.longitude ?? 0} />
+	<input type="hidden" name="accuracy" value={step2Data?.coordinates.accuracy ?? 0} />
+</form>
+
 <main>
 	<section id="main-content">
 		<StepHeader {currentStep} stepTitle={currentStepDescription[currentStep - 1]} />
@@ -133,7 +158,14 @@
 			</GalleryItem>
 
 			<GalleryItem galleryIndex={currentStep} startVisIdx={3} endVisIdx={4}>
-				<Step3 {canvasName} {canvasBackupCode} {currentStep} />
+				<Step3
+					{canvasName}
+					{canvasBackupCode}
+					bind:modalOpened
+					bind:modalTitle
+					bind:modalSubtitle
+					bind:modalMode
+				/>
 			</GalleryItem>
 		</section>
 	</section>
@@ -179,19 +211,7 @@
 	</sect>
 </main>
 
-<form
-	id="hidden-form"
-	method="post"
-	action="/api/canvas?/createCanvas"
-	use:enhance={submitCallback}
-	bind:this={hiddenFormElement}
->
-	<input type="hidden" name="title" value={canvasName} />
-	<input type="hidden" name="loc_desc" value={locationDescription} />
-	<input type="hidden" name="latitude" value={step2Data?.coordinates.latitude ?? 0} />
-	<input type="hidden" name="longitude" value={step2Data?.coordinates.longitude ?? 0} />
-	<input type="hidden" name="accuracy" value={step2Data?.coordinates.accuracy ?? 0} />
-</form>
+<Modal bind:opened={modalOpened} bind:title={modalTitle} bind:subtitle={modalSubtitle}></Modal>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
