@@ -90,11 +90,12 @@
 			userDisplayName: string;
 			userID: string;
 			canvasDrawing: JSON;
+			channelName: string;
 		};
 	} = $props();
 
 	const supabase = backend.supabase;
-	let { realtimeManager, canvasChannel, userDisplayName, userID, canvasDrawing } =
+	let { realtimeManager, canvasChannel, userDisplayName, userID, canvasDrawing, channelName } =
 		$derived(backend);
 
 	let loadErr: string | null = null;
@@ -165,7 +166,26 @@
 					);
 				}
 			)
-			.subscribe();
+			.subscribe( async () => {
+				
+				// any delays in loading will be resolved by loading the canvas again
+				const { data } = await supabase
+					.from("canvas")
+					.select("drawing")
+					.eq("backup_code", channelName)
+					.limit(1)
+					.maybeSingle();
+				
+				if (data !== null) {
+					Object.assign(
+					(objects["pixelGrid"] as PixelGrid).pixels,
+					data.drawing);
+
+					Object.assign(
+					(objects["pixelGrid"] as PixelGrid).pixels,
+					realtimeManager.getPixelDatabaseQueue());
+				}
+			});
 
 		return null;
 	};

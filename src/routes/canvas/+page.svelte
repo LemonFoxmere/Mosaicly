@@ -39,7 +39,7 @@
 	let userWithinCanvasBefore: boolean = $derived.by(() => {
 
 		// when user arrives to canvas the first arrival, they will always be able to see that canvas
-		if (userLocationListener.getIsCloseToCanvas() || userWithinCanvasBefore === true) {
+		if (userLocationListener.getIsCloseToCanvas() || userWithinCanvasBeforeInitial === true) {
 			userWithinCanvasBeforeInitial = true;
 			return true
 		} else {
@@ -138,7 +138,8 @@
 						canvasChannel,
 						userDisplayName,
 						userID,
-						canvasDrawing
+						canvasDrawing,
+						channelName
 					}}
 				/>
 			</div>
