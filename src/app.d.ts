@@ -46,4 +46,9 @@ declare global {
 		session_id: string;
 		is_anonymous: boolean;
 	};
+
+	interface faultyResponse<T> {
+		data: T;
+		err: string | null;
+	}
 }

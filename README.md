@@ -1,6 +1,6 @@
 <div align="center" style="margin-top: 20px; font-family: Outfit;">
     <a href="https://mosaicly.io" style="display:flex; justify-content:center; height:fit-content; padding:0; text-decoration:none; margin:0 0 0 0">
-        <img src="./static/github-readme-logo.png" style="height:200px; margin:0"></img>
+        <img src="./static/logos/github-readme-logo.png" style="height:200px; margin:0"></img>
     </a>
     <h1>mosaicly</h1>
 

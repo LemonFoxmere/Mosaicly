@@ -36,10 +36,15 @@
 
 	main {
 		display: flex;
+		flex-direction: column;
 		justify-content: space-between;
-		column-gap: 20px;
+		gap: 20px;
 
 		padding: 15px 20px;
+
+		@media screen and (min-width: $mobile-width) {
+			flex-direction: row;
+		}
 
 		#content {
 			max-width: 100%;
@@ -80,9 +85,13 @@
 		#cta {
 			display: flex;
 			flex-direction: row;
-			justify-content: center;
+			justify-content: flex-end;
 			align-items: center;
 			gap: 5px;
+
+			@media screen and (min-width: $mobile-width) {
+				justify-content: center;
+			}
 		}
 	}
 </style>
