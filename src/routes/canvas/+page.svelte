@@ -5,7 +5,7 @@
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
 	import { UserLocationListener } from "$lib/comp/canvas/objects/UserLocationListener.svelte";
 	import { supabase } from "../../lib/supabaseClient";
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import type { PageProps } from "./$types";
 	import { Value } from "sass";
 
@@ -31,21 +31,7 @@
 	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
 
 	// manages user location and state
-	const userLocationListener = new UserLocationListener;
-	let userIsTooFarFromCanvas = $derived(!userLocationListener.getIsCloseToCanvas() 
-									&& userLocationListener.getDistance() !== Infinity); // user is close (and does not have an invalid distance)
-
-	let userWithinCanvasBeforeInitial = false; // initial assignment to be used in userWithinCanvasBefore
-	let userWithinCanvasBefore: boolean = $derived.by(() => {
-
-		// when user arrives to canvas the first arrival, they will always be able to see that canvas
-		if (userLocationListener.getIsCloseToCanvas() || userWithinCanvasBeforeInitial === true) {
-			userWithinCanvasBeforeInitial = true;
-			return true
-		} else {
-			return false
-		}
-	});
+	const userLocationListener = $derived(new UserLocationListener(canvasLatitude, canvasLongitude));
 
 	let hasSession = $derived<boolean>(!!data.session);
 
@@ -53,7 +39,7 @@
 
 	// if user is too far away from the canvas then force view mode (derived state can be updated since Svelte v5.25)
 	let editState: "view" | "edit" | "inspect" = $derived.by(() => {
-		if (!userLocationListener.getIsCloseToCanvas()) {
+		if (!userLocationListener.userHasCanvasEditAccess()) {
 			return "view"
 		} else {
 			return "view"
@@ -70,8 +56,12 @@
 
 	onMount(() => {
 
-		// set up user location listening on the browser
-		userLocationListener.setupListener(canvasLatitude, canvasLongitude);
+		// set up user location listening on the browser (only needs to be done once, automatically removes any previous listener)
+		userLocationListener.setupListener();
+	})
+
+	onDestroy(() => {
+		userLocationListener.clearListener();
 	})
 </script>
 
@@ -90,7 +80,7 @@
 		</button>
 		<button
 			class={`${editState === "edit" ? "solid" : "outline"}`}
-			disabled={!hasSession || !userLocationListener.getIsCloseToCanvas()}
+			disabled={!hasSession || !userLocationListener.userHasCanvasEditAccess()}
 			on:click={() => updateState("edit")}
 		>
 			{#if !hasSession}
@@ -107,13 +97,15 @@
 		</button> -->
 	</section>
 	
-	{#if userIsTooFarFromCanvas && !userWithinCanvasBefore}
+	{#if userLocationListener.userHasCanvasLocationWait()}
+		<!-- possibly a loading icon here? -->
+	{:else if !userLocationListener.userHasCanvasViewAccess()}
 		<p class="err-msg">You need to move closer to the canvas to view (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
-	{:else if userIsTooFarFromCanvas}
+	{:else if userLocationListener.userHasCanvasDistanceError()}
 		<p class="err-msg">You need to move closer to the canvas to edit (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
 	{/if}
 
-	<section id="canvas-container" class:hidden={!userWithinCanvasBefore}>
+	<section id="canvas-container" class:hidden={!userLocationListener.userHasCanvasViewAccess()}>
 		<div id="loading-cover" class:hidden={canvasLoaded}>
 			<LoaderCircle size={32} class="animate-spin" />
 		</div>
