@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { RealtimePixelManager } from "$lib/comp/canvas/objects/RealtimePixelManager";
+	import { UserLocationListener } from "$lib/comp/canvas/objects/UserLocationListener.svelte";
+	import { formatDistance } from "$lib/comp/canvas/utils/Geolocation";
 	import { LoaderCircle } from "@lucide/svelte";
+	import { onDestroy, onMount } from "svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
-	import { UserLocationListener } from "$lib/comp/canvas/objects/UserLocationListener.svelte";
 	import { supabase } from "../../lib/supabaseClient";
-	import { onDestroy, onMount } from "svelte";
 	import type { PageProps } from "./$types";
-	import { Value } from "sass";
 
 	let { data }: PageProps = $props();
 
@@ -40,9 +40,9 @@
 	// if user is too far away from the canvas then force view mode (derived state can be updated since Svelte v5.25)
 	let editState: "view" | "edit" | "inspect" = $derived.by(() => {
 		if (!userLocationListener.userHasCanvasEditAccess()) {
-			return "view"
+			return "view";
 		} else {
-			return "view"
+			return "view";
 		}
 	});
 
@@ -55,20 +55,25 @@
 	};
 
 	onMount(() => {
-
 		// set up user location listening on the browser (only needs to be done once, automatically removes any previous listener)
 		userLocationListener.setupListener();
-	})
+	});
 
 	onDestroy(() => {
 		userLocationListener.clearListener();
-	})
+	});
 </script>
 
 <main>
 	<section id="title-container" class="no-drag">
 		<h2>{canvasTitle}</h2>
 		<p>{canvasLocDesc}</p>
+		{#if userLocationListener.userHasCanvasDistanceError()}
+			<p id="too-far">
+				Currently {formatDistance(userLocationListener.getRoundedDistanceInFeet() / 5280)} from
+				this canvas
+			</p>
+		{/if}
 	</section>
 
 	<section id="action-container">
@@ -85,6 +90,8 @@
 		>
 			{#if !hasSession}
 				Login to edit
+			{:else if userLocationListener.userHasCanvasDistanceError()}
+				Too far to edit
 			{:else}
 				Edit
 			{/if}
@@ -96,12 +103,12 @@
 			Inspect
 		</button> -->
 	</section>
-	
-	{#if userLocationListener.userHasCanvasLocationWait()}
-		<!-- possibly a loading icon here? -->
+
+	<!-- possibly a loading icon here? -->
+	<!-- {#if userLocationListener.userHasCanvasLocationWait()}
 	{:else if userLocationListener.userHasCanvasDistanceError()}
 		<p class="err-msg">You need to move closer to the canvas to edit (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
-	{/if}
+	{/if} -->
 
 	<section id="canvas-container">
 		<div id="loading-cover" class:hidden={canvasLoaded}>
@@ -188,6 +195,10 @@
 				-webkit-line-clamp: 2;
 				overflow: hidden;
 				text-overflow: ellipsis;
+
+				&#too-far {
+					color: $accent-error;
+				}
 			}
 		}
 
@@ -199,6 +210,7 @@
 
 			button {
 				width: 100%;
+				white-space: nowrap;
 			}
 		}
 

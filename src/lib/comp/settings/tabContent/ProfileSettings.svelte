@@ -46,7 +46,7 @@
 	};
 </script>
 
-<form class="no-drag" method="POST" action="/profile?/update_profile" use:enhance={submitCallback}>
+<form class="no-drag" method="POST" action="/settings?/update_profile" use:enhance={submitCallback}>
 	<FormField
 		label={nameValid
 			? "Display Name"
