@@ -187,7 +187,7 @@
 			flex-direction: column;
 			padding: 20px 30px calc(20px + $navbar-height) 30px;
 			gap: 30px;
-			max-width: calc($global-max-width - 60px);
+			max-width: calc($global-max-width);
 			margin: 0 auto;
 			width: 100%;
 
