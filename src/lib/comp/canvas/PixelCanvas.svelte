@@ -166,8 +166,7 @@
 					);
 				}
 			)
-			.subscribe( async () => {
-				
+			.subscribe(async () => {
 				// any delays in loading will be resolved by loading the canvas again
 				const { data } = await supabase
 					.from("canvas")
@@ -175,15 +174,14 @@
 					.eq("backup_code", channelName)
 					.limit(1)
 					.maybeSingle();
-				
+
 				if (data !== null) {
-					Object.assign(
-					(objects["pixelGrid"] as PixelGrid).pixels,
-					data.drawing);
+					Object.assign((objects["pixelGrid"] as PixelGrid).pixels, data.drawing);
 
 					Object.assign(
-					(objects["pixelGrid"] as PixelGrid).pixels,
-					realtimeManager.getPixelDatabaseQueue());
+						(objects["pixelGrid"] as PixelGrid).pixels,
+						realtimeManager.getPixelDatabaseQueue()
+					);
 				}
 			});
 
