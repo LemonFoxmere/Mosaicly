@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import RightArrowOutline from "$lib/comp/ui/icons/RightArrowOutline.svelte";
+	import { CircleCheck, LoaderCircle } from "@lucide/svelte";
+	import type { ActionResult } from "@sveltejs/kit";
+	import { onMount } from "svelte";
 
 	const codeFormat = /^(((\w{4})-){2}(\w{4}))$/; // format: xxxx-xxxx-xxxx
-	let canvasCode = "";
-	let canvasFound = true;
-	let idField: HTMLElement;
 
 	// animate the error shake for a certain text box
 	const animateFailure = (ele: HTMLElement) => {
@@ -15,24 +16,77 @@
 		};
 	};
 
-	/*
-	 * check if the canvas exists
-	 * if yes: redirect to canvas
-	 * else: show error message  (text has its own if statement)
-	 */
+	// any error messages that pops up
+	let statusMsg = $state({
+		flag: false,
+		err: false,
+		message: ""
+	});
+	const showStatus = (message: string, err: boolean) => {
+		console.error(message);
+		statusMsg.flag = true;
+		statusMsg.err = err;
+		statusMsg.message = message;
+	};
 
-	const dummyCode = "aaaaaaaaaaaa";
-	function submit() {
-		// always true
-		canvasFound = canvasCode === dummyCode;
+	// UI states
+	let isFinding = $state<boolean>(false);
+	let isFound = $state<boolean>(false);
+	let canvasCode = $state<string>("");
 
-		if (!canvasFound) {
-			animateFailure(idField);
-		} else {
-			window.location.href = "/canvas";
+	// HTML bindings
+	let inputField: HTMLElement;
+	let formSubmitButton: HTMLButtonElement;
+
+	const submit = () => {
+		isFinding = true; // set UI state
+		formSubmitButton.click(); // call search action
+	};
+
+	const submitCallback = () => {
+		return async ({
+			result
+		}: {
+			formData: FormData;
+			result: ActionResult;
+			update: (opts?: any) => Promise<void>;
+		}) => {
+			isFinding = false; // reset UI state
+			if (result.type === "failure") {
+				// detect failure code
+				console.log(`Fail status: ${result.status}`);
+				if (result.status === 404) {
+					showStatus("Canvas not found. Try another code?", true);
+				} else {
+					showStatus("An error occurred while searching for the canvas.", true);
+				}
+				animateFailure(inputField);
+			} else if (result.type === "success" && result.data) {
+				// canvas is found. Redirect
+				const code = result.data?.canvas.backup_code;
+				isFound = true;
+				showStatus("We found that canvas. Redirecting you now...", false); // show success message
+				window.location.href = `/canvas?c=${code}`;
+			}
+		};
+	};
+
+	onMount(() => {
+		// reset ALL UI states
+		isFinding = false;
+		isFound = false;
+		canvasCode = "";
+		statusMsg = { flag: false, err: false, message: "" };
+		if (inputField) {
+			inputField.classList.add("no-anim"); // reset input field
 		}
-	}
+	});
 </script>
+
+<form id="hidden-form" method="POST" use:enhance={submitCallback}>
+	<input name="canvasCode" type="text" bind:value={canvasCode} />
+	<button bind:this={formSubmitButton} formaction="?/searchCanvas" />
+</form>
 
 <main>
 	<section id="content">
@@ -56,16 +110,27 @@
 	</div>
 
 	<section id="cta">
-		<form bind:this={idField} id="input-wrapper" class="item-frame no-anim">
+		<form bind:this={inputField} id="input-wrapper" class="item-frame no-anim">
 			<input bind:value={canvasCode} placeholder="a9Xk-72Bc-dF4m" maxlength="14" />
 			<!-- must be in the format of xxxx-xxxx-xxxx -->
-			<button type="submit" disabled={!codeFormat.test(canvasCode)} on:click={submit}>
-				<RightArrowOutline s={32} />
+			<button
+				type="submit"
+				disabled={!codeFormat.test(canvasCode) || isFinding || isFound}
+				class:full-opacity={isFinding || isFound}
+				on:click={submit}
+			>
+				{#if isFound}
+					<CircleCheck size={28} absoluteStrokeWidth={true} strokeWidth={2} />
+				{:else if isFinding}
+					<LoaderCircle size={28} class="animate-spin" />
+				{:else}
+					<RightArrowOutline s={32} />
+				{/if}
 			</button>
 		</form>
 
-		<section id="err" class={`${canvasFound ? "hidden" : "shown"}`}>
-			<p>No canvas found. Try another one.</p>
+		<section id="status-msg-container" class={`${statusMsg.flag ? "shown" : "hidden"}`}>
+			<p class:err={statusMsg.err}>{statusMsg.message}&nbsp;</p>
 		</section>
 		<!-- <a class="wrapper" href="/">
 			<button>Go back home</button>
@@ -165,11 +230,15 @@
 					background-color: transparent;
 					padding: 0;
 					color: inherit;
+
+					&.full-opacity {
+						opacity: 1 !important; // override disabled
+					}
 				}
 			}
 		}
 
-		#err {
+		#status-msg-container {
 			width: 100%;
 			display: flex;
 			justify-content: center;
@@ -181,7 +250,12 @@
 			}
 
 			p {
-				color: $accent-error;
+				color: $text-secondary;
+
+				&.err {
+					color: $accent-error;
+					animation: none;
+				}
 			}
 		}
 
@@ -206,5 +280,9 @@
 				transform: translateX(0px);
 			}
 		}
+	}
+
+	#hidden-form {
+		display: none;
 	}
 </style>
