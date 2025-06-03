@@ -111,6 +111,7 @@ export class PixelGrid extends CanvasObject {
 					lastedEditedUserID: this.userID,
 					lastedEditedName: this.userDisplayName
 				});
+				this.realtimeManager.broadcastChanges(); // push any pending pixel changes to the server
 			}
 		}
 	}
@@ -271,7 +272,7 @@ export class PixelGrid extends CanvasObject {
 			this.placePixel(sctx.cursor.relx, sctx.cursor.rely, sctx.pixelGrid.brush.color, sctx);
 		}
 
-		this.realtimeManager.broadcastThenSave(this.pixels); // push any pending pixel changes to the server
+		this.realtimeManager.saveToDatabase(this.pixels); // push pixel changes (will not send anything if there are no new pixels to be sent)
 		sctx.pixelGrid.brush.active = false;
 	}
 }

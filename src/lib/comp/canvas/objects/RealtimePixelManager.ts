@@ -50,31 +50,35 @@ export class RealtimePixelManager {
 
 	// fetch request to send pixels to database
 	saveToDatabase(pixels: Record<string, PixelData>): void {
+
 		// takes a "snapshot" of what pixels will be sent to the database
 		const current: Record<string, PixelData> = Object.assign({}, this.pixelDatabaseQueue);
-		fetch("/api/canvas", {
-			method: "PATCH",
-			headers: {
-				Accept: "application/json",
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify({
-				canvasID: this.canvasID,
-				drawing: pixels
-			})
-		}).then((response) => {
-			void response;
-			// TODO: error handling and possibly UI text for successful save?
-		});
 
-		// dequeue pixels that have been sent to the database
-		Object.keys(current).map((cellKey) => {
-			delete this.pixelDatabaseQueue[cellKey];
-		});
+		if (Object.keys(current).length > 0) {
+			fetch("/api/canvas", {
+				method: "PATCH",
+				headers: {
+					Accept: "application/json",
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					canvasID: this.canvasID,
+					drawing: pixels
+				})
+			}).then((response) => {
+				void response;
+				// TODO: error handling and possibly UI text for successful save?
+			});
+
+			// dequeue pixels that have been sent to the database
+			Object.keys(current).map((cellKey) => {
+				delete this.pixelDatabaseQueue[cellKey];
+			});
+		}
 	}
 
-	// broadcasts pixel changes and eventually saves the whole canvas
-	broadcastThenSave(pixels: Record<string, PixelData>): void {
+	// broadcasts pixel changes
+	broadcastChanges(): void {
 		if (this.isDirty && Object.keys(this.pixelBroadcastQueue).length > 0) {
 			// console.log("fuck");
 
@@ -95,14 +99,10 @@ export class RealtimePixelManager {
 					}
 				})
 				.then(() => {
-					// check if there are any pixels to update before beginning database sending
+					
+					// check if there are any pixels to update before setting down dirty flag
 					if (Object.keys(this.pixelBroadcastQueue).length == 0) {
 						this.isDirty = false;
-
-						// if nothing waiting, start readying for the canvas sending (1 second debounce)
-						this.clearDatabaseTimer();
-						// this.databaseTimeout = setTimeout(async () => this.saveToDatabase(pixels), 1000);
-						this.saveToDatabase(pixels);
 					}
 				});
 		}
