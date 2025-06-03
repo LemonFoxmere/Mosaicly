@@ -1,4 +1,4 @@
-import { checkNavigatorConfig, handleStatusError, haversineDistance } from "../utils/Geolocation";
+import { calculateDistanceBetweenCoordinates, checkNavigatorConfig, handleStatusError } from "../utils/Geolocation";
 
 // listens to user location, calculates if user is within the canvas, and also sets states (for distance and whether user is within the bounds)
 export class UserLocationListener {
@@ -88,7 +88,7 @@ export class UserLocationListener {
 	// calculate spherical distance from canvas and add to list of distances
 	pushDistanceFromCanvas(userLat: number, userLon: number, canvasLat: number, canvasLon: number) {
 
-		const currDistance: number = haversineDistance(userLat, userLon, canvasLat, canvasLon);
+		const currDistance: number = calculateDistanceBetweenCoordinates(userLat, userLon, canvasLat, canvasLon);
 		this.pushDistance(currDistance);
 	}
 
