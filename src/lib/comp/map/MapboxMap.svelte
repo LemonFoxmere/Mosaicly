@@ -10,6 +10,8 @@
 		longitude: number;
 		allowClickToUpdateCoordinates?: boolean;
 		showMarker?: boolean;
+		showRadius?: boolean;
+		forceMapToCenter?: boolean;
 		onClickWithCoords?: (lat: number, lng: number) => void;
 	}
 
@@ -18,6 +20,8 @@
 		longitude = $bindable(),
 		allowClickToUpdateCoordinates = false,
 		showMarker = true,
+		showRadius = false,
+		forceMapToCenter = $bindable<boolean>(), // flip value to trigger force reload
 		onClickWithCoords = undefined
 	}: Props = $props();
 
@@ -50,7 +54,9 @@
 		// Add navigation controls
 		map.on("load", () => {
 			setMarker();
-			addRadiusCircle();
+			if (showRadius) {
+				addRadiusCircle();
+			}
 		});
 		map.on("zoomend", () => {
 			if (map) {
@@ -113,7 +119,7 @@
 			typeof longitude !== "number" ||
 			isNaN(latitude) ||
 			isNaN(longitude) ||
-			!showMarker
+			!showRadius
 		)
 			return;
 
@@ -156,6 +162,16 @@
 		}
 	};
 
+	const removeRadiusCircle = () => {
+		if (!map) return;
+		if (map.getLayer(radiusCircleId)) {
+			map.removeLayer(radiusCircleId);
+		}
+		if (map.getSource(radiusCircleId)) {
+			map.removeSource(radiusCircleId);
+		}
+	};
+
 	const updateMapAndView = () => {
 		if (
 			map &&
@@ -164,7 +180,6 @@
 			!isNaN(latitude) &&
 			!isNaN(longitude)
 		) {
-			// Ensure the map is centered on the new coordinates with the current zoom level
 			map.flyTo({
 				center: [longitude, latitude],
 				zoom: Math.max(currentZoom, USER_ACTION_ZOOM),
@@ -172,29 +187,35 @@
 				speed: 1
 			});
 			setMarker();
-			addRadiusCircle();
+			if (showRadius) {
+				addRadiusCircle();
+			} else {
+				removeRadiusCircle();
+			}
 		}
 	};
 
 	$effect(() => {
-		// This effect runs whenever latitude or longitude changes
-		if (
-			!map ||
-			typeof latitude !== "number" ||
-			typeof longitude !== "number" ||
-			isNaN(latitude) ||
-			isNaN(longitude)
-		)
-			return;
+		if (forceMapToCenter || !forceMapToCenter) {
+			// This effect runs whenever latitude or longitude changes
+			if (
+				!map ||
+				typeof latitude !== "number" ||
+				typeof longitude !== "number" ||
+				isNaN(latitude) ||
+				isNaN(longitude)
+			)
+				return;
 
-		if (map.isStyleLoaded()) {
-			// update map and view if the style is already loaded
-			updateMapAndView();
-		} else {
-			// if the style is not loaded yet, wait for it to load
-			map.once("style.load", () => {
+			if (map.isStyleLoaded()) {
+				// update map and view if the style is already loaded
 				updateMapAndView();
-			});
+			} else {
+				// if the style is not loaded yet, wait for it to load
+				map.once("style.load", () => {
+					updateMapAndView();
+				});
+			}
 		}
 	});
 </script>

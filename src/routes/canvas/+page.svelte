@@ -3,30 +3,48 @@
 	import { LoaderCircle } from "@lucide/svelte";
 	import Palette from "../../lib/comp/canvas/Palette.svelte";
 	import PixelCanvas from "../../lib/comp/canvas/PixelCanvas.svelte";
+	import { UserLocationListener } from "$lib/comp/canvas/objects/UserLocationListener.svelte";
 	import { supabase } from "../../lib/supabaseClient";
+	import { onDestroy, onMount } from "svelte";
 	import type { PageProps } from "./$types";
-
-	let selectedColor = $state("#000000");
-	let editState: "view" | "edit" | "inspect" = $state("view");
+	import { Value } from "sass";
 
 	let { data }: PageProps = $props();
 
 	// canvas infos
-	let canvasID = $derived(data.canvas.id);
-	let canvasDrawing = $derived(data.canvas.drawing); // will be used for initial canvas state
-	let canvasTitle = $derived(data.canvas.title); // used for the title in the header
-	let canvasLocDesc = $derived(data.canvas.loc_desc); // used for the description in the header
+	const canvasID = data.canvas.id;
+	const canvasDrawing = data.canvas.drawing; // will be used for initial canvas state
+	const canvasTitle = data.canvas.title; // used for the title in the header
+	const canvasLocDesc = data.canvas.loc_desc; // used for the description in the header
 	let canvasLoaded = $state(false);
 
-	// realtime shit
-	let channelName = $derived(data.channelName);
-	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
-	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");
-	let userID = $derived(data.user?.account.id ?? "0");
+	// canvas location infos
+	const canvasLatitude = data.canvas.latitude;
+	const canvasLongitude = data.canvas.longitude;
 
-	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
+	// realtime shit
+	const channelName = data.channelName;
+	const canvasChannel = supabase.channel(channelName, { config: { private: true } });
+	const userDisplayName = data.user?.profile?.displayName ?? "";
+	const userID = data.user?.account.id ?? "0";
+
+	const realtimeManager = new RealtimePixelManager(canvasChannel, canvasID);
+
+	// manages user location and state
+	const userLocationListener = new UserLocationListener(canvasLatitude, canvasLongitude);
 
 	let hasSession = $derived<boolean>(!!data.session);
+
+	let selectedColor = $state("#000000");
+
+	// if user is too far away from the canvas then force view mode (derived state can be updated since Svelte v5.25)
+	let editState: "view" | "edit" | "inspect" = $derived.by(() => {
+		if (!userLocationListener.userHasCanvasEditAccess()) {
+			return "view"
+		} else {
+			return "view"
+		}
+	});
 
 	const updateState = (newState: "view" | "edit" | "inspect") => {
 		editState = newState;
@@ -35,6 +53,16 @@
 	const readyCanvas = () => {
 		canvasLoaded = true;
 	};
+
+	onMount(() => {
+
+		// set up user location listening on the browser (only needs to be done once, automatically removes any previous listener)
+		userLocationListener.setupListener();
+	})
+
+	onDestroy(() => {
+		userLocationListener.clearListener();
+	})
 </script>
 
 <main>
@@ -52,7 +80,7 @@
 		</button>
 		<button
 			class={`${editState === "edit" ? "solid" : "outline"}`}
-			disabled={!hasSession}
+			disabled={!hasSession || !userLocationListener.userHasCanvasEditAccess()}
 			on:click={() => updateState("edit")}
 		>
 			{#if !hasSession}
@@ -68,6 +96,12 @@
 			Inspect
 		</button> -->
 	</section>
+	
+	{#if userLocationListener.userHasCanvasLocationWait()}
+		<!-- possibly a loading icon here? -->
+	{:else if userLocationListener.userHasCanvasDistanceError()}
+		<p class="err-msg">You need to move closer to the canvas to edit (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
+	{/if}
 
 	<section id="canvas-container">
 		<div id="loading-cover" class:hidden={canvasLoaded}>
@@ -94,7 +128,8 @@
 						canvasChannel,
 						userDisplayName,
 						userID,
-						canvasDrawing
+						canvasDrawing,
+						channelName
 					}}
 				/>
 			</div>
@@ -165,6 +200,13 @@
 			button {
 				width: 100%;
 			}
+		}
+
+		.err-msg {
+			width: 100%;
+			text-align: center;
+			padding: 0px 10px;
+			color: $accent-error;
 		}
 
 		#canvas-container {
@@ -250,6 +292,12 @@
 						transform: translate(0px, 40px);
 					}
 				}
+			}
+
+			&.hidden {
+				opacity: 0;
+				pointer-events: none;
+				transform: translate(0px, -15px);
 			}
 
 			@media screen and (min-width: $mobile-width) {
