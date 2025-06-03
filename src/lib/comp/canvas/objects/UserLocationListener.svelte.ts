@@ -16,6 +16,12 @@ export class UserLocationListener {
 
 	private listenerID: number | null = null;
 
+	private listenerConfig = { 
+		enableHighAccuracy: true, 
+		timeout: 5000, 
+		maximumAge: 0 
+	}
+
 	constructor (
 		canvasLatitude: number,
 		canvasLongitude: number
@@ -60,8 +66,9 @@ export class UserLocationListener {
 			const feetDistance = meterDistance * 3.28084 // meters to feet conversion
 			const factor = Math.pow(10, decimalPlaces);
 			return Math.round(feetDistance * factor) / factor;
-		} else
+		} else {
 			return Infinity;
+		}
 	}
 
 	// push distance to the list of distances (maintains at most 5 distances on default)
@@ -113,7 +120,8 @@ export class UserLocationListener {
 					handleStatusError(error.code);
 					this.setUserEditAccess(false);
 				}, 
-				{ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+				this.listenerConfig
+			);
 		}
 	}
 }
