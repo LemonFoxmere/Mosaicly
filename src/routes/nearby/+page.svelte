@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import { LoaderCircle, EllipsisIcon } from "@lucide/svelte";
-	import Modal from "$lib/comp/ui/general/Modal.svelte";
-	import CanvasListItem from "$lib/comp/nearby/CanvasListItem.svelte";
-	import MapPopup from "$lib/comp/nearby/MapPopup.svelte";
 	import {
 		createLocationTracker,
 		formatDistance,
 		type NearbyCanvas
 	} from "$lib/comp/canvas/utils/Geolocation";
+	import CanvasListItem from "$lib/comp/nearby/CanvasListItem.svelte";
+	import MapPopup from "$lib/comp/nearby/MapPopup.svelte";
+	import Modal from "$lib/comp/ui/general/Modal.svelte";
+	import { LoaderCircle } from "@lucide/svelte";
+	import { onMount } from "svelte";
 
 	let canvases = $state<NearbyCanvas[]>([]);
 	let isLoading = $state(false);
@@ -18,6 +18,7 @@
 
 	let isModalOpen = $state(false);
 	let selectedCanvas = $state<NearbyCanvas | null>(null);
+	let forceMapToCenter = $state<boolean>(false);
 
 	const fetchNearbyCanvases = async (lat: number, lon: number) => {
 		isLoading = true;
@@ -90,6 +91,7 @@
 	const selectCanvas = (canvas: NearbyCanvas) => {
 		selectedCanvas = canvas;
 		isModalOpen = true;
+		forceMapToCenter = !forceMapToCenter; // force map centering every time the modal is opened
 	};
 
 	onMount(() => {
@@ -146,13 +148,7 @@
 						locDesc={canvas.loc_desc}
 						distance={formatDistance(canvas.distance_mi)}
 						onClick={() => selectCanvas(canvas)}
-					>
-						{#snippet ctaOptions()}
-							<button class="cta-button">
-								<EllipsisIcon size={28} />
-							</button>
-						{/snippet}
-					</CanvasListItem>
+					/>
 				{/each}
 			</section>
 		{/if}
@@ -172,7 +168,7 @@
 		title={selectedCanvas?.title ?? ""}
 		subtitle={selectedCanvas?.loc_desc ?? ""}
 	>
-		<MapPopup canvas={selectedCanvas} />
+		<MapPopup canvas={selectedCanvas} bind:forceMapToCenter />
 	</Modal>
 </main>
 
@@ -184,116 +180,94 @@
 		height: 100%;
 		display: flex;
 		flex-direction: column;
-	}
 
-	#main-content {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		padding: 20px 30px calc(20px + $navbar-height) 30px;
-		gap: 30px;
-		max-width: calc($global-max-width - 60px);
-		margin: 0 auto;
-		width: 100%;
-
-		@media screen and (min-width: $mobile-width) {
-			padding-bottom: calc(30px + $navbar-height);
-		}
-	}
-
-	#greeting-card {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-
-		h2 {
-			color: $text-primary;
-			margin: 0;
-		}
-
-		p {
-			color: $text-secondary;
-			margin: 0;
-		}
-	}
-
-	#canvas-list {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		flex: 1;
-		overflow-y: auto;
-		-webkit-overflow-scrolling: touch;
-	}
-
-	.state-container {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		padding: 30px;
-		text-align: center;
-		flex: 1;
-		gap: 10px;
-
-		p {
-			color: $text-secondary;
-			font-weight: 400;
-			line-height: 22px;
-		}
-
-		&.error p {
-			color: $accent-error;
-		}
-
-		.empty-state {
-			font-weight: 700;
-			color: $text-primary;
-		}
-
-		.error-detail {
-			font-size: 14px;
-			opacity: 0.8;
-			max-width: 400px;
-			word-break: break-word;
-		}
-	}
-
-	#refresh-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 10px;
-
-		p {
-			color: $text-secondary;
-			margin: 0;
-		}
-
-		button {
+		#main-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			padding: 20px 30px calc(20px + $navbar-height) 30px;
+			gap: 30px;
+			max-width: calc($global-max-width - 60px);
+			margin: 0 auto;
 			width: 100%;
-			max-width: 342px;
-		}
-	}
 
-	.cta-button {
-		color: $text-primary;
-		padding: 8px;
-		border-radius: 8px;
-		background: none;
-		border: none;
-		cursor: pointer;
-
-		@media (hover: hover) {
-			&:hover {
-				opacity: 0.5;
+			@media screen and (min-width: $mobile-width) {
+				padding-bottom: calc(30px + $navbar-height);
 			}
 		}
 
-		&:active {
-			opacity: 1;
-			transform: scale(0.8);
-			background-color: $text-active-highlight;
+		#greeting-card {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+
+			h2 {
+				color: $text-primary;
+				margin: 0;
+			}
+
+			p {
+				color: $text-secondary;
+				margin: 0;
+			}
+		}
+
+		#canvas-list {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			flex: 1;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.state-container {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			padding: 30px;
+			text-align: center;
+			flex: 1;
+			gap: 10px;
+
+			p {
+				color: $text-secondary;
+				font-weight: 400;
+				line-height: 22px;
+			}
+
+			&.error p {
+				color: $accent-error;
+			}
+
+			.empty-state {
+				font-weight: 700;
+				color: $text-primary;
+			}
+
+			.error-detail {
+				font-size: 14px;
+				opacity: 0.8;
+				max-width: 400px;
+				word-break: break-word;
+			}
+		}
+
+		#refresh-section {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 5px;
+
+			p {
+				color: $text-tertiary;
+				margin: 0;
+			}
+
+			button {
+				width: 100%;
+			}
 		}
 	}
 </style>

@@ -9,7 +9,7 @@
 		</section>
 
 		<section id="cta">
-			<a class="wrapper" href="/search">
+			<a class="wrapper" href="/nearby">
 				<button id="search">Start touching grass</button>
 			</a>
 			<a class="wrapper" href="/about">

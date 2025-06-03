@@ -9,11 +9,9 @@
 	let { canvas, clickable = false, onClick, ctaOptions, caption }: Props = $props();
 
 	const { title, locDesc, isArchived } = $derived(canvas);
-	const WrapperElement = clickable ? "button" : "div";
 </script>
 
-<svelte:element
-	this={WrapperElement}
+<div
 	class="item-frame canvas-card"
 	class:clickable
 	class:archived={isArchived}
@@ -38,25 +36,27 @@
 	<section id="cta">
 		{@render ctaOptions?.()}
 	</section>
-</svelte:element>
+</div>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
 	.canvas-card {
 		display: flex;
+		flex-direction: column;
 		justify-content: space-between;
-		align-items: center;
 		gap: 20px;
 		background-color: $background-primary;
 
 		padding: 15px 20px;
 
+		@media screen and (min-width: $mobile-width) {
+			flex-direction: row;
+		}
+
 		&.clickable {
 			cursor: pointer;
 			text-align: left;
-			padding: 14px 25px 14px 20px;
-			min-height: 120px;
 
 			transition: 300ms $out-generic-expo;
 			transition-property: opacity, transform, border-color;
@@ -69,7 +69,7 @@
 
 			&:active {
 				opacity: 1;
-				transform: scale(0.98);
+				transform: scale(0.925);
 			}
 
 			#content {
@@ -97,7 +97,7 @@
 				display: flex;
 				max-width: 100%;
 				flex-direction: column;
-				row-gap: 5px;
+				row-gap: 1rem; // 1 line height
 
 				#title-container {
 					display: flex;
@@ -132,9 +132,13 @@
 		#cta {
 			display: flex;
 			flex-direction: row;
-			justify-content: center;
+			justify-content: flex-end;
 			align-items: center;
 			gap: 5px;
+
+			@media screen and (min-width: $mobile-width) {
+				justify-content: center;
+			}
 		}
 	}
 </style>
