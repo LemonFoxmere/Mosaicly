@@ -6,9 +6,8 @@
 		locDesc: string;
 		distance: string;
 		onClick?: () => void;
-		ctaOptions?: () => any;
 	}
-	let { title, locDesc, distance, onClick, ctaOptions }: Props = $props();
+	let { title, locDesc, distance, onClick }: Props = $props();
 
 	const canvas = $derived({
 		title,
@@ -17,7 +16,7 @@
 	} as DB.Canvas);
 </script>
 
-<CanvasCard {canvas} clickable={true} {onClick} {ctaOptions}>
+<CanvasCard {canvas} clickable={true} {onClick}>
 	{#snippet caption()}
 		<p class="distance">{distance}</p>
 	{/snippet}

@@ -45,7 +45,6 @@
 
 	.canvas-card {
 		display: flex;
-		flex-direction: column;
 		justify-content: space-between;
 		align-items: center;
 		gap: 20px;
@@ -133,13 +132,9 @@
 		#cta {
 			display: flex;
 			flex-direction: row;
-			justify-content: flex-end;
+			justify-content: center;
 			align-items: center;
 			gap: 5px;
-
-			@media screen and (min-width: $mobile-width) {
-				justify-content: center;
-			}
 		}
 	}
 </style>
