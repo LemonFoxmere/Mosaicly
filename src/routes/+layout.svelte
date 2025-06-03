@@ -85,8 +85,8 @@
 
 			<hr class="menu-items" />
 
-			<a class="menu-items" href="/nearby" on:click={closeMobileMenu}>
-				<p>Nearby Canvases</p>
+			<a class="menu-items" href="/search" on:click={closeMobileMenu}>
+				<p>Search by Backup Code</p>
 			</a>
 
 			<hr class="menu-items" />

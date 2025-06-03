@@ -1,12 +1,13 @@
 <script lang="ts">
-	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 	import { formatDistance, type NearbyCanvas } from "$lib/comp/canvas/utils/Geolocation";
+	import MapboxMap from "$lib/comp/map/MapboxMap.svelte";
 
 	interface Props {
 		canvas: NearbyCanvas | null;
+		forceMapToCenter?: boolean;
 	}
 
-	let { canvas }: Props = $props();
+	let { canvas, forceMapToCenter = $bindable<boolean>() }: Props = $props();
 </script>
 
 {#if canvas}
@@ -17,6 +18,7 @@
 				longitude={canvas.longitude}
 				showMarker={false}
 				showRadius={true}
+				bind:forceMapToCenter
 			/>
 		</div>
 

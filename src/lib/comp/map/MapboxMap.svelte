@@ -11,6 +11,7 @@
 		allowClickToUpdateCoordinates?: boolean;
 		showMarker?: boolean;
 		showRadius?: boolean;
+		forceMapToCenter?: boolean;
 		onClickWithCoords?: (lat: number, lng: number) => void;
 	}
 
@@ -20,6 +21,7 @@
 		allowClickToUpdateCoordinates = false,
 		showMarker = true,
 		showRadius = false,
+		forceMapToCenter = $bindable<boolean>(), // flip value to trigger force reload
 		onClickWithCoords = undefined
 	}: Props = $props();
 
@@ -194,24 +196,26 @@
 	};
 
 	$effect(() => {
-		// This effect runs whenever latitude or longitude changes
-		if (
-			!map ||
-			typeof latitude !== "number" ||
-			typeof longitude !== "number" ||
-			isNaN(latitude) ||
-			isNaN(longitude)
-		)
-			return;
+		if (forceMapToCenter || !forceMapToCenter) {
+			// This effect runs whenever latitude or longitude changes
+			if (
+				!map ||
+				typeof latitude !== "number" ||
+				typeof longitude !== "number" ||
+				isNaN(latitude) ||
+				isNaN(longitude)
+			)
+				return;
 
-		if (map.isStyleLoaded()) {
-			// update map and view if the style is already loaded
-			updateMapAndView();
-		} else {
-			// if the style is not loaded yet, wait for it to load
-			map.once("style.load", () => {
+			if (map.isStyleLoaded()) {
+				// update map and view if the style is already loaded
 				updateMapAndView();
-			});
+			} else {
+				// if the style is not loaded yet, wait for it to load
+				map.once("style.load", () => {
+					updateMapAndView();
+				});
+			}
 		}
 	});
 </script>
