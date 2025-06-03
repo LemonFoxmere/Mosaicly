@@ -12,26 +12,26 @@
 	let { data }: PageProps = $props();
 
 	// canvas infos
-	let canvasID = $derived(data.canvas.id);
-	let canvasDrawing = $derived(data.canvas.drawing); // will be used for initial canvas state
-	let canvasTitle = $derived(data.canvas.title); // used for the title in the header
-	let canvasLocDesc = $derived(data.canvas.loc_desc); // used for the description in the header
+	const canvasID = data.canvas.id;
+	const canvasDrawing = data.canvas.drawing; // will be used for initial canvas state
+	const canvasTitle = data.canvas.title; // used for the title in the header
+	const canvasLocDesc = data.canvas.loc_desc; // used for the description in the header
 	let canvasLoaded = $state(false);
 
 	// canvas location infos
-	let canvasLatitude = $derived(data.canvas.latitude);
-	let canvasLongitude = $derived(data.canvas.longitude);
+	const canvasLatitude = data.canvas.latitude;
+	const canvasLongitude = data.canvas.longitude;
 
 	// realtime shit
-	let channelName = $derived(data.channelName);
-	let canvasChannel = $derived(supabase.channel(channelName, { config: { private: true } }));
-	let userDisplayName = $derived(data.user?.profile?.displayName ?? "");
-	let userID = $derived(data.user?.account.id ?? "0");
+	const channelName = data.channelName;
+	const canvasChannel = supabase.channel(channelName, { config: { private: true } });
+	const userDisplayName = data.user?.profile?.displayName ?? "";
+	const userID = data.user?.account.id ?? "0";
 
-	let realtimeManager = $derived(new RealtimePixelManager(canvasChannel, canvasID));
+	const realtimeManager = new RealtimePixelManager(canvasChannel, canvasID);
 
 	// manages user location and state
-	const userLocationListener = $derived(new UserLocationListener(canvasLatitude, canvasLongitude));
+	const userLocationListener = new UserLocationListener(canvasLatitude, canvasLongitude);
 
 	let hasSession = $derived<boolean>(!!data.session);
 
@@ -99,13 +99,11 @@
 	
 	{#if userLocationListener.userHasCanvasLocationWait()}
 		<!-- possibly a loading icon here? -->
-	{:else if !userLocationListener.userHasCanvasViewAccess()}
-		<p class="err-msg">You need to move closer to the canvas to view (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
 	{:else if userLocationListener.userHasCanvasDistanceError()}
 		<p class="err-msg">You need to move closer to the canvas to edit (currently {userLocationListener.getRoundedDistanceInFeet()} feet away)</p>
 	{/if}
 
-	<section id="canvas-container" class:hidden={!userLocationListener.userHasCanvasViewAccess()}>
+	<section id="canvas-container">
 		<div id="loading-cover" class:hidden={canvasLoaded}>
 			<LoaderCircle size={32} class="animate-spin" />
 		</div>

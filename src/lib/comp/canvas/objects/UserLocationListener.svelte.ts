@@ -10,9 +10,8 @@ export class UserLocationListener {
 	private distanceCountLimit: number = 5;
 
 	private hasValidDistance = $derived(this.getDistance() !== Infinity); // does user have any recorded distances? (used for canvas edit access errors)
-	private canvasViewAccess = $state<boolean>(false); // has the user arrived at the canvas before?
 	private canvasEditAccess = $state<boolean>(false); // is user within the canvas with no errors?
-	private showCanvasLocationWait = $derived<boolean>(!this.canvasViewAccess && !this.hasValidDistance) // has the user never arrived at canvas before and has no distance recorded?
+	private showCanvasLocationWait = $derived<boolean>(!this.hasValidDistance) // has the user never arrived at canvas before and has no distance recorded?
 	private showCanvasDistanceError = $derived<boolean>(!this.canvasEditAccess && this.hasValidDistance); // is user too far from the canvas with a valid distance?
 
 	private listenerID: number | null = null;
@@ -21,17 +20,8 @@ export class UserLocationListener {
 		canvasLatitude: number,
 		canvasLongitude: number
 	) {
-		this.canvasLatitude = $derived(canvasLatitude);
-		this.canvasLongitude = $derived(canvasLongitude);
-	}
-
-	userHasCanvasViewAccess() {
-		return this.canvasViewAccess;
-	}
-
-	// should be permanently set true as soon as user has come within canvas bounds
-	setCanvasViewAccess(bool: boolean) {
-		this.canvasViewAccess = bool;
+		this.canvasLatitude = canvasLatitude;
+		this.canvasLongitude = canvasLongitude;
 	}
 
 	userHasCanvasEditAccess() {
@@ -40,9 +30,6 @@ export class UserLocationListener {
 
 	// can be false if user is too far or if there is an error (also automatically sets view access if true)
 	setUserEditAccess(bool: boolean) {
-		if (bool === true) {
-			this.setCanvasViewAccess(true);
-		}
 		this.canvasEditAccess = bool;
 	}
 
