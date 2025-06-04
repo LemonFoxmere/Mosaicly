@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Butterfly from "$lib/comp/ui/graphics/Butterfly.svelte";
 </script>
 
 <main>
@@ -33,12 +34,18 @@
 	</div>
 
 	<section id="cta">
-		<a class="wrapper" href="/search">
+		<a class="wrapper" href="/nearby">
 			<button id="search">Start touching grass</button>
 		</a>
 		<a class="wrapper" href="/">
 			<button class="outline" id="about">Go back home</button>
 		</a>
+	</section>
+
+	<section id="graphics">
+		<!-- butterfly -->
+		<div class="butterfly only-desktop"><Butterfly s={300} /></div>
+		<div class="butterfly only-mobile"><Butterfly s={250} /></div>
 	</section>
 </main>
 
@@ -46,6 +53,8 @@
 	@use "$static/stylesheets/guideline" as *;
 
 	main {
+		position: relative;
+
 		width: 100%;
 		height: fit-content;
 		margin: auto 0;
@@ -59,6 +68,10 @@
 		flex-direction: column;
 		justify-content: flex-start;
 		row-gap: 30px;
+
+		* {
+			z-index: 2;
+		}
 
 		#content {
 			width: 100%;
@@ -100,6 +113,36 @@
 				width: 100%;
 				button {
 					width: 100%;
+				}
+			}
+		}
+
+		#graphics {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			// max-width: $global-max-width;
+			height: calc(100% - $navbar-height);
+
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			z-index: 1; // stay below the main content
+
+			* {
+				position: absolute;
+				color: $text-tertiary;
+			}
+
+			.butterfly {
+				bottom: 0;
+				right: 0;
+				transform: translate(40px, 0px); // offset to cutoff a bit
+
+				&.only-desktop {
+					transform: translate(10vw, -10px);
 				}
 			}
 		}

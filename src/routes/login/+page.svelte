@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CircularAbstraction from "$lib/comp/ui/graphics/CircularAbstraction.svelte";
 	import DiscordLogo from "$lib/comp/ui/logos/DiscordLogo.svelte";
 	import GithubLogo from "$lib/comp/ui/logos/GithubLogo.svelte";
 	import GoogleLogo from "$lib/comp/ui/logos/GoogleLogo.svelte";
@@ -29,12 +30,20 @@
 			</button>
 		</form>
 	</section>
+
+	<section id="graphics">
+		<!-- butterfly -->
+		<div class="abstract only-desktop"><CircularAbstraction s={400} /></div>
+		<div class="abstract only-mobile"><CircularAbstraction s={315} /></div>
+	</section>
 </main>
 
 <style lang="scss">
 	@use "$static/stylesheets/guideline" as *;
 
 	main {
+		position: relative;
+
 		width: 100%;
 		height: fit-content;
 		margin: auto 0;
@@ -48,6 +57,10 @@
 		justify-content: center;
 		align-items: center;
 		row-gap: 30px;
+
+		* {
+			z-index: 2;
+		}
 
 		#titles {
 			width: 100%;
@@ -72,6 +85,36 @@
 
 				button {
 					width: 100%;
+				}
+			}
+		}
+
+		#graphics {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			// max-width: $global-max-width;
+			height: calc(100% - $navbar-height);
+
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			z-index: 1; // stay below the main content
+
+			* {
+				position: absolute;
+				color: $text-tertiary;
+			}
+
+			.abstract {
+				bottom: -100%;
+				right: 0;
+				transform: translate(40px, 0px); // offset to cutoff a bit
+
+				&.only-desktop {
+					transform: translate(5vw, 0px);
 				}
 			}
 		}
