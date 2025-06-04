@@ -16,7 +16,7 @@
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "^9.18.0",
-		"@sveltejs/adapter-vercel": "^5.6.3",
+		"@sveltejs/adapter-vercel": "^5.7.2",
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"eslint": "^9.18.0",
@@ -37,6 +37,7 @@
 		"@supabase/supabase-js": "^2.49.4",
 		"@types/jspdf": "^2.0.0",
 		"@types/qrcode": "^1.5.5",
+		"@vercel/analytics": "^1.5.0",
 		"jspdf": "^3.0.1",
 		"mapbox-gl": "^3.12.0",
 		"qrcode": "^1.5.4",
