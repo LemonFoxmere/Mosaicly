@@ -19,9 +19,6 @@
 			vandalized. You'll get a QR code. People scan it, see your masterpiece, and if they're brave
 			enough, they can contribute — but only in person. No remote edits. Just you, your legs, and
 			your questionable art skills.
-			<br /><br />
-			Oh and you also earn points and level up or something. HR told me dopamine hits are good
-			for revenue.
 		</p>
 	</section>
 
