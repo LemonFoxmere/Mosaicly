@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { SUPABASE_KEY, SUPABASE_URL } from "./@const/dynamic.env";
+import { BASE_URL as DYN_BASE_URL, SUPABASE_KEY, SUPABASE_URL } from "./@const/dynamic.env";
 
 export const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_KEY, {
 	auth: {
@@ -11,4 +11,4 @@ export const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 // export const BASE_URL = "http://192.168.50.100:3001";
-export const BASE_URL = "http://localhost:3000";
+export const BASE_URL = DYN_BASE_URL;
