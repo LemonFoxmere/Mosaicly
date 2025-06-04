@@ -48,7 +48,6 @@ The goal with Mosaicly is to give people something stupidly low-effort to bond o
 - **You can slap canvases anywhere**: lamppost, vending machine, or a urinal.
 - **You have to show up IRL** to edit. No couch contributions allowed.
 - **It’s fast, lightweight, and works on your browser** — no install required.
-- **It uses real-time updates, points, and unlocks** — because who doesn’t like pixels and XP.
 
 It's probably not going to change your life. But it forces you to go outside and potentially meet people that you can talk to. That’s good enough for us.
 
@@ -60,7 +59,6 @@ It's probably not going to change your life. But it forces you to go outside and
 2. **Put it somewhere**: Print out the QR code (or just get it into the real world somehow), and stick it somewhere semi-legal.
 3. **Someone sees it**: They scan the code.
 4. **They want to edit it**: Gotta be there in person. That's the whole point.
-5. **You place a pixel**: You get XP. Maybe it unlocks stuff. Maybe it just feeds our engagement metrics. Don’t worry about it.
 
 <br>
 
