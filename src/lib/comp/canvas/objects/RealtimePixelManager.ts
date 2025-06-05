@@ -11,6 +11,7 @@ export class RealtimePixelManager {
 
 	private canvasID: string;
 	private databaseTimeout: NodeJS.Timeout | undefined;
+	private debounceDelay: number = 1500; // Delay for debouncing save operations
 
 	constructor(canvasChannel: RealtimeChannel, canvasID: string) {
 		this.canvasChannel = canvasChannel;
@@ -48,9 +49,27 @@ export class RealtimePixelManager {
 		clearTimeout(this.databaseTimeout);
 	}
 
-	// fetch request to send pixels to database
-	saveToDatabase(pixels: Record<string, PixelData>): void {
+	// Schedules a fetch request to send pixels to database
+	saveToDatabase(): void {
+		this.clearDatabaseTimer(); // Clear any existing timer
 
+		// Only schedule a save if there's something in the database queue
+		if (Object.keys(this.pixelDatabaseQueue).length > 0) {
+			this.databaseTimeout = setTimeout(() => {
+				this._executeSaveToDatabase();
+			}, this.debounceDelay);
+		}
+	}
+
+	// Immediately executes the save operation, bypassing debounce.
+	// Useful for scenarios like component unmount.
+	public flushSaveChanges(): void {
+		this.clearDatabaseTimer();
+		this._executeSaveToDatabase();
+	}
+
+	// Actual fetch request to send pixels to database
+	private _executeSaveToDatabase(): void {
 		// takes a "snapshot" of what pixels will be sent to the database
 		const current: Record<string, PixelData> = Object.assign({}, this.pixelDatabaseQueue);
 
@@ -63,7 +82,7 @@ export class RealtimePixelManager {
 				},
 				body: JSON.stringify({
 					canvasID: this.canvasID,
-					drawing: pixels
+					drawing: current // Send only the queued changes
 				})
 			}).then((response) => {
 				void response;
@@ -99,7 +118,7 @@ export class RealtimePixelManager {
 					}
 				})
 				.then(() => {
-					
+
 					// check if there are any pixels to update before setting down dirty flag
 					if (Object.keys(this.pixelBroadcastQueue).length == 0) {
 						this.isDirty = false;

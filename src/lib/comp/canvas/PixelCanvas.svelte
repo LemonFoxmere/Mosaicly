@@ -566,7 +566,7 @@
 		onDestroy(() => {
 			cleanUpListeners();
 			realtimeManager.clearDatabaseTimer();
-			realtimeManager.saveToDatabase((objects["pixelGrid"] as PixelGrid).pixels);
+			realtimeManager.flushSaveChanges();
 			supabase.removeChannel(canvasChannel);
 		});
 	});

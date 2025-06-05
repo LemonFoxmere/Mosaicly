@@ -272,7 +272,7 @@ export class PixelGrid extends CanvasObject {
 			this.placePixel(sctx.cursor.relx, sctx.cursor.rely, sctx.pixelGrid.brush.color, sctx);
 		}
 
-		this.realtimeManager.saveToDatabase(this.pixels); // push pixel changes (will not send anything if there are no new pixels to be sent)
+		this.realtimeManager.saveToDatabase(); // Use the debounced save
 		sctx.pixelGrid.brush.active = false;
 	}
 }
