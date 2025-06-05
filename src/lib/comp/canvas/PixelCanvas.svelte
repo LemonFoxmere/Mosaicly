@@ -565,8 +565,7 @@
 
 		onDestroy(() => {
 			cleanUpListeners();
-			realtimeManager.clearDatabaseTimer();
-			realtimeManager.flushSaveChanges();
+			realtimeManager.saveToDatabase();
 			supabase.removeChannel(canvasChannel);
 		});
 	});
