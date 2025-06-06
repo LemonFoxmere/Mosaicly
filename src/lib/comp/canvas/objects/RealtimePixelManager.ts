@@ -10,7 +10,6 @@ export class RealtimePixelManager {
 	private canvasChannel: RealtimeChannel;
 
 	private canvasID: string;
-	private databaseTimeout: NodeJS.Timeout | undefined;
 
 	constructor(canvasChannel: RealtimeChannel, canvasID: string) {
 		this.canvasChannel = canvasChannel;
@@ -43,14 +42,8 @@ export class RealtimePixelManager {
 		});
 	}
 
-	// delete timer for sending canvas to the database (this will be called right before queueing another pixel)
-	clearDatabaseTimer(): void {
-		clearTimeout(this.databaseTimeout);
-	}
-
 	// fetch request to send pixels to database
-	saveToDatabase(pixels: Record<string, PixelData>): void {
-
+	saveToDatabase(): void {
 		// takes a "snapshot" of what pixels will be sent to the database
 		const current: Record<string, PixelData> = Object.assign({}, this.pixelDatabaseQueue);
 
@@ -63,7 +56,7 @@ export class RealtimePixelManager {
 				},
 				body: JSON.stringify({
 					canvasID: this.canvasID,
-					drawing: pixels
+					drawing: current // Send only the queued changes
 				})
 			}).then((response) => {
 				void response;
@@ -99,7 +92,6 @@ export class RealtimePixelManager {
 					}
 				})
 				.then(() => {
-					
 					// check if there are any pixels to update before setting down dirty flag
 					if (Object.keys(this.pixelBroadcastQueue).length == 0) {
 						this.isDirty = false;

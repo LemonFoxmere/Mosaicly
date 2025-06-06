@@ -91,18 +91,22 @@ export async function GET({ request, setHeaders, locals: { supabase, safeGetSess
 export async function PATCH({ request, locals: { supabase, safeGetSession } }) {
 	const { session } = await safeGetSession();
 	if (session) {
-		const { canvasID, drawing } = await request.json();
+		const { canvasID, drawing: changedPixels } = await request.json();
 
-		const resp = await supabase.from("canvas").update({ drawing: drawing }).eq("id", canvasID);
+		// Call the PostgreSQL function to merge the drawing
+		const { error: rpcError } = await supabase.rpc("merge_canvas_drawing", {
+			p_canvas_id: canvasID,
+			p_changed_pixels: changedPixels
+		});
 
-		if (resp && resp.status >= 200 && resp.status < 300) {
-			return json(null, { status: 200 });
-		} else if (resp) {
-			// throw error if something went wrong
-			error(resp.status, resp.statusText);
-		} else {
-			error(400); // bad req
+		if (rpcError) {
+			console.error("Error calling merge_canvas_drawing RPC:", rpcError);
+			error(500, "Could not update canvas drawing via RPC.");
 		}
+
+		// If RPC call is successful
+		return json(null, { status: 200 });
+
 	} else {
 		error(403); // forbidden
 	}
